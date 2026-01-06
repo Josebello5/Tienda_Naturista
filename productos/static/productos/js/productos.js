@@ -1,5 +1,5 @@
 // productos.js - Funcionalidad completa para productos
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const tableBody = document.getElementById('tableBody');
     const searchInput = document.getElementById('searchInput');
     const serialInput = document.getElementById('serialInput');
@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const estadoSelect = document.getElementById('estadoSelect');
     const sujetoIvaSelect = document.getElementById('sujetoIvaSelect');
     const printBtn = document.getElementById('printBtn');
-    
+
     // Elementos del modal de editar precio
     const modalEditarPrecio = document.getElementById('modalEditarPrecio');
     const btnCerrarModalPrecio = document.getElementById('btnCerrarModalPrecio');
@@ -16,15 +16,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnGuardarPrecio = document.getElementById('btnGuardarPrecio');
     const nuevoPrecioVentaInput = document.getElementById('nuevoPrecioVenta');
     const productoIdPrecioInput = document.getElementById('productoIdPrecio');
-    
+
+    // Elementos del modal ver detalles
+    const modalVerDetalles = document.getElementById('modalVerDetalles');
+    const btnCerrarModalDetalles = document.getElementById('btnCerrarModalDetalles');
+    const btnCerrarDetallesInfo = document.getElementById('btnCerrarDetallesInfo');
+    const detalleNombre = document.getElementById('detalleNombre');
+    const detalleSerial = document.getElementById('detalleSerial');
+    const detalleUbicacion = document.getElementById('detalleUbicacion');
+
     // Contenedores de sugerencias para filtros
     const sugerenciasCategoriaFiltro = document.getElementById('sugerencias-categoria');
     const sugerenciasPatologiaFiltro = document.getElementById('sugerencias-patologia');
-    
+
     let searchTimeout;
 
     // ===== FUNCIONES AUXILIARES =====
-    
+
     function getCSRFToken() {
         const name = 'csrftoken';
         let cookieValue = null;
@@ -46,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!serialInput) return;
 
         // Restricción de tipeo - solo números
-        serialInput.addEventListener('keypress', function(e) {
+        serialInput.addEventListener('keypress', function (e) {
             const char = String.fromCharCode(e.keyCode || e.which);
             // Solo permitir números
             if (!/^[0-9]$/.test(char)) {
@@ -61,10 +69,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Validación en tiempo real
-        serialInput.addEventListener('input', function() {
+        serialInput.addEventListener('input', function () {
             // Solo permitir números
             this.value = this.value.replace(/[^0-9]/g, '');
-            
+
             // Limitar a 25 caracteres
             if (this.value.length > 25) {
                 this.value = this.value.substring(0, 25);
@@ -83,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Limpiar estilos al perder foco si está vacío
-        serialInput.addEventListener('blur', function() {
+        serialInput.addEventListener('blur', function () {
             if (this.value === '') {
                 this.classList.remove('is-invalid', 'is-valid');
             }
@@ -96,19 +104,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('successModal');
         const tituloElement = document.getElementById('successModalTitle');
         const mensajeElement = document.getElementById('successModalMessage');
-        
+
         if (!modal || !tituloElement || !mensajeElement) {
             console.error('Elementos del modal no encontrados');
             alert(`${titulo}: ${mensaje}`);
             return;
         }
-        
+
         tituloElement.textContent = titulo;
         mensajeElement.textContent = mensaje;
         modal.classList.add('active');
-        
+
         crearHojasFlotantes(modal.querySelector('.modal-success'));
-        
+
         setTimeout(() => {
             if (modal.classList.contains('active')) {
                 cerrarModalExito();
@@ -120,17 +128,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('deleteModal');
         const tituloElement = document.getElementById('deleteModalTitle');
         const mensajeElement = document.getElementById('deleteModalMessage');
-        
+
         if (!modal || !tituloElement || !mensajeElement) {
             console.error('Elementos del modal no encontrados');
             alert(`${titulo}: ${mensaje}`);
             return;
         }
-        
+
         tituloElement.textContent = titulo;
         mensajeElement.textContent = mensaje;
         modal.classList.add('active');
-        
+
         setTimeout(() => {
             if (modal.classList.contains('active')) {
                 cerrarModalEliminacion();
@@ -142,17 +150,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('errorModal');
         const tituloElement = document.getElementById('errorModalTitle');
         const mensajeElement = document.getElementById('errorModalMessage');
-        
+
         if (!modal || !tituloElement || !mensajeElement) {
             console.error('Elementos del modal de error no encontrados');
             alert(`ERROR: ${titulo} - ${mensaje}`);
             return;
         }
-        
+
         tituloElement.textContent = titulo;
         mensajeElement.textContent = mensaje;
         modal.classList.add('active');
-        
+
         setTimeout(() => {
             if (modal.classList.contains('active')) {
                 cerrarModalError();
@@ -173,45 +181,45 @@ document.addEventListener('DOMContentLoaded', function() {
             const mensajeElement = document.getElementById('confirmDeleteMessage');
             const botonConfirmar = document.getElementById('confirmDelete');
             const tituloElement = modal.querySelector('h2');
-            
+
             if (!modal || !mensajeElement || !botonConfirmar) {
                 console.error('Elementos del modal de confirmación no encontrados');
                 resolve(confirm(mensaje));
                 return;
             }
-            
+
             tituloElement.textContent = titulo;
             mensajeElement.textContent = mensaje;
             botonConfirmar.textContent = 'Aceptar';
-            
+
             modal.classList.add('active');
-            
+
             const btnCancelar = document.getElementById('cancelDelete');
-            
+
             const limpiarEventos = () => {
                 btnCancelar.removeEventListener('click', onCancel);
                 botonConfirmar.removeEventListener('click', onConfirm);
                 modal.removeEventListener('click', onOutsideClick);
             };
-            
+
             const onCancel = () => {
                 cerrarModalConfirmacion();
                 limpiarEventos();
                 resolve(false);
             };
-            
+
             const onConfirm = () => {
                 cerrarModalConfirmacion();
                 limpiarEventos();
                 resolve(true);
             };
-            
+
             const onOutsideClick = (e) => {
                 if (e.target === modal) {
                     onCancel();
                 }
             };
-            
+
             btnCancelar.addEventListener('click', onCancel);
             botonConfirmar.addEventListener('click', onConfirm);
             modal.addEventListener('click', onOutsideClick);
@@ -241,12 +249,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function crearHojasFlotantes(modalElement) {
         if (!modalElement) return;
-        
+
         const colors = ['#4caf50', '#81c784', '#a5d6a7', '#66bb6a', '#8bc34a'];
-        
+
         const existingLeaves = modalElement.querySelectorAll('.leaf');
         existingLeaves.forEach(leaf => leaf.remove());
-        
+
         for (let i = 0; i < 12; i++) {
             const leaf = document.createElement('div');
             leaf.className = 'leaf';
@@ -257,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
             leaf.style.height = Math.random() * 20 + 10 + 'px';
             leaf.style.animation = `float ${Math.random() * 2 + 2}s ease-in-out forwards`;
             leaf.style.animationDelay = Math.random() * 1 + 's';
-            
+
             modalElement.appendChild(leaf);
         }
     }
@@ -267,11 +275,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const closeSuccessModal = document.getElementById('closeSuccessModal');
         const closeDeleteModal = document.getElementById('closeDeleteModal');
         const closeErrorModal = document.getElementById('closeErrorModal');
-        
+
         if (closeSuccessModal) {
             closeSuccessModal.addEventListener('click', cerrarModalExito);
         }
-        
+
         if (closeDeleteModal) {
             closeDeleteModal.addEventListener('click', cerrarModalEliminacion);
         }
@@ -279,25 +287,25 @@ document.addEventListener('DOMContentLoaded', function() {
         if (closeErrorModal) {
             closeErrorModal.addEventListener('click', cerrarModalError);
         }
-        
+
         const successModal = document.getElementById('successModal');
         const deleteModal = document.getElementById('deleteModal');
         const errorModal = document.getElementById('errorModal');
-        
+
         if (successModal) {
-            successModal.addEventListener('click', function(e) {
+            successModal.addEventListener('click', function (e) {
                 if (e.target === this) cerrarModalExito();
             });
         }
-        
+
         if (deleteModal) {
-            deleteModal.addEventListener('click', function(e) {
+            deleteModal.addEventListener('click', function (e) {
                 if (e.target === this) cerrarModalEliminacion();
             });
         }
 
         if (errorModal) {
-            errorModal.addEventListener('click', function(e) {
+            errorModal.addEventListener('click', function (e) {
                 if (e.target === this) cerrarModalError();
             });
         }
@@ -319,7 +327,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(CATEGORIAS_JSON_URL)
             .then(response => response.json())
             .then(data => {
-                const sugerencias = data.filter(categoria => 
+                const sugerencias = data.filter(categoria =>
                     categoria.nombre.toLowerCase().includes(query.toLowerCase())
                 );
 
@@ -337,8 +345,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         sugerencia.className = 'sugerencia-item';
                         sugerencia.textContent = categoria.nombre;
                         sugerencia.setAttribute('data-categoria-nombre', categoria.nombre);
-                        
-                        sugerencia.addEventListener('click', function() {
+
+                        sugerencia.addEventListener('click', function () {
                             categoriaInput.value = categoria.nombre;
                             sugerenciasCategoriaFiltro.style.display = 'none';
                             buscarProductos();
@@ -365,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(PATOLOGIAS_JSON_URL)
             .then(response => response.json())
             .then(data => {
-                const sugerencias = data.filter(patologia => 
+                const sugerencias = data.filter(patologia =>
                     patologia.nombre.toLowerCase().includes(query.toLowerCase())
                 );
 
@@ -383,8 +391,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         sugerencia.className = 'sugerencia-item';
                         sugerencia.textContent = patologia.nombre;
                         sugerencia.setAttribute('data-patologia-nombre', patologia.nombre);
-                        
-                        sugerencia.addEventListener('click', function() {
+
+                        sugerencia.addEventListener('click', function () {
                             patologiaInput.value = patologia.nombre;
                             sugerenciasPatologiaFiltro.style.display = 'none';
                             buscarProductos();
@@ -402,16 +410,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Event listeners para los inputs de categoría y patología en filtros
-    categoriaInput.addEventListener('input', function() {
+    categoriaInput.addEventListener('input', function () {
         cargarSugerenciasCategoriasFiltro(this.value);
     });
 
-    patologiaInput.addEventListener('input', function() {
+    patologiaInput.addEventListener('input', function () {
         cargarSugerenciasPatologiasFiltro(this.value);
     });
 
     // Ocultar sugerencias al hacer clic fuera
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!categoriaInput.contains(e.target) && !sugerenciasCategoriaFiltro.contains(e.target)) {
             sugerenciasCategoriaFiltro.style.display = 'none';
         }
@@ -445,16 +453,16 @@ document.addEventListener('DOMContentLoaded', function() {
         btnCerrarModalPrecio.addEventListener('click', cerrarModalEditarPrecio);
         btnCancelarPrecio.addEventListener('click', cerrarModalEditarPrecio);
 
-        modalEditarPrecio.addEventListener('click', function(e) {
+        modalEditarPrecio.addEventListener('click', function (e) {
             if (e.target === modalEditarPrecio) {
                 cerrarModalEditarPrecio();
             }
         });
 
-        btnGuardarPrecio.addEventListener('click', function() {
+        btnGuardarPrecio.addEventListener('click', function () {
             const productoId = productoIdPrecioInput.value;
             const nuevoPrecio = parseFloat(nuevoPrecioVentaInput.value);
-            
+
             if (isNaN(nuevoPrecio) || nuevoPrecio <= 0) {
                 mostrarModalError('Error', 'Por favor, ingrese un precio válido (mayor a 0).');
                 return;
@@ -475,28 +483,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     precio_venta: nuevoPrecio
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const celdaPrecio = document.querySelector(`.editable-precio[data-producto-id="${productoId}"]`);
-                    if (celdaPrecio) {
-                        celdaPrecio.textContent = `$${parseFloat(data.precio_venta).toFixed(2)}`;
-                        celdaPrecio.setAttribute('data-precio-actual', data.precio_venta);
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const celdaPrecio = document.querySelector(`.editable-precio[data-producto-id="${productoId}"]`);
+                        if (celdaPrecio) {
+                            celdaPrecio.textContent = `$${parseFloat(data.precio_venta).toFixed(2)}`;
+                            celdaPrecio.setAttribute('data-precio-actual', data.precio_venta);
+                        }
+
+                        cerrarModalEditarPrecio();
+                        mostrarModalExito('¡Éxito!', 'Precio actualizado correctamente');
+                    } else {
+                        mostrarModalError('Error', data.error);
                     }
-                    
-                    cerrarModalEditarPrecio();
-                    mostrarModalExito('¡Éxito!', 'Precio actualizado correctamente');
-                } else {
-                    mostrarModalError('Error', data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                mostrarModalError('Error', 'Error al actualizar el precio');
-            });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarModalError('Error', 'Error al actualizar el precio');
+                });
         });
 
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (e.target.closest('.btn-edit-precio')) {
                 const button = e.target.closest('.btn-edit-precio');
                 const productoId = button.getAttribute('data-producto-id');
@@ -511,7 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
         async function cambiarEstadoProducto(productoId, estadoActual) {
             let mensajeConfirmacion;
             let accion;
-            
+
             if (estadoActual === 'agotado') {
                 accion = 'activar';
                 mensajeConfirmacion = '¿Estás seguro de que deseas activar este producto?';
@@ -522,7 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 accion = 'activar';
                 mensajeConfirmacion = '¿Estás seguro de que deseas activar este producto?';
             }
-            
+
             const confirmado = await mostrarConfirmacion(mensajeConfirmacion, `Confirmar ${accion.charAt(0).toUpperCase() + accion.slice(1)}`);
             if (!confirmado) {
                 return;
@@ -536,32 +544,32 @@ document.addEventListener('DOMContentLoaded', function() {
                         'X-CSRFToken': getCSRFToken()
                     }
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const fila = document.querySelector(`tr[data-producto-id="${productoId}"]`);
                     if (fila) {
                         const celdaEstado = fila.querySelector('td:nth-child(11) .status');
                         const botonEstado = fila.querySelector('.btn-cambiar-estado');
                         const iconoEstado = botonEstado.querySelector('i');
-                        
+
                         fila.setAttribute('data-estado', data.nuevo_estado);
-                        
-                        celdaEstado.className = 'status ' + 
-                            (data.nuevo_estado === 'activo' ? 'status-active' : 
-                             data.nuevo_estado === 'inactivo' ? 'status-inactive' : 'status-agotado');
+
+                        celdaEstado.className = 'status ' +
+                            (data.nuevo_estado === 'activo' ? 'status-active' :
+                                data.nuevo_estado === 'inactivo' ? 'status-inactive' : 'status-agotado');
                         celdaEstado.textContent = data.nuevo_estado_display;
-                        
+
                         if (data.nuevo_estado === 'activo') {
                             iconoEstado.className = 'fas fa-toggle-on';
                         } else {
                             iconoEstado.className = 'fas fa-toggle-off';
                         }
                         botonEstado.setAttribute('data-estado-actual', data.nuevo_estado);
-                        
+
                         filtrarProductos();
-                        
+
                         mostrarModalExito('¡Éxito!', `Producto ${accion === 'activar' ? 'activado' : 'desactivado'} correctamente`);
                     }
                 } else {
@@ -573,7 +581,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             const btnCambiarEstado = e.target.closest('.btn-cambiar-estado');
             if (btnCambiarEstado) {
                 const productoId = btnCambiarEstado.getAttribute('data-producto-id');
@@ -590,14 +598,14 @@ document.addEventListener('DOMContentLoaded', function() {
             buscarProductos();
         }, 300);
     }
-    
+
     searchInput.addEventListener('input', manejarFiltros);
     serialInput.addEventListener('input', manejarFiltros);
     categoriaInput.addEventListener('input', manejarFiltros);
     patologiaInput.addEventListener('input', manejarFiltros);
     estadoSelect.addEventListener('change', manejarFiltros);
     sujetoIvaSelect.addEventListener('change', manejarFiltros);
-    
+
     function buscarProductos() {
         const query = searchInput.value.trim();
         const serial = serialInput.value.trim();
@@ -605,7 +613,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const patologia = patologiaInput.value.trim();
         const estado = estadoSelect.value;
         const sujetoIva = sujetoIvaSelect.value;
-        
+
         tableBody.innerHTML = `
             <tr>
                 <td colspan="12" style="text-align: center; padding: 40px;">
@@ -613,7 +621,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </td>
             </tr>
         `;
-        
+
         const params = new URLSearchParams();
         if (query) params.append('q', query);
         if (serial) params.append('serial', serial);
@@ -621,12 +629,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (patologia) params.append('patologia', patologia);
         if (estado) params.append('estado', estado);
         if (sujetoIva) params.append('sujeto_iva', sujetoIva);
-        
+
         const xhr = new XMLHttpRequest();
         xhr.open('GET', `?${params.toString()}`, true);
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        
-        xhr.onload = function() {
+
+        xhr.onload = function () {
             if (xhr.status === 200) {
                 try {
                     const response = JSON.parse(xhr.responseText);
@@ -640,20 +648,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 location.reload();
             }
         };
-        
-        xhr.onerror = function() {
+
+        xhr.onerror = function () {
             console.error('Error de conexión');
             location.reload();
         };
-        
+
         xhr.send();
     }
-    
+
     function actualizarTabla(productos) {
         if (!tableBody) return;
-        
+
         tableBody.innerHTML = '';
-        
+
         if (productos.length === 0) {
             tableBody.innerHTML = `
                 <tr class="empty-row">
@@ -668,19 +676,19 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             return;
         }
-        
+
         productos.forEach(producto => {
-            const estadoClass = producto.estado_valor === 'activo' ? 'status-active' : 
-                              producto.estado_valor === 'inactivo' ? 'status-inactive' : 'status-agotado';
-            const stockMinClass = producto.stock_minimo === 0 ? 'status-inactive' : 
-                                 producto.stock_minimo < 5 ? 'status-low' : 'status-active';
-            const stockActClass = producto.stock_actual === 0 ? 'status-inactive' : 
-                                 producto.stock_actual < 5 ? 'status-low' : 'status-active';
-            
+            const estadoClass = producto.estado_valor === 'activo' ? 'status-active' :
+                producto.estado_valor === 'inactivo' ? 'status-inactive' : 'status-agotado';
+            const stockMinClass = producto.stock_minimo === 0 ? 'status-inactive' :
+                producto.stock_minimo < 5 ? 'status-low' : 'status-active';
+            const stockActClass = producto.stock_actual === 0 ? 'status-inactive' :
+                producto.stock_actual < 5 ? 'status-low' : 'status-active';
+
             const tr = document.createElement('tr');
             tr.setAttribute('data-producto-id', producto.id);
             tr.setAttribute('data-estado', producto.estado_valor);
-            
+
             tr.innerHTML = `
                 <td>${producto.id}</td>
                 <td>${producto.serial}</td>
@@ -708,11 +716,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     </button>
                 </td>
             `;
-            
+
             tableBody.appendChild(tr);
         });
     }
-    
+
     function filtrarProductos() {
         const query = searchInput.value.trim().toLowerCase();
         const serial = serialInput.value.trim().toLowerCase();
@@ -720,7 +728,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const patologia = patologiaInput.value.trim().toLowerCase();
         const estado = estadoSelect.value;
         const sujetoIva = sujetoIvaSelect.value;
-        
+
         const rows = tableBody.querySelectorAll('tr');
         let visibleRows = 0;
 
@@ -736,16 +744,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const patologiaFila = row.cells[4].textContent.toLowerCase();
             const estadoFila = row.getAttribute('data-estado');
             const sujetoIvaFila = row.cells[6].textContent.trim();
-            
+
             const coincideSerial = !serial || serialFila.includes(serial);
             const coincideNombre = !query || nombre.includes(query);
             const coincideCategoria = !categoria || categoriaFila.includes(categoria);
             const coincidePatologia = !patologia || patologiaFila.includes(patologia);
             const coincideEstado = !estado || estadoFila === estado;
-            const coincideSujetoIva = !sujetoIva || 
+            const coincideSujetoIva = !sujetoIva ||
                 (sujetoIva === 'si' && sujetoIvaFila === 'Sí') ||
                 (sujetoIva === 'no' && sujetoIvaFila === 'No');
-            
+
             if (coincideSerial && coincideNombre && coincideCategoria && coincidePatologia && coincideEstado && coincideSujetoIva) {
                 row.style.display = '';
                 visibleRows++;
@@ -759,15 +767,15 @@ document.addEventListener('DOMContentLoaded', function() {
             emptyRow.style.display = visibleRows === 0 ? '' : 'none';
         }
     }
-    
-    printBtn.addEventListener('click', function() {
+
+    printBtn.addEventListener('click', function () {
         const query = searchInput.value.trim();
         const serial = serialInput.value.trim();
         const categoria = categoriaInput.value.trim();
         const patologia = patologiaInput.value.trim();
         const estado = estadoSelect.value;
         const sujetoIva = sujetoIvaSelect.value;
-        
+
         const params = new URLSearchParams();
         if (query) params.append('q', query);
         if (serial) params.append('serial', serial);
@@ -775,22 +783,68 @@ document.addEventListener('DOMContentLoaded', function() {
         if (patologia) params.append('patologia', patologia);
         if (estado) params.append('estado', estado);
         if (sujetoIva) params.append('sujeto_iva', sujetoIva);
-        
+
         const pdfUrl = `/productos/generar-pdf/?${params.toString()}`;
         window.open(pdfUrl, '_blank');
     });
-    
+
+    // ===== FUNCIONALIDAD PARA VER DETALLES =====
+    function inicializarVerDetalles() {
+        function abrirModalDetalles(nombre, serial, ubicacion) {
+            detalleNombre.textContent = nombre;
+            detalleSerial.textContent = serial || '-';
+            detalleUbicacion.textContent = ubicacion || '-';
+
+            modalVerDetalles.classList.add('active');
+        }
+
+        function cerrarModalDetalles() {
+            modalVerDetalles.classList.remove('active');
+        }
+
+        // Event delegation para botones de detalles
+        document.addEventListener('click', function (e) {
+            const btnDetalles = e.target.closest('.btn-ver-detalles');
+            if (btnDetalles) {
+                const nombre = btnDetalles.getAttribute('data-nombre');
+                const serial = btnDetalles.getAttribute('data-serial');
+                const ubicacion = btnDetalles.getAttribute('data-ubicacion');
+
+                abrirModalDetalles(nombre, serial, ubicacion);
+            }
+        });
+
+        // Event listening para cerrar modal
+        if (btnCerrarModalDetalles) {
+            btnCerrarModalDetalles.addEventListener('click', cerrarModalDetalles);
+        }
+
+        if (btnCerrarDetallesInfo) {
+            btnCerrarDetallesInfo.addEventListener('click', cerrarModalDetalles);
+        }
+
+        // Cerrar al hacer clic fuera
+        if (modalVerDetalles) {
+            modalVerDetalles.addEventListener('click', function (e) {
+                if (e.target === this) {
+                    cerrarModalDetalles();
+                }
+            });
+        }
+    }
+
     // ===== INICIALIZACIÓN =====
     function inicializar() {
         inicializarValidacionSerialFiltro();
         inicializarModalPrecio();
         inicializarCambioEstado();
+        inicializarVerDetalles();
         inicializarModales();
-        
+
         if (searchInput) {
             searchInput.focus();
         }
-        
+
         console.log('Sistema de gestión de productos inicializado correctamente');
     }
 

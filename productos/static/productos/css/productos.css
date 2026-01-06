@@ -222,7 +222,8 @@ a.btn {
   color: var(--white-base);
 }
 
-a.btn:hover, a.btn:focus {
+a.btn:hover,
+a.btn:focus {
   text-decoration: none;
   color: var(--white-base);
 }
@@ -331,62 +332,86 @@ td {
 
 /* ===== AJUSTES DE ANCHO DE COLUMNAS CORREGIDOS ===== */
 /* Ajustar el ancho de las columnas para que quepan todas */
-th:nth-child(1), td:nth-child(1) { /* ID */
+th:nth-child(1),
+td:nth-child(1) {
+  /* ID */
   width: 80px;
   text-align: center;
 }
 
-th:nth-child(2), td:nth-child(2) { /* Serial - Nueva columna */
+th:nth-child(2),
+td:nth-child(2) {
+  /* Serial - Nueva columna */
   width: 120px;
   text-align: center;
 }
 
-th:nth-child(3), td:nth-child(3) { /* Nombre */
+th:nth-child(3),
+td:nth-child(3) {
+  /* Nombre */
   width: 180px;
   min-width: 150px;
 }
 
 /* Ajustar el resto de las columnas para compensar */
-th:nth-child(4), td:nth-child(4) { /* Categoría */
+th:nth-child(4),
+td:nth-child(4) {
+  /* Categoría */
   width: 120px;
   min-width: 100px;
 }
 
-th:nth-child(5), td:nth-child(5) { /* Patología */
+th:nth-child(5),
+td:nth-child(5) {
+  /* Patología */
   width: 120px;
   min-width: 100px;
 }
 
-th:nth-child(6), td:nth-child(6) { /* Ubicación */
+th:nth-child(6),
+td:nth-child(6) {
+  /* Ubicación */
   width: 100px;
 }
 
-th:nth-child(7), td:nth-child(7) { /* IVA */
+th:nth-child(7),
+td:nth-child(7) {
+  /* IVA */
   width: 70px;
   text-align: center;
 }
 
-th:nth-child(8), td:nth-child(8) { /* Precio */
+th:nth-child(8),
+td:nth-child(8) {
+  /* Precio */
   width: 100px;
   text-align: right;
 }
 
-th:nth-child(9), td:nth-child(9) { /* Stock Mínimo */
+th:nth-child(9),
+td:nth-child(9) {
+  /* Stock Mínimo */
   width: 110px;
   text-align: center;
 }
 
-th:nth-child(10), td:nth-child(10) { /* Stock Actual */
+th:nth-child(10),
+td:nth-child(10) {
+  /* Stock Actual */
   width: 110px;
   text-align: center;
 }
 
-th:nth-child(11), td:nth-child(11) { /* Estado */
+th:nth-child(11),
+td:nth-child(11) {
+  /* Estado */
   width: 100px;
   text-align: center;
 }
 
-th:nth-child(12), td:nth-child(12) { /* Acciones */
+th:nth-child(12),
+td:nth-child(12) {
+  /* Acciones */
   width: 140px;
   text-align: center;
 }
@@ -432,7 +457,7 @@ td:nth-child(8) {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
   transition: left 0.5s;
 }
 
@@ -479,26 +504,26 @@ td:nth-child(8) {
 }
 
 /* Botones para categorías y patologías */
-.btn-editar-categoria, 
+.btn-editar-categoria,
 .btn-editar-patologia {
   background: linear-gradient(135deg, var(--primary-green), #2e7d32);
   color: white;
 }
 
-.btn-editar-categoria:hover, 
+.btn-editar-categoria:hover,
 .btn-editar-patologia:hover {
   background: linear-gradient(135deg, #2d7058, #1b5e20);
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 6px 15px rgba(58, 140, 110, 0.4);
 }
 
-.btn-eliminar-categoria, 
+.btn-eliminar-categoria,
 .btn-eliminar-patologia {
   background: linear-gradient(135deg, #e74c3c, #c0392b);
   color: white;
 }
 
-.btn-eliminar-categoria:hover, 
+.btn-eliminar-categoria:hover,
 .btn-eliminar-patologia:hover {
   background: linear-gradient(135deg, #c0392b, #a93226);
   transform: translateY(-2px) scale(1.05);
@@ -572,13 +597,14 @@ td:nth-child(8) {
 
 /* ===== ANIMACIONES ===== */
 @keyframes fadeIn {
-  from { 
-    opacity: 0; 
-    transform: translateY(10px); 
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -736,7 +762,9 @@ tbody tr {
   opacity: 1;
 }
 
-.modal-success, .modal-delete, .modal-confirm {
+.modal-success,
+.modal-delete,
+.modal-confirm {
   background: white;
   border-radius: 20px;
   padding: 40px 30px;
@@ -759,7 +787,9 @@ tbody tr {
   opacity: 1;
 }
 
-.modal-success-icon, .modal-delete-icon, .modal-confirm-icon {
+.modal-success-icon,
+.modal-delete-icon,
+.modal-confirm-icon {
   font-size: 80px;
   margin-bottom: 25px;
   animation: bounce 0.8s ease;
@@ -777,7 +807,9 @@ tbody tr {
   color: #f39c12;
 }
 
-.modal-success h2, .modal-delete h2, .modal-confirm h2 {
+.modal-success h2,
+.modal-delete h2,
+.modal-confirm h2 {
   margin-bottom: 20px;
   font-size: 28px;
   font-weight: 700;
@@ -795,7 +827,9 @@ tbody tr {
   color: #e67e22;
 }
 
-.modal-success p, .modal-delete p, .modal-confirm p {
+.modal-success p,
+.modal-delete p,
+.modal-confirm p {
   margin-bottom: 30px;
   line-height: 1.6;
   font-size: 16px;
@@ -845,7 +879,8 @@ tbody tr {
   margin-top: 25px;
 }
 
-.btn-cancel, .btn-confirm {
+.btn-cancel,
+.btn-confirm {
   padding: 12px 30px;
   border: none;
   border-radius: 50px;
@@ -893,36 +928,45 @@ tbody tr {
 }
 
 @keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-      transform: translateY(0);
+
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
   }
+
   40% {
-      transform: translateY(-20px);
+    transform: translateY(-20px);
   }
+
   60% {
-      transform: translateY(-10px);
+    transform: translateY(-10px);
   }
 }
 
 @keyframes float {
   0% {
-      transform: translateY(0) rotate(0deg);
-      opacity: 1;
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
   }
+
   100% {
-      transform: translateY(-100px) rotate(360deg);
-      opacity: 0;
+    transform: translateY(-100px) rotate(360deg);
+    opacity: 0;
   }
 }
 
 @keyframes slideIn {
   from {
-      opacity: 0;
-      transform: translateY(-20px);
+    opacity: 0;
+    transform: translateY(-20px);
   }
+
   to {
-      opacity: 1;
-      transform: translateY(0);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -1088,12 +1132,12 @@ tbody tr {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .toolbar-actions {
     justify-content: center;
     width: 100%;
   }
-  
+
   .action-group {
     justify-content: center;
     flex: 1;
@@ -1106,65 +1150,72 @@ tbody tr {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .filtros-container {
     max-width: 100%;
     margin-bottom: 15px;
   }
-  
+
   .toolbar-actions {
     width: 100%;
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .action-group {
     justify-content: stretch;
   }
-  
+
   .action-group .btn {
     flex: 1;
     min-width: 0;
   }
-  
+
   .productos-main {
     padding: 20px;
     margin: 10px;
   }
-  
+
   table {
     min-width: 900px;
   }
-  
+
   .modal-toolbar {
     flex-direction: column;
   }
-  
+
   .modal-toolbar .search-box,
   .modal-toolbar .btn {
     width: 100%;
   }
-  
-  .modal-success, .modal-delete, .modal-confirm {
+
+  .modal-success,
+  .modal-delete,
+  .modal-confirm {
     padding: 30px 20px;
     margin: 15px;
   }
-  
-  .modal-success-icon, .modal-delete-icon, .modal-confirm-icon {
+
+  .modal-success-icon,
+  .modal-delete-icon,
+  .modal-confirm-icon {
     font-size: 60px;
     margin-bottom: 20px;
   }
-  
-  .modal-success h2, .modal-delete h2, .modal-confirm h2 {
+
+  .modal-success h2,
+  .modal-delete h2,
+  .modal-confirm h2 {
     font-size: 24px;
   }
-  
+
   .modal-confirm-actions {
     flex-direction: column;
     gap: 10px;
   }
-  
-  .btn-cancel, .btn-confirm {
+
+  .btn-cancel,
+  .btn-confirm {
     width: 100%;
   }
 }
@@ -1174,66 +1225,74 @@ tbody tr {
   .filtros-container {
     flex-direction: column;
   }
-  
-  .search-box, .filtro-select {
+
+  .search-box,
+  .filtro-select {
     min-width: 100%;
   }
-  
+
   .filtro-select select {
     padding: 12px 35px 12px 15px;
   }
-  
+
   .actions {
     flex-direction: row;
     align-items: center;
     gap: 6px;
   }
-  
+
   .btn-action {
     width: 32px;
     height: 32px;
     font-size: 0.9rem;
   }
-  
+
   .status {
     padding: 5px 10px;
     font-size: 0.75rem;
     min-width: 80px;
   }
-  
+
   .productos-container {
     padding: 10px;
   }
-  
+
   .btn {
     padding: 12px 20px;
     min-width: 140px;
     font-size: 0.9rem;
   }
-  
+
   table {
     min-width: 850px;
   }
-  
-  th, td {
+
+  th,
+  td {
     padding: 14px 10px;
     font-size: 0.85rem;
   }
-  
-  .modal-success, .modal-delete, .modal-confirm {
+
+  .modal-success,
+  .modal-delete,
+  .modal-confirm {
     padding: 25px 15px;
     margin: 10px;
   }
-  
-  .modal-success-icon, .modal-delete-icon, .modal-confirm-icon {
+
+  .modal-success-icon,
+  .modal-delete-icon,
+  .modal-confirm-icon {
     font-size: 50px;
     margin-bottom: 15px;
   }
-  
-  .modal-success h2, .modal-delete h2, .modal-confirm h2 {
+
+  .modal-success h2,
+  .modal-delete h2,
+  .modal-confirm h2 {
     font-size: 20px;
   }
-  
+
   .btn-aceptar {
     padding: 12px 25px;
     font-size: 14px;
@@ -1246,7 +1305,7 @@ tbody tr {
   .productos-container {
     max-width: 1400px;
   }
-  
+
   table {
     min-width: auto;
   }
@@ -1254,25 +1313,70 @@ tbody tr {
 
 /* ===== ESTILOS PARA IMPRESIÓN ===== */
 @media print {
+
   .productos-toolbar,
   .actions,
   .btn-action {
     display: none !important;
   }
-  
+
   .productos-main {
     box-shadow: none;
     padding: 0;
   }
-  
+
   .table-container {
     box-shadow: none;
     border: 1px solid #000;
   }
-  
+
   thead {
     background: #666 !important;
     color: white !important;
     -webkit-print-color-adjust: exact;
   }
+}
+
+/* ===== ESTILOS PARA MODAL VER DETALLES (Similar a Lotes) ===== */
+.titulo-producto-detalle {
+  margin: 0 0 20px 0;
+  font-size: 1.6rem;
+  color: var(--primary-green);
+  text-align: center;
+  border-bottom: 2px solid var(--soft-blue);
+  padding-bottom: 15px;
+}
+
+.detalle-group {
+  padding: 12px 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.detalle-group:last-child {
+  border-bottom: none;
+}
+
+.detalle-group label {
+  display: block;
+  color: var(--dark-gray);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detalle-valor {
+  color: var(--dark-gray);
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Aumentar tamaño de letra en tabla para mejor legibilidad */
+td {
+  padding: 14px 12px;
+  font-size: 0.95rem;
 }

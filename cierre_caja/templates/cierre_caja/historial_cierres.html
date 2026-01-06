@@ -36,6 +36,9 @@
             </div>
 
             <div class="toolbar-actions">
+                <a href="{% url 'cierre_caja:menu_cierre_caja' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
                 <a href="{% url 'cierre_caja:menu_cierre_caja' %}" class="btn btn-primary">
                     <i class="fas fa-plus-circle"></i> Nuevo Cierre
                 </a>
@@ -91,9 +94,11 @@
                         </td>
                         <td style="text-align: center;">
                             {% if cierre.Notas %}
-                            <span style="color: var(--primary-blue); cursor: help;" title="{{ cierre.Notas }}">
+                            <button class="btn-ver-nota" data-nota="{{ cierre.Notas }}"
+                                style="background: none; border: none; color: var(--primary-blue); cursor: pointer; font-size: 1.1rem;"
+                                title="Ver nota completa">
                                 <i class="fas fa-comment-alt"></i>
-                            </span>
+                            </button>
                             {% else %}
                             <span style="color: var(--natural-gray);">-</span>
                             {% endif %}
@@ -161,4 +166,71 @@
         font-size: 1rem;
     }
 </style>
+<!-- ===== MODAL VER NOTA ===== -->
+<div id="modalVerNota" class="modal-overlay">
+    <div class="modal-contenido">
+        <div class="modal-header">
+            <h3>Nota del Cierre</h3>
+            <button class="btn-cerrar" id="btnCerrarModalNota">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="nota-content"
+                style="padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid var(--primary-blue);">
+                <p id="contenidoNota"
+                    style="margin: 0; color: var(--dark-gray); font-size: 1.1rem; line-height: 1.5; white-space: pre-wrap;">
+                </p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="btnCerrarNotaFooter">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Modal Ver Nota
+        const modalVerNota = document.getElementById('modalVerNota');
+        const btnCerrarModalNota = document.getElementById('btnCerrarModalNota');
+        const btnCerrarNotaFooter = document.getElementById('btnCerrarNotaFooter');
+        const contenidoNota = document.getElementById('contenidoNota');
+
+        function abrirModalNota(texto) {
+            contenidoNota.textContent = texto;
+            modalVerNota.classList.add('active');
+        }
+
+        function cerrarModalNota() {
+            modalVerNota.classList.remove('active');
+        }
+
+        // Event delegation para botones de nota
+        document.addEventListener('click', function (e) {
+            const btnNota = e.target.closest('.btn-ver-nota');
+            if (btnNota) {
+                const nota = btnNota.getAttribute('data-nota');
+                abrirModalNota(nota);
+            }
+        });
+
+        if (btnCerrarModalNota) {
+            btnCerrarModalNota.addEventListener('click', cerrarModalNota);
+        }
+
+        if (btnCerrarNotaFooter) {
+            btnCerrarNotaFooter.addEventListener('click', cerrarModalNota);
+        }
+
+        if (modalVerNota) {
+            modalVerNota.addEventListener('click', function (e) {
+                if (e.target === this) {
+                    cerrarModalNota();
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

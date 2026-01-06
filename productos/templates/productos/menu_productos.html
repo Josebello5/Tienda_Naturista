@@ -14,10 +14,10 @@
 {% if messages %}
 <div class="messages-container">
   {% for message in messages %}
-    <div class="alert alert-{{ message.tags }}">
-      <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
-      {{ message }}
-    </div>
+  <div class="alert alert-{{ message.tags }}">
+    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+    {{ message }}
+  </div>
   {% endfor %}
 </div>
 {% endif %}
@@ -25,7 +25,7 @@
 <!-- ===== CONTENEDOR PRINCIPAL DE PRODUCTOS ===== -->
 <div class="productos-container">
   <div class="productos-main">
-    
+
     <!-- ===== BARRA DE HERRAMIENTAS MEJORADA ===== -->
     <div class="productos-toolbar">
       <div class="filtros-container">
@@ -33,27 +33,27 @@
           <i class="fas fa-search"></i>
           <input type="text" id="searchInput" placeholder="Buscar por nombre..." value="{{ query }}">
         </div>
-        
+
         <!-- Nuevo filtro por Serial -->
         <div class="search-box">
           <i class="fas fa-barcode"></i>
           <input type="text" id="serialInput" placeholder="Buscar por serial..." value="{{ serial_filtro }}">
         </div>
-        
+
         <!-- Filtro de Categoría con sugerencias -->
         <div class="search-box" style="position: relative;">
           <i class="fas fa-layer-group"></i>
           <input type="text" id="categoriaInput" placeholder="Buscar categoría..." value="{{ categoria_filtro }}">
           <div id="sugerencias-categoria" class="sugerencias-container"></div>
         </div>
-        
+
         <!-- Filtro de Patología con sugerencias -->
         <div class="search-box" style="position: relative;">
           <i class="fas fa-stethoscope"></i>
           <input type="text" id="patologiaInput" placeholder="Buscar patología..." value="{{ patologia_filtro }}">
           <div id="sugerencias-patologia" class="sugerencias-container"></div>
         </div>
-        
+
         <div class="filtro-select">
           <select id="estadoSelect">
             <option value="">Todos los estados</option>
@@ -70,7 +70,7 @@
           </select>
         </div>
       </div>
-      
+
       <div class="toolbar-actions">
         <!-- Grupo de acciones principales -->
         <div class="action-group">
@@ -78,7 +78,7 @@
             <i class="fas fa-plus-circle"></i> Agregar Producto
           </a>
         </div>
-        
+
         <!-- Grupo de gestión de categorías y patologías -->
         <div class="action-group">
           <button class="btn btn-info" id="categoriasBtn">
@@ -88,7 +88,7 @@
             <i class="fas fa-stethoscope"></i> Patologías
           </button>
         </div>
-        
+
         <!-- Grupo de utilidades -->
         <div class="action-group">
           <button class="btn btn-secondary" id="printBtn">
@@ -103,12 +103,9 @@
       <table id="dataTable">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Serial</th>
             <th>Nombre</th>
             <th>Categoría</th>
             <th>Patología</th>
-            <th>Ubicación</th>
             <th>IVA</th>
             <th>Precio</th>
             <th>Stock Mínimo</th>
@@ -120,15 +117,13 @@
         <tbody id="tableBody">
           {% for producto in productos %}
           <tr data-producto-id="{{ producto.ID_producto }}" data-estado="{{ producto.estado }}">
-            <td>{{ producto.ID_producto }}</td>
-            <td>{{ producto.serial }}</td>
             <td>{{ producto.nombre_pro }}</td>
             <td>{{ producto.categoria.nombre }}</td>
             <td>{{ producto.patologia.nombre|default:"-" }}</td>
-            <td>{{ producto.ubicacion|default:"-" }}</td>
             <!-- CORRECCIÓN: Cambiar el filtro yesno por una condición directa -->
             <td>{% if producto.sujeto_iva == 'si' %}Sí{% else %}No{% endif %}</td>
-            <td class="editable-precio" data-producto-id="{{ producto.ID_producto }}" data-precio-actual="{{ producto.precio_venta }}">
+            <td class="editable-precio" data-producto-id="{{ producto.ID_producto }}"
+              data-precio-actual="{{ producto.precio_venta }}">
               ${{ producto.precio_venta }}
             </td>
             <td>
@@ -157,17 +152,26 @@
             </td>
             <td class="actions">
               <!-- Botón para editar producto -->
-              <a href="{% url 'productos:editar_producto' producto.ID_producto %}" class="btn-action btn-editar" title="Editar Producto">
+              <a href="{% url 'productos:editar_producto' producto.ID_producto %}" class="btn-action btn-editar"
+                title="Editar Producto">
                 <i class="fas fa-edit"></i>
               </a>
-              
+
+              <!-- Botón Ver Detalles -->
+              <button class="btn-action btn-ver-detalles" title="Ver Detalles" data-nombre="{{ producto.nombre_pro }}"
+                data-serial="{{ producto.serial }}" data-ubicacion="{{ producto.ubicacion|default:'-' }}">
+                <i class="fas fa-eye"></i>
+              </button>
+
               <!-- Botón para editar precio -->
-              <button class="btn-action btn-edit-precio" title="Editar Precio" data-producto-id="{{ producto.ID_producto }}">
+              <button class="btn-action btn-edit-precio" title="Editar Precio"
+                data-producto-id="{{ producto.ID_producto }}">
                 <i class="fas fa-dollar-sign"></i>
               </button>
-              
+
               <!-- Botón para cambiar estado -->
-              <button class="btn-action btn-cambiar-estado" title="Cambiar Estado" data-producto-id="{{ producto.ID_producto }}" data-estado-actual="{{ producto.estado }}">
+              <button class="btn-action btn-cambiar-estado" title="Cambiar Estado"
+                data-producto-id="{{ producto.ID_producto }}" data-estado-actual="{{ producto.estado }}">
                 <i class="fas fa-toggle-{% if producto.estado == 'activo' %}on{% else %}off{% endif %}"></i>
               </button>
             </td>
@@ -310,7 +314,8 @@
           <label for="nombreCategoria">Nombre de la categoría:</label>
           <div class="input-icon">
             <i class="fas fa-tag"></i>
-            <input type="text" id="nombreCategoria" class="form-control" required maxlength="20" placeholder="Solo letras, máximo 20 caracteres" autocomplete="off">
+            <input type="text" id="nombreCategoria" class="form-control" required maxlength="20"
+              placeholder="Solo letras, máximo 20 caracteres" autocomplete="off">
           </div>
           <small class="form-text text-muted">Solo letras, sin espacios, máximo 20 caracteres.</small>
           <span class="error-msg" id="errorNombreCategoria" style="display: none;"></span>
@@ -338,7 +343,8 @@
           <label for="nombrePatologia">Nombre de la patología:</label>
           <div class="input-icon">
             <i class="fas fa-stethoscope"></i>
-            <input type="text" id="nombrePatologia" class="form-control" required maxlength="20" placeholder="Solo letras, máximo 20 caracteres" autocomplete="off">
+            <input type="text" id="nombrePatologia" class="form-control" required maxlength="20"
+              placeholder="Solo letras, máximo 20 caracteres" autocomplete="off">
           </div>
           <small class="form-text text-muted">Solo letras, sin espacios, máximo 20 caracteres.</small>
           <span class="error-msg" id="errorNombrePatologia" style="display: none;"></span>
@@ -354,50 +360,76 @@
 
 <!-- ===== MODALES PARA MENSAJES ===== -->
 <div id="successModal" class="modal-overlay">
-    <div class="modal-success">
-        <div class="modal-success-icon">
-            <i class="fas fa-check-circle"></i>
-        </div>
-        <h2 id="successModalTitle">¡Éxito!</h2>
-        <p id="successModalMessage">La acción se ha realizado correctamente.</p>
-        <button id="closeSuccessModal" class="btn-aceptar">Continuar</button>
+  <div class="modal-success">
+    <div class="modal-success-icon">
+      <i class="fas fa-check-circle"></i>
     </div>
+    <h2 id="successModalTitle">¡Éxito!</h2>
+    <p id="successModalMessage">La acción se ha realizado correctamente.</p>
+    <button id="closeSuccessModal" class="btn-aceptar">Continuar</button>
+  </div>
 </div>
 
 <div id="deleteModal" class="modal-overlay">
-    <div class="modal-delete">
-        <div class="modal-delete-icon">
-            <i class="fas fa-trash-alt"></i>
-        </div>
-        <h2 id="deleteModalTitle">¡Eliminado Exitosamente!</h2>
-        <p id="deleteModalMessage">El elemento ha sido eliminado correctamente del sistema.</p>
-        <button id="closeDeleteModal" class="btn-aceptar">Continuar</button>
+  <div class="modal-delete">
+    <div class="modal-delete-icon">
+      <i class="fas fa-trash-alt"></i>
     </div>
+    <h2 id="deleteModalTitle">¡Eliminado Exitosamente!</h2>
+    <p id="deleteModalMessage">El elemento ha sido eliminado correctamente del sistema.</p>
+    <button id="closeDeleteModal" class="btn-aceptar">Continuar</button>
+  </div>
 </div>
 
 <div id="errorModal" class="modal-overlay">
-    <div class="modal-error">
-        <div class="modal-error-icon">
-            <i class="fas fa-exclamation-circle"></i>
-        </div>
-        <h2 id="errorModalTitle">¡Error!</h2>
-        <p id="errorModalMessage">Ha ocurrido un error inesperado.</p>
-        <button id="closeErrorModal" class="btn-aceptar-error">Continuar</button>
+  <div class="modal-error">
+    <div class="modal-error-icon">
+      <i class="fas fa-exclamation-circle"></i>
     </div>
+    <h2 id="errorModalTitle">¡Error!</h2>
+    <p id="errorModalMessage">Ha ocurrido un error inesperado.</p>
+    <button id="closeErrorModal" class="btn-aceptar-error">Continuar</button>
+  </div>
 </div>
 
 <div id="confirmDeleteModal" class="modal-overlay">
-    <div class="modal-confirm">
-        <div class="modal-confirm-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <h2>Confirmar Eliminación</h2>
-        <p id="confirmDeleteMessage">¿Está seguro de que desea eliminar este elemento?</p>
-        <div class="modal-confirm-actions">
-            <button id="cancelDelete" class="btn-cancel">Cancelar</button>
-            <button id="confirmDelete" class="btn-confirm">Eliminar</button>
-        </div>
+  <div class="modal-confirm">
+    <div class="modal-confirm-icon">
+      <i class="fas fa-exclamation-triangle"></i>
     </div>
+    <h2>Confirmar Eliminación</h2>
+    <p id="confirmDeleteMessage">¿Está seguro de que desea eliminar este elemento?</p>
+    <div class="modal-confirm-actions">
+      <button id="cancelDelete" class="btn-cancel">Cancelar</button>
+      <button id="confirmDelete" class="btn-confirm">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL VER DETALLES PRODUCTO ===== -->
+<div id="modalVerDetalles" class="modal-overlay">
+  <div class="modal-contenido">
+    <div class="modal-header">
+      <h3>Detalles del Producto</h3>
+      <button class="btn-cerrar" id="btnCerrarModalDetalles">&times;</button>
+    </div>
+    <div class="modal-body">
+      <h2 id="detalleNombre" class="titulo-producto-detalle"></h2>
+
+      <div class="detalle-group">
+        <label>Serial:</label>
+        <p id="detalleSerial" class="detalle-valor"></p>
+      </div>
+
+      <div class="detalle-group">
+        <label>Ubicación:</label>
+        <p id="detalleUbicacion" class="detalle-valor"></p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCerrarDetallesInfo">Cerrar</button>
+    </div>
+  </div>
 </div>
 
 {% endblock %}
@@ -420,67 +452,67 @@
   const ELIMINAR_PATOLOGIA_URL = "{% url 'productos:eliminar_patologia' 0 %}".replace('/0/', '/');
   const IMPRIMIR_CATEGORIAS_URL = "{% url 'productos:imprimir_categorias' %}";
   const IMPRIMIR_PATOLOGIAS_URL = "{% url 'productos:imprimir_patologias' %}";
-  
+
   // CORRECCIÓN: Detectar tanto registro como edición exitosa
   const urlParams = new URLSearchParams(window.location.search);
   const registroExitoso = urlParams.get('registro_exitoso');
   const edicionExitosa = urlParams.get('edicion_exitosa');
   const nombreProducto = urlParams.get('nombre_producto');
-  
+
   // Función para mostrar modal de éxito y limpiar URL
   function mostrarExitoYLimpiarURL(titulo, mensaje) {
-      if (typeof mostrarModalExito === 'function') {
-          mostrarModalExito(titulo, mensaje);
-          
-          // Limpiar la URL para evitar que se muestre el modal al recargar
-          const nuevaURL = window.location.pathname;
-          window.history.replaceState({}, document.title, nuevaURL);
-      }
+    if (typeof mostrarModalExito === 'function') {
+      mostrarModalExito(titulo, mensaje);
+
+      // Limpiar la URL para evitar que se muestre el modal al recargar
+      const nuevaURL = window.location.pathname;
+      window.history.replaceState({}, document.title, nuevaURL);
+    }
   }
-  
+
   if (registroExitoso === 'true' && nombreProducto) {
-      // Mostrar modal de éxito después de cargar la página
-      document.addEventListener('DOMContentLoaded', function() {
-          setTimeout(function() {
-              mostrarExitoYLimpiarURL(
-                  '¡Producto Registrado!', 
-                  `El producto "${nombreProducto}" ha sido registrado exitosamente.`
-              );
-          }, 500);
-      });
+    // Mostrar modal de éxito después de cargar la página
+    document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(function () {
+        mostrarExitoYLimpiarURL(
+          '¡Producto Registrado!',
+          `El producto "${nombreProducto}" ha sido registrado exitosamente.`
+        );
+      }, 500);
+    });
   }
-  
+
   // CORRECCIÓN: Agregar detección para edición exitosa
   if (edicionExitosa === 'true' && nombreProducto) {
-      document.addEventListener('DOMContentLoaded', function() {
-          setTimeout(function() {
-              mostrarExitoYLimpiarURL(
-                  '¡Producto Actualizado!', 
-                  `El producto "${nombreProducto}" ha sido actualizado exitosamente.`
-              );
-          }, 500);
-      });
+    document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(function () {
+        mostrarExitoYLimpiarURL(
+          '¡Producto Actualizado!',
+          `El producto "${nombreProducto}" ha sido actualizado exitosamente.`
+        );
+      }, 500);
+    });
   }
-  
+
   // Auto-ocultar mensajes después de 5 segundos
-  document.addEventListener('DOMContentLoaded', function() {
-      const messages = document.querySelectorAll('.alert');
-      messages.forEach(function(message) {
-          setTimeout(function() {
-              message.style.opacity = '0';
-              message.style.transition = 'opacity 0.5s ease';
-              setTimeout(function() {
-                  if (message.parentNode) {
-                      message.remove();
-                  }
-              }, 500);
-          }, 5000);
-      });
-      
-      // Inicializar modales
-      if (typeof inicializarModales === 'function') {
-          inicializarModales();
-      }
+  document.addEventListener('DOMContentLoaded', function () {
+    const messages = document.querySelectorAll('.alert');
+    messages.forEach(function (message) {
+      setTimeout(function () {
+        message.style.opacity = '0';
+        message.style.transition = 'opacity 0.5s ease';
+        setTimeout(function () {
+          if (message.parentNode) {
+            message.remove();
+          }
+        }, 500);
+      }, 5000);
+    });
+
+    // Inicializar modales
+    if (typeof inicializarModales === 'function') {
+      inicializarModales();
+    }
   });
 </script>
 <script src="{% static 'productos/js/productos.js' %}"></script>
