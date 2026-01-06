@@ -199,8 +199,6 @@ def calcular_montos_sistema(fecha):
         elif pago.Metodo_Pago == 'efectivo_usd':
             # Para USD guardamos el monto en USD, no en Bs
             montos['efectivo_usd'] += pago.Monto
-            # También sumamos el equivalente en Bs al efectivo
-            montos['efectivo_bs'] += pago.Monto_Bs
         elif pago.Metodo_Pago == 'transferencia':
             montos['transferencia'] += pago.Monto_Bs
         elif pago.Metodo_Pago == 'pago_movil':

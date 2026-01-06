@@ -4,146 +4,165 @@
 {% block title %}Recibo de Cierre - Tienda Naturista{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="receipt-container">
-        <!-- Encabezado del Recibo -->
-        <div class="receipt-header">
-            <h2 class="receipt-title">Comprobante de Cierre de Caja</h2>
-            <div class="receipt-meta">
-                <p><strong>Fecha de Cierre:</strong> {{ fecha_cierre_formateada }}</p>
-                <p><strong>Generado el:</strong> {{ fecha_formateada }}</p>
-                <p><strong>Usuario:</strong> {{ cierre.Usuario.username }}</p>
-                <p><strong>ID:</strong> #{{ cierre.ID_Cierre }}</p>
-            </div>
-        </div>
+<!-- ===== TARJETA DE BIENVENIDA ===== -->
+<div class="welcome-card">
+    <h2><i class="fas fa-receipt me-2"></i>Comprobante de Cierre de Caja</h2>
+    <p>Detalle completo del cierre #{{ cierre.ID_Cierre }} - {{ fecha_cierre_formateada }}</p>
+</div>
 
-        <!-- Resumen de Diferencias -->
-        {% if diferencia_total_formatted != "0,00" %}
-        <div
-            class="alert {% if cierre.Diferencia_Total >= 0 %}alert-success{% else %}alert-danger{% endif %} text-center mb-4">
-            <h4 class="alert-heading">Diferencia Total</h4>
-            <p class="h3">{{ diferencia_total_formatted }}</p>
-            <p class="mb-0">
-                {% if cierre.Diferencia_Total > 0 %}Sobrante en caja{% elif cierre.Diferencia_Total < 0 %}Faltante en
-                    caja{% else %}Cuadre perfecto{% endif %} </p>
+<div class="receipt-container">
+    <!-- Información del Cierre -->
+    <div class="receipt-header">
+        <div class="receipt-meta">
+            <p><strong>Fecha de Cierre:</strong> {{ fecha_cierre_formateada }}</p>
+            <p><strong>Generado el:</strong> {{ fecha_formateada }}</p>
+            <p><strong>Usuario:</strong> {{ cierre.Usuario.username }}</p>
+            <p><strong>ID:</strong> #{{ cierre.ID_Cierre }}</p>
         </div>
-        {% else %}
-        <div class="alert alert-success text-center mb-4">
-            <h4 class="alert-heading"><i class="fas fa-check-circle"></i> Caja Cuadrada</h4>
-            <p class="mb-0">Los montos reales coinciden perfectamente con el sistema.</p>
-        </div>
-        {% endif %}
+    </div>
 
-        <!-- Tabla Comparativa -->
-        <div class="receipt-section">
-            <h3><i class="fas fa-list-alt me-2"></i>Detalle Comparativo</h3>
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Método de Pago</th>
-                            <th class="text-end">Sistema</th>
-                            <th class="text-end">Real (Caja)</th>
-                            <th class="text-end">Diferencia</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Efectivo Bs -->
-                        <tr>
-                            <td>Efectivo Bolívares</td>
-                            <td class="text-end">Bs {{ sistema_efectivo_bs_formatted }}</td>
-                            <td class="text-end">Bs {{ real_efectivo_bs_formatted }}</td>
-                            <td
-                                class="text-end fw-bold {% if diferencias.efectivo_bs < 0 %}text-danger{% elif diferencias.efectivo_bs > 0 %}text-success{% endif %}">
+    <!-- Resumen de Diferencias -->
+    {% if diferencia_total_formatted != "0,00" %}
+    <div class="alert {% if cierre.Diferencia_Total >= 0 %}alert-success{% else %}alert-error{% endif %}"
+        style="text-align: center; margin-bottom: 2rem;">
+        <h4 style="margin: 0 0 0.5rem 0; font-size: 1.2rem;">Diferencia Total</h4>
+        <p style="font-size: 1.8rem; font-weight: 700; margin: 0.5rem 0; font-family: 'Roboto Mono', monospace;">{{
+            diferencia_total_formatted }}</p>
+        <p style="margin: 0;">
+            {% if cierre.Diferencia_Total > 0 %}Sobrante en caja
+            {% elif cierre.Diferencia_Total < 0 %}Faltante en caja {% else %}Cuadre perfecto{% endif %} </p>
+    </div>
+    {% else %}
+    <div class="alert alert-success" style="text-align: center; margin-bottom: 2rem;">
+        <h4 style="margin: 0 0 0.5rem 0;"><i class="fas fa-check-circle"></i> Caja Cuadrada</h4>
+        <p style="margin: 0;">Los montos reales coinciden perfectamente con el sistema.</p>
+    </div>
+    {% endif %}
+
+    <!-- Tabla Comparativa -->
+    <div class="receipt-section">
+        <h3><i class="fas fa-list-alt me-2"></i>Detalle Comparativo</h3>
+        <div class="table-responsive">
+            <table class="cierre-table">
+                <thead>
+                    <tr>
+                        <th>Método de Pago</th>
+                        <th style="text-align: right;">Sistema</th>
+                        <th style="text-align: right;">Real (Caja)</th>
+                        <th style="text-align: right;">Diferencia</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Efectivo Bs -->
+                    <tr>
+                        <td><i class="fas fa-money-bill-wave method-icon"></i>Efectivo Bolívares</td>
+                        <td style="text-align: right;">Bs {{ sistema_efectivo_bs_formatted }}</td>
+                        <td style="text-align: right;">Bs {{ real_efectivo_bs_formatted }}</td>
+                        <td style="text-align: right;">
+                            <span
+                                class="difference-display {% if diferencias.efectivo_bs < 0 %}diff-negative{% elif diferencias.efectivo_bs > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
                                 {{ dif_efectivo_bs_formatted }}
-                            </td>
-                        </tr>
+                            </span>
+                        </td>
+                    </tr>
 
-                        <!-- Efectivo USD -->
-                        <tr>
-                            <td>Efectivo Dólares</td>
-                            <td class="text-end">$ {{ sistema_efectivo_usd_formatted }}</td>
-                            <td class="text-end">$ {{ real_efectivo_usd_formatted }}</td>
-                            <td
-                                class="text-end fw-bold {% if diferencias.efectivo_usd < 0 %}text-danger{% elif diferencias.efectivo_usd > 0 %}text-success{% endif %}">
+                    <!-- Efectivo USD -->
+                    <tr>
+                        <td><i class="fas fa-dollar-sign method-icon"></i>Efectivo Dólares</td>
+                        <td style="text-align: right;">$ {{ sistema_efectivo_usd_formatted }}</td>
+                        <td style="text-align: right;">$ {{ real_efectivo_usd_formatted }}</td>
+                        <td style="text-align: right;">
+                            <span
+                                class="difference-display {% if diferencias.efectivo_usd < 0 %}diff-negative{% elif diferencias.efectivo_usd > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
                                 {{ dif_efectivo_usd_formatted }}
-                            </td>
-                        </tr>
+                            </span>
+                        </td>
+                    </tr>
 
-                        <!-- Punto de Venta -->
-                        <tr>
-                            <td>Punto de Venta</td>
-                            <td class="text-end">Bs {{ sistema_punto_venta_formatted }}</td>
-                            <td class="text-end">Bs {{ real_punto_venta_formatted }}</td>
-                            <td
-                                class="text-end fw-bold {% if diferencias.punto_venta < 0 %}text-danger{% elif diferencias.punto_venta > 0 %}text-success{% endif %}">
+                    <!-- Punto de Venta -->
+                    <tr>
+                        <td><i class="fas fa-credit-card method-icon"></i>Punto de Venta</td>
+                        <td style="text-align: right;">Bs {{ sistema_punto_venta_formatted }}</td>
+                        <td style="text-align: right;">Bs {{ real_punto_venta_formatted }}</td>
+                        <td style="text-align: right;">
+                            <span
+                                class="difference-display {% if diferencias.punto_venta < 0 %}diff-negative{% elif diferencias.punto_venta > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
                                 {{ dif_punto_venta_formatted }}
-                            </td>
-                        </tr>
+                            </span>
+                        </td>
+                    </tr>
 
-                        <!-- Pago Móvil -->
-                        <tr>
-                            <td>Pago Móvil</td>
-                            <td class="text-end">Bs {{ sistema_pago_movil_formatted }}</td>
-                            <td class="text-end">Bs {{ real_pago_movil_formatted }}</td>
-                            <td
-                                class="text-end fw-bold {% if diferencias.pago_movil < 0 %}text-danger{% elif diferencias.pago_movil > 0 %}text-success{% endif %}">
+                    <!-- Pago Móvil -->
+                    <tr>
+                        <td><i class="fas fa-mobile-alt method-icon"></i>Pago Móvil</td>
+                        <td style="text-align: right;">Bs {{ sistema_pago_movil_formatted }}</td>
+                        <td style="text-align: right;">Bs {{ real_pago_movil_formatted }}</td>
+                        <td style="text-align: right;">
+                            <span
+                                class="difference-display {% if diferencias.pago_movil < 0 %}diff-negative{% elif diferencias.pago_movil > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
                                 {{ dif_pago_movil_formatted }}
-                            </td>
-                        </tr>
+                            </span>
+                        </td>
+                    </tr>
 
-                        <!-- Transferencia -->
-                        <tr>
-                            <td>Transferencia</td>
-                            <td class="text-end">Bs {{ sistema_transferencia_formatted }}</td>
-                            <td class="text-end">Bs {{ real_transferencia_formatted }}</td>
-                            <td
-                                class="text-end fw-bold {% if diferencias.transferencia < 0 %}text-danger{% elif diferencias.transferencia > 0 %}text-success{% endif %}">
+                    <!-- Transferencia -->
+                    <tr>
+                        <td><i class="fas fa-university method-icon"></i>Transferencia</td>
+                        <td style="text-align: right;">Bs {{ sistema_transferencia_formatted }}</td>
+                        <td style="text-align: right;">Bs {{ real_transferencia_formatted }}</td>
+                        <td style="text-align: right;">
+                            <span
+                                class="difference-display {% if diferencias.transferencia < 0 %}diff-negative{% elif diferencias.transferencia > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
                                 {{ dif_transferencia_formatted }}
-                            </td>
-                        </tr>
+                            </span>
+                        </td>
+                    </tr>
 
-                        <!-- Tarjeta -->
-                        <tr>
-                            <td>Otros / Tarjeta</td>
-                            <td class="text-end">Bs {{ sistema_tarjeta_formatted }}</td>
-                            <td class="text-end">Bs {{ real_tarjeta_formatted }}</td>
-                            <td
-                                class="text-end fw-bold {% if diferencias.tarjeta < 0 %}text-danger{% elif diferencias.tarjeta > 0 %}text-success{% endif %}">
+                    <!-- Tarjeta -->
+                    <tr>
+                        <td><i class="far fa-credit-card method-icon"></i>Otros / Tarjeta</td>
+                        <td style="text-align: right;">Bs {{ sistema_tarjeta_formatted }}</td>
+                        <td style="text-align: right;">Bs {{ real_tarjeta_formatted }}</td>
+                        <td style="text-align: right;">
+                            <span
+                                class="difference-display {% if diferencias.tarjeta < 0 %}diff-negative{% elif diferencias.tarjeta > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
                                 {{ dif_tarjeta_formatted }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+    </div>
 
-        {% if closure.Notas %}
-        <div class="receipt-section">
-            <h3><i class="fas fa-comment me-2"></i>Notas</h3>
-            <p class="p-3 bg-light rounded">{{ cierre.Notas|linebreaks }}</p>
+    {% if cierre.Notas %}
+    <div class="receipt-section">
+        <h3><i class="fas fa-comment me-2"></i>Notas</h3>
+        <div class="notes-input"
+            style="background: var(--light-gray); border: 1px solid var(--border-gray); padding: 1rem; border-radius: 10px; min-height: auto;">
+            {{ cierre.Notas|linebreaks }}
         </div>
-        {% endif %}
+    </div>
+    {% endif %}
 
-        <!-- Botones de Acción -->
-        <div class="d-flex justify-content-center gap-3 mt-4 print-hide">
-            <a href="{% url 'cierre_caja:menu_cierre_caja' %}?fecha={{ cierre.Fecha_Cierre|date:'Y-m-d' }}"
-                class="btn btn-secondary">
-                <i class="fas fa-edit me-2"></i>Editar
-            </a>
+    <!-- Botones de Acción -->
+    <div class="form-actions print-hide" style="justify-content: center;">
+        <a href="{% url 'cierre_caja:menu_cierre_caja' %}?fecha={{ cierre.Fecha_Cierre|date:'Y-m-d' }}"
+            class="btn-print" style="background: var(--primary-blue);">
+            <i class="fas fa-edit"></i> Editar
+        </a>
 
-            <a href="{% url 'cierre_caja:descargar_recibo_cierre' cierre.ID_Cierre %}" class="btn btn-primary">
-                <i class="fas fa-file-pdf me-2"></i>Descargar PDF
-            </a>
+        <a href="{% url 'cierre_caja:descargar_recibo_cierre' cierre.ID_Cierre %}" class="btn-save">
+            <i class="fas fa-file-pdf"></i> Descargar PDF
+        </a>
 
-            <a href="{% url 'cierre_caja:menu_cierre_caja' %}" class="btn btn-outline-dark">
-                <i class="fas fa-arrow-left me-2"></i>Volver al Menú
-            </a>
-        </div>
+        <a href="{% url 'cierre_caja:menu_cierre_caja' %}" class="btn-print">
+            <i class="fas fa-arrow-left"></i> Volver al Menú
+        </a>
+    </div>
 
-        <div class="receipt-footer">
-            <p>Tienda Naturista - Sistema de Gestión</p>
-        </div>
+    <div class="receipt-footer">
+        <p>Tienda Naturista - Sistema de Gestión</p>
     </div>
 </div>
 {% endblock %}
@@ -156,7 +175,8 @@
         .print-hide,
         .sidebar,
         .header-logo,
-        .toggler {
+        .toggler,
+        .welcome-card {
             display: none !important;
         }
 

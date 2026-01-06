@@ -4,131 +4,130 @@
 {% block title %}Historial de Cierres - Tienda Naturista{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <!-- Encabezado -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="mb-1"><i class="fas fa-history text-secondary me-2"></i>Historial de Cierres</h2>
-            <p class="text-muted mb-0">Registro histórico de cierres de caja diarios</p>
-        </div>
-        <a href="{% url 'cierre_caja:menu_cierre_caja' %}" class="btn btn-primary">
-            <i class="fas fa-plus-circle me-2"></i>Nuevo Cierre
-        </a>
-    </div>
+<!-- ===== TARJETA DE BIENVENIDA ===== -->
+<div class="welcome-card">
+    <h2><i class="fas fa-history me-2"></i>Historial de Cierres</h2>
+    <p>Registro histórico de cierres de caja diarios</p>
+</div>
 
-    <!-- Filtros -->
-    <div class="card mb-4 shadow-sm">
-        <div class="card-body">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label for="fecha_desde" class="form-label">Desde:</label>
-                    <input type="date" class="form-control" id="fecha_desde" name="fecha_desde"
-                        value="{{ fecha_desde|default:'' }}">
-                </div>
-                <div class="col-md-4">
-                    <label for="fecha_hasta" class="form-label">Hasta:</label>
-                    <input type="date" class="form-control" id="fecha_hasta" name="fecha_hasta"
-                        value="{{ fecha_hasta|default:'' }}">
-                </div>
-                <div class="col-md-4">
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-filter me-2"></i>Filtrar
-                        </button>
-                        <a href="{% url 'cierre_caja:historial_cierres' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-sync-alt"></i>
-                        </a>
+<!-- ===== CONTENEDOR PRINCIPAL ===== -->
+<div class="productos-container">
+    <div class="productos-main">
+
+        <!-- ===== BARRA DE HERRAMIENTAS ===== -->
+        <div class="productos-toolbar">
+            <div class="filtros-container">
+                <form method="get" style="display: flex; gap: 15px; width: 100%;">
+                    <div class="filtro-select" style="flex: 1;">
+                        <input type="date" name="fecha_desde" value="{{ fecha_desde|default:'' }}"
+                            style="width: 100%; padding: 14px 18px; border: 2px solid var(--border-gray); border-radius: 50px; font-size: 1rem;">
                     </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Tabla de Historial -->
-    <div class="card shadow">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="ps-4">Fecha</th>
-                            <th>Usuario</th>
-                            <th class="text-end">Total Sistema (Ref)</th>
-                            <th class="text-end">Total Real (Ref)</th>
-                            <th class="text-center">Diferencia</th>
-                            <th class="text-center">Notas</th>
-                            <th class="text-end pe-4">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for cierre in cierres %}
-                        <tr>
-                            <td class="ps-4 fw-bold text-nowrap">
-                                {{ cierre.Fecha_Cierre|date:'d/m/Y' }}
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-circle me-2 bg-primary text-white d-flex align-items-center justify-content-center rounded-circle"
-                                        style="width: 32px; height: 32px; font-size: 0.8rem;">
-                                        {{ cierre.Usuario.username|first|upper }}
-                                    </div>
-                                    {{ cierre.Usuario.username }}
-                                </div>
-                            </td>
-                            <td class="text-end text-muted font-monospace">
-                                {{ cierre.Total_Sistema|floatformat:2 }}
-                            </td>
-                            <td class="text-end font-monospace">
-                                {{ cierre.Total_Real|floatformat:2 }}
-                            </td>
-                            <td class="text-center">
-                                {% if cierre.Diferencia_Total == 0 %}
-                                <span class="badge bg-success rounded-pill px-3">Cuadre Exacto</span>
-                                {% elif cierre.Diferencia_Total > 0 %}
-                                <span class="badge bg-primary rounded-pill px-3">+{{
-                                    cierre.Diferencia_Total|floatformat:2 }} (Sobra)</span>
-                                {% else %}
-                                <span class="badge bg-danger rounded-pill px-3">{{ cierre.Diferencia_Total|floatformat:2
-                                    }} (Falta)</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-center">
-                                {% if cierre.Notas %}
-                                <span class="text-primary" data-bs-toggle="tooltip" title="{{ cierre.Notas }}">
-                                    <i class="fas fa-comment-alt"></i>
-                                </span>
-                                {% else %}
-                                <span class="text-muted">-</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-end pe-4">
-                                <div class="btn-group">
-                                    <a href="{% url 'cierre_caja:ver_recibo_cierre' cierre.ID_Cierre %}"
-                                        class="btn btn-sm btn-outline-primary" title="Ver detalle">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{% url 'cierre_caja:descargar_recibo_cierre' cierre.ID_Cierre %}"
-                                        class="btn btn-sm btn-outline-secondary" title="Descargar PDF">
-                                        <i class="fas fa-download"></i>
-                                    </a>
-                                    <a href="{% url 'cierre_caja:menu_cierre_caja' %}?fecha={{ cierre.Fecha_Cierre|date:'Y-m-d' }}"
-                                        class="btn btn-sm btn-outline-info" title="Editar">
-                                        <i class="fas fa-pen"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
-                                <i class="fas fa-folder-open fa-3x mb-3 text-secondary opacity-50"></i>
-                                <p class="mb-0">No se encontraron cierres de caja registrados</p>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                    <div class="filtro-select" style="flex: 1;">
+                        <input type="date" name="fecha_hasta" value="{{ fecha_hasta|default:'' }}"
+                            style="width: 100%; padding: 14px 18px; border: 2px solid var(--border-gray); border-radius: 50px; font-size: 1rem;">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                    <a href="{% url 'cierre_caja:historial_cierres' %}" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt"></i> Limpiar
+                    </a>
+                </form>
             </div>
+
+            <div class="toolbar-actions">
+                <a href="{% url 'cierre_caja:menu_cierre_caja' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle"></i> Nuevo Cierre
+                </a>
+            </div>
+        </div>
+
+        <!-- ===== TABLA DE HISTORIAL ===== -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th style="text-align: right;">Total Sistema (Ref)</th>
+                        <th style="text-align: right;">Total Real (Ref)</th>
+                        <th style="text-align: center;">Diferencia</th>
+                        <th style="text-align: center;">Notas</th>
+                        <th style="text-align: center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cierre in cierres %}
+                    <tr>
+                        <td style="font-weight: 600;">
+                            {{ cierre.Fecha_Cierre|date:'d/m/Y' }}
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div
+                                    style="width: 32px; height: 32px; background: var(--primary-green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem;">
+                                    {{ cierre.Usuario.username|first|upper }}
+                                </div>
+                                {{ cierre.Usuario.username }}
+                            </div>
+                        </td>
+                        <td
+                            style="text-align: right; font-family: 'Roboto Mono', monospace; color: var(--natural-gray);">
+                            {{ cierre.Total_Sistema|floatformat:2 }}
+                        </td>
+                        <td style="text-align: right; font-family: 'Roboto Mono', monospace; font-weight: 600;">
+                            {{ cierre.Total_Real|floatformat:2 }}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if cierre.Diferencia_Total == 0 %}
+                            <span class="status status-active">Cuadre Exacto</span>
+                            {% elif cierre.Diferencia_Total > 0 %}
+                            <span class="status diff-positive">+{{ cierre.Diferencia_Total|floatformat:2 }}
+                                (Sobra)</span>
+                            {% else %}
+                            <span class="status diff-negative">{{ cierre.Diferencia_Total|floatformat:2 }}
+                                (Falta)</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            {% if cierre.Notas %}
+                            <span style="color: var(--primary-blue); cursor: help;" title="{{ cierre.Notas }}">
+                                <i class="fas fa-comment-alt"></i>
+                            </span>
+                            {% else %}
+                            <span style="color: var(--natural-gray);">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <a href="{% url 'cierre_caja:ver_recibo_cierre' cierre.ID_Cierre %}"
+                                    class="btn-action btn-editar" title="Ver detalle">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'cierre_caja:descargar_recibo_cierre' cierre.ID_Cierre %}"
+                                    class="btn-action btn-edit-precio" title="Descargar PDF">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                <a href="{% url 'cierre_caja:menu_cierre_caja' %}?fecha={{ cierre.Fecha_Cierre|date:'Y-m-d' }}"
+                                    class="btn-action btn-cambiar-estado" title="Editar">
+                                    <i class="fas fa-pen"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr class="empty-row">
+                        <td colspan="7">
+                            <div class="no-results">
+                                <i class="fas fa-folder-open"></i>
+                                <h3>No se encontraron cierres de caja</h3>
+                                <p>No hay registros para el período seleccionado</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -136,4 +135,30 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'cierre_caja/css/cierre_caja.css' %}">
+<link rel="stylesheet" href="{% static 'productos/css/productos.css' %}">
+<style>
+    .no-results {
+        text-align: center;
+        padding: 60px 40px;
+        color: var(--natural-gray);
+    }
+
+    .no-results i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        color: var(--border-gray);
+        opacity: 0.6;
+    }
+
+    .no-results h3 {
+        font-weight: 500;
+        margin-bottom: 10px;
+        color: var(--dark-gray);
+    }
+
+    .no-results p {
+        color: var(--natural-gray);
+        font-size: 1rem;
+    }
+</style>
 {% endblock %}

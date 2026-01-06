@@ -10,12 +10,11 @@
     <p>Conciliación de ventas del sistema vs. ingresos reales</p>
 </div>
 
-<!-- ===== MENSAJES ===== -->
+<!-- ===== MENSAJES (OCULTOS - SE MUESTRAN VÍA MODAL) ===== -->
 {% if messages %}
-<div class="messages-container">
+<div class="messages-container" style="display: none;" id="djangoMessages">
     {% for message in messages %}
-    <div class="alert alert-{{ message.tags }}">
-        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+    <div class="alert alert-{{ message.tags }}" data-message-tag="{{ message.tags }}">
         {{ message }}
     </div>
     {% endfor %}
@@ -248,6 +247,30 @@
         </div>
     </div>
 </form>
+
+<!-- ===== MODALES PARA MENSAJES ===== -->
+<div id="successModal" class="modal-overlay">
+    <div class="modal-success">
+        <div class="modal-success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h2 id="successModalTitle">¡Éxito!</h2>
+        <p id="successModalMessage">La acción se ha realizado correctamente.</p>
+        <button id="closeSuccessModal" class="btn-aceptar">Continuar</button>
+    </div>
+</div>
+
+<div id="errorModal" class="modal-overlay">
+    <div class="modal-error">
+        <div class="modal-error-icon">
+            <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <h2 id="errorModalTitle">¡Error!</h2>
+        <p id="errorModalMessage">Ha ocurrido un error inesperado.</p>
+        <button id="closeErrorModal" class="btn-aceptar-error">Continuar</button>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_css %}
