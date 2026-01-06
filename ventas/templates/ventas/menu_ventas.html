@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ventas - Tienda Naturista{% endblock %}
+
+{% block content %}
+<!-- ===== TARJETA DE BIENVENIDA ===== -->
+<div class="welcome-card">
+  <h2>Panel de Ventas</h2>
+  <p>Gestión de ventas y transacciones</p>
+</div>
+
+<!-- ===== RESUMEN DE TOTALES ===== -->
+<div class="resumen-totales">
+  <div class="tarjeta-total">
+    <div class="icono-total">
+      <i class="fas fa-shopping-cart"></i>
+    </div>
+    <div class="info-total">
+      <h3 id="totalVentas">{{ total_ventas }}</h3>
+      <p>Total Ventas</p>
+    </div>
+  </div>
+  
+  <div class="tarjeta-total">
+    <div class="icono-total">
+      <i class="fas fa-calculator"></i>
+    </div>
+    <div class="info-total">
+      <h3 id="subtotalGeneralBs">Bs {{ total_bs|floatformat:2 }}</h3>
+      <p id="subtotalGeneralUsd" style="display: none;">$ {{ total_usd|floatformat:2 }}</p>
+      <span>Subtotal General</span>
+    </div>
+  </div>
+  
+  <div class="tarjeta-total">
+    <div class="icono-total">
+      <i class="fas fa-percentage"></i>
+    </div>
+    <div class="info-total">
+      <h3 id="ivaGeneralBs">Bs 0,00</h3>
+      <p id="ivaGeneralUsd" style="display: none;">$ 0,00</p>
+      <span>IVA General</span>
+    </div>
+  </div>
+  
+  <div class="tarjeta-total total-general">
+    <div class="icono-total">
+      <i class="fas fa-chart-line"></i>
+    </div>
+    <div class="info-total">
+      <h3 id="totalGeneralBs">Bs {{ total_bs|floatformat:2 }}</h3>
+      <p id="totalGeneralUsd" style="display: none;">$ {{ total_usd|floatformat:2 }}</p>
+      <span>Total General</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MENSAJES ===== -->
+{% if messages %}
+<div class="messages-container">
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+      <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+      {{ message }}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ===== CONTENEDOR PRINCIPAL DE VENTAS ===== -->
+<div class="productos-container">
+  <div class="productos-main">
+    
+    <!-- ===== BARRA DE HERRAMIENTAS ===== -->
+    <div class="productos-toolbar">
+      <div class="filtros-container">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Buscar por ID, cliente...">
+        </div>
+
+        <!-- Búsqueda por cliente -->
+        <div class="cliente-search-container">
+          <input type="text" id="clienteSearchInput" placeholder="Buscar cliente..." class="cliente-search-input">
+          <div id="clienteSuggestions" class="cliente-suggestions"></div>
+        </div>
+
+        <!-- Filtro por fecha -->
+        <button class="btn-filtro-fecha" id="btnFiltroFechaVenta">
+          <i class="fas fa-calendar-day"></i> Fecha de Venta
+        </button>
+
+        <!-- Filtro por estado de pago -->
+        <div class="filtro-select">
+          <select id="estadoPagoSelect">
+            <option value="">Todos los estados</option>
+            <option value="completo">Completo</option>
+            <option value="parcial">Pago Parcial</option>
+          </select>
+        </div>
+
+        <!-- Filtro por tipo de venta -->
+        <div class="filtro-select">
+          <select id="tipoVentaSelect">
+            <option value="">Todos los tipos</option>
+            <option value="contado">Contado</option>
+            <option value="credito">Crédito</option>
+          </select>
+        </div>
+
+        <!-- Filtro por método de pago -->
+        <div class="filtro-select">
+          <select id="metodoPagoSelect">
+            <option value="">Todos los métodos</option>
+            <option value="efectivo_bs">Efectivo Bs</option>
+            <option value="efectivo_usd">Efectivo $</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="pago_movil">Pago Móvil</option>
+            <option value="punto_venta">Punto de Venta</option>
+          </select>
+        </div>
+
+        <!-- Filtro por ventas anuladas -->
+        <div class="filtro-select">
+          <select id="anuladaSelect">
+            <option value="">Todas las ventas</option>
+            <option value="no">No anuladas</option>
+            <option value="si">Anuladas</option>
+          </select>
+        </div>
+
+        <!-- Selector de moneda para mostrar -->
+        <div class="filtro-select">
+          <select id="monedaSelect">
+            <option value="bs">Mostrar en Bs</option>
+            <option value="usd">Mostrar en $</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="toolbar-actions">
+        <a href="{% url 'ventas:registrar_venta' %}" class="btn btn-primary">
+          <i class="fas fa-plus-circle"></i> Nueva Venta
+        </a>
+        <button class="btn btn-secondary" id="printBtn">
+          <i class="fas fa-print"></i> Imprimir
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== TABLA DE VENTAS ===== -->
+    <div class="table-container">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>ID Venta</th>
+            <th>Cliente</th>
+            <th>Fecha</th>
+            <th class="moneda-header">Total (<span id="totalMoneda">Bs</span>)</th>
+            <th>Estado Pago</th>
+            <th>Tipo Venta</th>
+            <th>Método Pago</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% for venta in ventas %}
+          <tr data-cliente-id="{{ venta.Cedula.cedula }}" 
+              data-estado-pago="{{ venta.Estado_Pago }}"
+              data-tipo-venta="{{ venta.Tipo_Venta }}"
+              data-metodo-pago="{{ venta.get_metodo_pago_codigo }}"
+              data-anulada="{{ venta.anulada|yesno:'si,no' }}"
+              data-fecha-venta="{{ venta.Fecha_Venta|date:'Y-m-d H:i' }}"
+              data-tasa="{{ venta.get_tasa_venta|floatformat:2 }}"
+              data-total-bs="{{ venta.Total|floatformat:2 }}"
+              data-total-usd="{{ venta.get_total_usd|floatformat:2 }}"
+              data-pagos-metodo='{{ venta.get_pagos_por_metodo_json|safe }}'>
+            <td>#{{ venta.ID_Ventas }}</td>
+            <td>
+              <strong>{{ venta.Cedula.nombre }} {{ venta.Cedula.apellido }}</strong>
+              <br><small>{{ venta.Cedula.cedula }}</small>
+            </td>
+            <td>{{ venta.Fecha_Venta|date:"d/m/Y H:i" }}</td>
+            <td class="centered total">
+              <strong class="total-bs">Bs {{ venta.Total|floatformat:2 }}</strong>
+              <br><small class="total-usd">$ {{ venta.get_total_usd|floatformat:2 }}</small>
+              <!-- Mostrar total por método cuando se filtre -->
+              <br><small class="total-metodo" style="display: none; color: #3498db; font-weight: 500;"></small>
+            </td>
+            <td>
+              <span class="status status-{{ venta.Estado_Pago }}">
+                {{ venta.get_Estado_Pago_display }}
+              </span>
+            </td>
+            <td>
+              <span class="tipo-venta tipo-{{ venta.Tipo_Venta }}">
+                {{ venta.get_Tipo_Venta_display }}
+              </span>
+            </td>
+            <td>
+              <span class="metodo-pago metodo-{{ venta.get_metodo_pago_codigo }}">
+                {{ venta.get_metodo_pago_principal }}
+              </span>
+            </td>
+            <td class="actions">
+              <div class="acciones-venta">
+                <!-- Ver comprobante -->
+                <a href="{% url 'ventas:ver_comprobante' venta.ID_Ventas %}" 
+                   target="_blank" 
+                   class="btn-action btn-ver" 
+                   title="Ver Comprobante">
+                  <i class="fas fa-eye"></i>
+                </a>
+                
+                <!-- Descargar comprobante (descarga automática) -->
+                <a href="{% url 'ventas:descargar_comprobante' venta.ID_Ventas %}" 
+                   class="btn-action btn-descargar" 
+                   title="Descargar Comprobante"
+                   download="venta_{{ venta.ID_Ventas }}.pdf">
+                  <i class="fas fa-download"></i>
+                </a>
+                
+                <!-- Devolución (solo si no está anulada) -->
+                {% if not venta.anulada %}
+                <button class="btn-action btn-devolucion" 
+                        title="Devolver Venta" 
+                        data-venta-id="{{ venta.ID_Ventas }}"
+                        onclick="devolverVenta({{ venta.ID_Ventas }})">
+                  <i class="fas fa-undo"></i>
+                </button>
+                {% else %}
+                <span class="venta-anulada">Anulada</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr class="empty-row">
+            <td colspan="8">
+              <i class="fas fa-shopping-cart"></i>
+              <h3>No hay ventas registradas</h3>
+              <p>Comienza registrando tu primera venta</p>
+              <a href="{% url 'ventas:registrar_venta' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Registrar Primera Venta
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL PARA FILTRO DE FECHAS ===== -->
+<div id="modalFiltroFechas" class="modal-filtro">
+  <div class="modal-contenido">
+    <div class="modal-header">
+      <h3 id="modalTitulo">Filtrar por Fecha de Venta</h3>
+      <button class="btn-cerrar" id="btnCerrarModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="fecha-inputs">
+        <div class="fecha-group">
+          <label for="fechaDesde">Desde:</label>
+          <input type="date" id="fechaDesde">
+        </div>
+        <div class="fecha-group">
+          <label for="fechaHasta">Hasta:</label>
+          <input type="date" id="fechaHasta">
+        </div>
+      </div>
+      <!-- Mensaje de error para validación de fechas -->
+      <div id="fechaError" class="error-message" style="display: none; color: #e74c3c; font-size: 0.85rem; margin-top: 10px; text-align: center; padding: 8px; background: rgba(231, 76, 60, 0.1); border-radius: 5px;">
+        <i class="fas fa-exclamation-triangle"></i> La fecha "Hasta" no puede ser menor que la fecha "Desde"
+      </div>
+      <div class="opciones-rapidas">
+        <h4>Opciones Rápidas:</h4>
+        <div class="botones-opciones">
+          <button type="button" class="btn-opcion" data-dias="1">Hoy</button>
+          <button type="button" class="btn-opcion" data-dias="8">Última semana</button>
+          <button type="button" class="btn-opcion" data-dias="31">Último mes</button>
+          <button type="button" class="btn-opcion" data-dias="365">Último año</button>
+          <button type="button" class="btn-opcion btn-limpiar">Limpiar</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="btnAplicar">Aplicar Filtro</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<!-- ===== ESTILOS ESPECÍFICOS PARA VENTAS ===== -->
+<link rel="stylesheet" href="{% static 'ventas/css/menu_ventas.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Pasar datos de Django al JavaScript - CORREGIDO
+    const DEVOLVER_VENTA_URL = "{% url 'ventas:devolver_venta' 0 %}".replace('/0/', '/');
+    const GENERAR_PDF_URL = "{% url 'ventas:generar_pdf_ventas' %}";
+    // Pasar los clientes directamente al window object
+    window.clientesData = {{ clientes_json|safe }};
+</script>
+<script src="{% static 'ventas/js/menu_ventas.js' %}"></script>
+{% endblock %}

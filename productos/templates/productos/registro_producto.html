@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'productos/css/registro_producto.css' %}">
+
+<div class="form-container">
+  <div class="form-header">
+    <h2>Registro de Producto</h2>
+    <p>Complete todos los campos requeridos para registrar un nuevo producto</p>
+  </div>
+  
+  <div class="form-body">
+    {% if messages %}
+      {% for message in messages %}
+        {% if message.tags == 'error' %}
+          <div class="error-msg-container">
+            <div class="error-msg">
+              <i class="fas fa-exclamation-circle"></i> {{ message }}
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    
+    <form method="POST" id="productoForm" novalidate>
+      {% csrf_token %}
+      <div class="form-row">
+        <!-- Campo Serial -->
+        <div class="form-col">
+          <label for="serial" class="form-label">Serial</label>
+          <div class="input-icon">
+            <i class="fas fa-barcode"></i>
+            <input type="text" id="serial" name="serial" 
+                   class="form-control{% if form.serial.errors %} is-invalid{% endif %}" 
+                   value="{{ form.serial.value|default_if_none:'' }}" 
+                   required placeholder="Serial del producto (solo números)" 
+                   autocomplete="off" maxlength="25">
+          </div>
+          <span class="error-msg" id="error-serial">
+            {% for error in form.serial.errors %}{{ error }}{% endfor %}
+          </span>
+        </div>
+        
+        <!-- Campo Categoría con sugerencias -->
+        <div class="form-col" style="position: relative;">
+          <label for="categoria_busqueda" class="form-label">Categoría</label>
+          <div class="input-icon">
+            <i class="fas fa-layer-group"></i>
+            <input type="text" id="categoria_busqueda" name="categoria_busqueda" 
+                   class="form-control{% if form.categoria_busqueda.errors %} is-invalid{% endif %}" 
+                   value="{{ form.categoria_busqueda.value|default_if_none:'' }}" 
+                   required placeholder="Buscar o escribir categoría..." autocomplete="off"
+                   maxlength="20">
+          </div>
+          <div id="sugerencias-categoria" class="sugerencias-container"></div>
+          <span class="error-msg" id="error-categoria_busqueda">
+            {% for error in form.categoria_busqueda.errors %}{{ error }}{% endfor %}
+          </span>
+        </div>
+        
+        <!-- Campo Patología con sugerencias -->
+        <div class="form-col" style="position: relative;">
+          <label for="patologia_busqueda" class="form-label">Patología</label>
+          <div class="input-icon">
+            <i class="fas fa-stethoscope"></i>
+            <input type="text" id="patologia_busqueda" name="patologia_busqueda" 
+                   class="form-control{% if form.patologia_busqueda.errors %} is-invalid{% endif %}" 
+                   value="{{ form.patologia_busqueda.value|default_if_none:'' }}" 
+                   placeholder="Buscar o escribir patología..." autocomplete="off"
+                   maxlength="20">
+          </div>
+          <div id="sugerencias-patologia" class="sugerencias-container"></div>
+          <span class="error-msg" id="error-patologia_busqueda">
+            {% for error in form.patologia_busqueda.errors %}{{ error }}{% endfor %}
+          </span>
+        </div>
+        
+        <!-- Campo Sujeto a IVA -->
+        <div class="form-col">
+          <label for="sujeto_iva" class="form-label">Sujeto a IVA</label>
+          <div class="input-icon">
+            <i class="fas fa-receipt"></i>
+            <select id="sujeto_iva" name="sujeto_iva" class="form-control{% if form.sujeto_iva.errors %} is-invalid{% endif %}" required>
+              <option value="">Seleccione una opción</option>
+              {% for value, label in form.fields.sujeto_iva.choices %}
+                <option value="{{ value }}" {% if form.sujeto_iva.value == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <span class="error-msg" id="error-sujeto_iva">
+            {% for error in form.sujeto_iva.errors %}{{ error }}{% endfor %}
+          </span>
+        </div>
+        
+        <!-- Campo Nombre del Producto -->
+        <div class="form-col">
+          <label for="nombre_pro" class="form-label">Nombre del Producto</label>
+          <div class="input-icon">
+            <i class="fas fa-tag"></i>
+            <input type="text" id="nombre_pro" name="nombre_pro" 
+                   class="form-control{% if form.nombre_pro.errors %} is-invalid{% endif %}" 
+                   value="{{ form.nombre_pro.value|default_if_none:'' }}" 
+                   required placeholder="Nombre del producto (solo letras y números)" 
+                   autocomplete="off" maxlength="30">
+          </div>
+          <span class="error-msg" id="error-nombre_pro">
+            {% for error in form.nombre_pro.errors %}{{ error }}{% endfor %}
+          </span>
+        </div>
+        
+        <!-- Campo Ubicación -->
+        <div class="form-col">
+          <label for="ubicacion" class="form-label">Ubicación</label>
+          <div class="input-icon">
+            <i class="fas fa-map-marker-alt"></i>
+            <input type="text" id="ubicacion" name="ubicacion" 
+                   class="form-control{% if form.ubicacion.errors %} is-invalid{% endif %}" 
+                   value="{{ form.ubicacion.value|default_if_none:'' }}" 
+                   required placeholder="Ubicación (máx. 15 caracteres)" 
+                   maxlength="15" autocomplete="off">
+          </div>
+          <span class="error-msg" id="error-ubicacion">
+            {% for error in form.ubicacion.errors %}{{ error }}{% endfor %}
+          </span>
+        </div>
+        
+        <!-- Campo Stock Mínimo -->
+        <div class="form-col">
+          <label for="stock_minimo" class="form-label">Stock Mínimo</label>
+          <div class="input-icon">
+            <i class="fas fa-cubes"></i>
+            <input type="number" id="stock_minimo" name="stock_minimo" 
+                   class="form-control{% if form.stock_minimo.errors %} is-invalid{% endif %}" 
+                   value="{{ form.stock_minimo.value|default_if_none:'1' }}" 
+                   required min="1" max="99" placeholder="Stock mínimo (1-99)">
+          </div>
+          <span class="error-msg" id="error-stock_minimo">
+            {% for error in form.stock_minimo.errors %}{{ error }}{% endfor %}
+          </span>
+        </div>
+        
+        <!-- Campo Precio de Venta -->
+        <div class="form-col">
+          <label for="precio_venta" class="form-label">Precio de Venta</label>
+          <div class="input-icon">
+            <i class="fas fa-money-bill-wave"></i>
+            <input type="number" id="precio_venta" name="precio_venta" 
+                   class="form-control{% if form.precio_venta.errors %} is-invalid{% endif %}" 
+                   value="{{ form.precio_venta.value|default_if_none:'' }}" 
+                   required placeholder="Precio de venta" 
+                   step="0.01" min="0.01" max="9999.99">
+          </div>
+          <span class="error-msg" id="error-precio_venta">
+            {% for error in form.precio_venta.errors %}{{ error }}{% endfor %}
+          </span>
+        </div>
+        
+        <!-- Campo Descripción -->
+        <div class="form-col full-width">
+          <label for="descripcion" class="form-label">Descripción</label>
+          <div class="input-icon">
+            <i class="fas fa-file-alt"></i>
+            <textarea id="descripcion" name="descripcion" 
+                      class="form-control{% if form.descripcion.errors %} is-invalid{% endif %}" 
+                      rows="3" placeholder="Descripción del producto (opcional)">{{ form.descripcion.value|default_if_none:'' }}</textarea>
+          </div>
+          <span class="error-msg" id="error-descripcion">
+            {% for error in form.descripcion.errors %}{{ error }}{% endfor %}
+          </span>
+        </div>
+      </div>
+      
+      {% if form.non_field_errors %}
+        <div class="error-msg-container">
+          <div class="error-msg" id="error-nonfield">
+            <i class="fas fa-exclamation-circle"></i> {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      
+      <!-- BOTONES ALINEADOS EN LA MISMA FILA -->
+      <div class="form-buttons-row">
+        <a href="{% url 'productos:menu_productos' %}" class="btn btn-back">
+          <i class="fas fa-arrow-left"></i> Volver al Menú
+        </a>
+        <button type="submit" class="btn btn-submit" disabled>
+          <i class="fas fa-save"></i> Registrar Producto
+        </button>
+      </div>
+    </form>
+  </div>
+  
+  <div class="form-footer">
+    <p>Sistema de Inventario • Los campos marcados con * son obligatorios</p>
+  </div>
+</div>
+
+<!-- Pasar datos de categorías y patologías al JavaScript -->
+<script>
+  window.categoriasData = {{ categorias|safe }};
+  window.patologiasData = {{ patologias|safe }};
+</script>
+
+<script src="{% static 'productos/js/registro_producto.js' %}"></script>
+{% endblock %}

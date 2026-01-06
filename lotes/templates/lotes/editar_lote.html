@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'lotes/css/registrar_lote.css' %}">
+
+<div class="form-container">
+  <div class="form-header">
+    <h2>Editar Lote</h2>
+    <p>Modifique los campos que desea actualizar</p>
+  </div>
+  
+  <div class="form-body">
+    <!-- VERIFICACIÓN DE ESTADO DEL LOTE -->
+    {% if lote.estado == 'vencido' or lote.estado == 'agotado' %}
+    <div class="alert alert-error">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div>
+        <strong>No se puede editar este lote</strong>
+        <p>El lote se encuentra <strong>{{ lote.get_estado_display|lower }}</strong>. No es posible realizar modificaciones.</p>
+        <a href="{% url 'lotes:menu_lote' %}" class="btn btn-back" style="margin-top: 10px;">
+          <i class="fas fa-arrow-left"></i> Volver al Menú
+        </a>
+      </div>
+    </div>
+    {% else %}
+    
+    <!-- Mensajes del sistema -->
+    {% if messages %}
+    <div class="messages-container">
+      {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'success' %}success{% else %}error{% endif %}">
+          <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    
+    <form method="POST" id="loteForm" novalidate>
+      {% csrf_token %}
+      
+      <!-- Primera fila: Producto con búsqueda -->
+      <div class="form-row">
+        <div class="form-col" style="position: relative;">
+          <label for="producto" class="form-label">Producto</label>
+          <div class="input-icon">
+            <i class="fas fa-box"></i>
+            <input type="text" id="producto" class="form-control" 
+                   placeholder="Buscar producto..." autocomplete="off" required
+                   value="{{ lote.id_producto.nombre_pro }}">
+            <input type="hidden" id="id_producto" name="id_producto" value="{{ form.id_producto.value|default_if_none:lote.id_producto.ID_producto }}">
+          </div>
+          <div id="sugerencias-producto" class="sugerencias-container"></div>
+          <span class="error-msg" id="error-id_producto">
+            {% for error in form.id_producto.errors %}{{ error }}{% endfor %}
+          </span>
+        </div>
+        
+        <div class="form-col">
+          <label class="form-label">Código de Lote</label>
+          <div class="input-icon">
+            <i class="fas fa-barcode"></i>
+            <input type="text" class="form-control" value="{{ lote.codigo_lote }}" readonly style="background-color: #f8f9fa;">
+          </div>
+          <small class="form-text text-muted">El código de lote no se puede modificar</small>
+        </div>
+      </div>
+
+      <!-- Segunda fila: Proveedor con búsqueda -->
+      <div class="form-row">
+        <div class="form-col" style="position: relative;">
+          <div class="proveedor-header">
+            <label for="proveedor" class="form-label">Proveedor</label>
+            <button type="button" id="btnAgregarProveedor" class="btn-agregar-proveedor">
+              <i class="fas fa-plus-circle"></i> Nuevo
+            </button>
+          </div>
+          <div class="input-icon">
+            <i class="fas fa-truck"></i>
+            <input type="text" id="proveedor" class="form-control" 
+                   placeholder="Buscar proveedor..." autocomplete="off" required
+                   value="{{ lote.proveedor.nombre }}">
+            <input type="hidden" id="id_proveedor" name="proveedor" value="{{ form.proveedor.value|default_if_none:lote.proveedor.id_proveedor }}">
+          </div>
+          <div id="sugerencias-proveedor" class="sugerencias-container"></div>
+          <span class="error-msg" id="error-proveedor">
+            {% for error in form.proveedor.errors %}{{ error }}{% endfor %}
+          </span>
+        </div>
+      </div>
+
+      <!-- Tercera fila: Cantidad y Costo Unitario -->
+      <div class="form-row">
+        <div class="form-col">
+          <label for="cantidad" class="form-label">Cantidad</label>
+          <div class="input-icon">
+            <i class="fas fa-hashtag"></i>
+            <input type="number" id="cantidad" name="cantidad" class="form-control{% if form.cantidad.errors %} is-invalid{% endif %}" 
+                  value="{{ form.cantidad.value|default_if_none:lote.cantidad }}" required placeholder="Cantidad de unidades" min="1" step="1">
+          </div>
+          <span class="error-msg" id="error-cantidad">
+            {% for error in form.cantidad.errors %}{{ error }}{% endfor %}
+          </span>
+        </div>
+        
+        <div class="form-col">
+          <label for="costo_unitario" class="form-label">Costo Unitario ($)</label>
+          <div class="input-icon">
+            <i class="fas fa-dollar-sign"></i>
+            <input type="text" id="costo_unitario" name="costo_unitario" class="form-control{% if form.costo_unitario.errors %} is-invalid{% endif %}" 
+                  value="{{ form.costo_unitario.value|default_if_none:lote.costo_unitario }}" required placeholder="0.00" autocomplete="off">
+          </div>
+          <span class="error-msg" id="error-costo">
+            {% for error in form.costo_unitario.errors %}{{ error }}{% endfor %}
+          </span>
+        </div>
+      </div>
+
+      <!-- Información de fechas (solo lectura) -->
+      <div class="form-row">
+        <div class="form-col">
+          <label class="form-label">Fecha de Recibimiento</label>
+          <div class="input-icon">
+            <i class="fas fa-calendar-check"></i>
+            <input type="text" class="form-control" value="{{ lote.fecha_recibimiento|date:'d/m/Y' }}" readonly style="background-color: #f8f9fa;">
+          </div>
+          <small class="form-text text-muted">No modificable</small>
+        </div>
+        
+        <div class="form-col">
+          <label class="form-label">Fecha de Vencimiento</label>
+          <div class="input-icon">
+            <i class="fas fa-calendar-alt"></i>
+            <input type="text" class="form-control" value="{{ lote.fecha_vencimiento|date:'d/m/Y' }}" readonly style="background-color: #f8f9fa;">
+          </div>
+          <small class="form-text text-muted">No modificable</small>
+        </div>
+      </div>
+      
+      <!-- Información del estado -->
+      <div class="codigo-lote-info full-width">
+        <i class="fas fa-info-circle"></i>
+        <div>
+          <strong>Estado actual:</strong> {{ lote.get_estado_display }}
+          <br><strong>Restricciones:</strong> No se pueden modificar las fechas ni el código de lote en la edición.
+          <br><strong>Nota:</strong> El estado se actualizará automáticamente solo si la cantidad disponible llega a 0.
+        </div>
+      </div>
+      
+      {% if form.non_field_errors %}
+        <div class="error-msg-container">
+          <div class="error-msg" id="error-nonfield">
+            <i class="fas fa-exclamation-circle"></i> {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      
+      <!-- BOTONES ALINEADOS EN LA MISMA FILA -->
+      <div class="form-buttons-row">
+          <a href="{% url 'lotes:menu_lote' %}" class="btn btn-back">
+              <i class="fas fa-arrow-left"></i> Volver al Menú
+          </a>
+          <button type="submit" class="btn btn-submit">
+              <i class="fas fa-save"></i> Actualizar Lote
+          </button>
+      </div>
+    </form>
+    {% endif %} <!-- Cierre del else para estado vencido/agotado -->
+  </div>
+  
+  <div class="form-footer">
+    <p>Sistema de Gestión de Lotes • Los campos marcados con * son obligatorios</p>
+  </div>
+</div>
+
+<!-- Modal para Agregar Nuevo Proveedor -->
+<div id="modalProveedor" class="modal-filtro">
+  <div class="modal-contenido">
+    <div class="modal-header">
+      <h3>Agregar Nuevo Proveedor</h3>
+      <button class="btn-cerrar" id="btnCerrarModalProveedor">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="formProveedor">
+        <div class="form-group">
+          <label for="nombreProveedor" class="form-label">Nombre del Proveedor</label>
+          <div class="input-icon">
+            <i class="fas fa-truck"></i>
+            <input type="text" id="nombreProveedor" class="form-control" 
+                   maxlength="100" placeholder="Letras, números y puntos" autocomplete="off" required>
+          </div>
+          <small class="form-text text-muted">Máximo 100 caracteres. Letras, números y puntos.</small>
+          <span class="error-msg" id="error-nombreProveedor" style="display: none;"></span>
+        </div>
+        <div class="form-group">
+          <label for="contactoProveedor" class="form-label">Información de Contacto (Opcional)</label>
+          <div class="input-icon">
+            <i class="fas fa-address-book"></i>
+            <input type="text" id="contactoProveedor" class="form-control" 
+                   maxlength="200" placeholder="Información de contacto" autocomplete="off">
+          </div>
+          <small class="form-text text-muted">Máximo 200 caracteres.</small>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelarProveedor">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarProveedor">Guardar Proveedor</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Pasar datos al JavaScript
+  window.productosData = [
+    {% for producto in productos %}
+    {
+      id: "{{ producto.ID_producto }}",
+      nombre: "{{ producto.nombre_pro|escapejs }}",
+      categoria: "{{ producto.categoria|escapejs }}",
+      serial: "{{ producto.serial|escapejs }}"  // AGREGAR ESTA LÍNEA
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  window.proveedoresData = [
+    {% for proveedor in proveedores %}
+    {
+      id: "{{ proveedor.id_proveedor }}",
+      nombre: "{{ proveedor.nombre|escapejs }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  // URLs para AJAX
+  const CREAR_PROVEEDOR_URL = "{% url 'lotes:crear_proveedor' %}";
+  const PROVEEDORES_JSON_URL = "{% url 'lotes:lista_proveedores_json' %}";
+  
+  // Pasar datos del lote actual
+  window.loteActual = {
+    id: "{{ lote.id_lote }}",
+    estado: "{{ lote.estado }}",
+    cantidad_disponible: "{{ lote.cantidad_disponible }}"
+  };
+</script>
+
+<script src="{% static 'lotes/js/editar_lote.js' %}"></script>
+
+{% endblock %}

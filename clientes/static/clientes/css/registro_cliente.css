@@ -1,0 +1,416 @@
+/* 
+ * Estilos para el formulario de registro de clientes
+ * Archivo: registro_cliente.css
+ * Ubicación: static/clientes/css/
+ */
+
+ :root {
+  --primary-green: #3A8C6E;
+  --primary-blue: #3498B5;
+  --white-base: #F9FCFA;
+  --accent-green: #5CB85C;
+  --soft-blue: #E6F4F8;
+  --detail-green: #8DC26F;
+  --natural-gray: #7F8C8D;
+  --dark-gray: #34495E;
+  --hover-blue: #2980B9;
+}
+
+body {
+  background-color: var(--soft-blue);
+  padding: 20px;
+}
+
+/* Contenedor principal del formulario */
+.form-container {
+  background-color: var(--white-base);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  max-width: 800px;
+  margin: 2rem auto;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  animation: fadeIn 0.6s ease forwards;
+}
+
+/* Encabezado del formulario */
+.form-header {
+  background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+  padding: 1.5rem 2rem;
+  color: white;
+  text-align: center;
+  position: relative;
+}
+
+.form-header h2 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  position: relative;
+  display: inline-block;
+}
+
+.form-header h2:after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 3px;
+  background: var(--accent-green);
+  border-radius: 2px;
+}
+
+.form-header p {
+  opacity: 0.9;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+/* Cuerpo del formulario */
+.form-body {
+  padding: 2rem;
+}
+
+/* Layout del formulario */
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -15px;
+}
+
+.form-col {
+  padding: 0 15px;
+  flex: 1 0 0%;
+  min-width: 250px;
+  margin-bottom: 1.5rem;
+}
+
+/* FILA DE BOTONES ALINEADOS */
+.form-buttons-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: space-between;
+}
+
+.form-buttons-row .btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+}
+
+/* Botón de volver */
+.btn-back {
+  background: var(--natural-gray);
+  color: white;
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+}
+
+.btn-back:hover {
+  background: var(--hover-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(41, 128, 185, 0.3);
+  color: white;
+  text-decoration: none;
+}
+
+/* Botón de enviar */
+.btn-submit {
+  background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+  color: white;
+  box-shadow: 0 4px 12px rgba(58, 140, 110, 0.2);
+}
+
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(58, 140, 110, 0.3);
+}
+
+/* Estados activos */
+.btn-back:active, .btn-submit:active {
+  transform: translateY(0);
+}
+
+/* Etiquetas y controles del formulario */
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--dark-gray);
+  position: relative;
+}
+
+.form-label:after {
+  content: '*';
+  color: #e74c3c;
+  margin-left: 3px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: white;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  color: var(--dark-gray);
+}
+
+.form-control:focus {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.15);
+  outline: none;
+}
+
+.form-control.is-invalid {
+  border-color: #e74c3c !important;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
+}
+
+/* Campos con iconos */
+.input-icon {
+  position: relative;
+}
+
+.input-icon i {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--natural-gray);
+  font-size: 1rem;
+}
+
+.input-icon input {
+  padding-left: 40px;
+}
+
+.input-icon select {
+  padding-left: 40px;
+}
+
+.input-icon textarea {
+  padding-left: 40px;
+}
+
+/* Mensajes de error y éxito */
+.error-msg {
+  color: #e74c3c;
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+  display: block;
+}
+
+.success-msg {
+  background-color: rgba(92, 184, 92, 0.15);
+  color: var(--accent-green);
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  border: 1px solid var(--accent-green);
+}
+
+.error-msg-container {
+  background-color: rgba(231, 76, 60, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.error-msg-container .error-msg {
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Pie del formulario */
+.form-footer {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  text-align: center;
+  color: var(--natural-gray);
+  font-size: 0.9rem;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .form-col {
+    flex: 0 0 100%;
+  }
+  
+  .form-buttons-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .form-buttons-row .btn {
+    width: 100%;
+  }
+  
+  .form-header {
+    padding: 1.2rem;
+  }
+  
+  .form-body {
+    padding: 1.5rem;
+  }
+}
+
+/* Estilos adicionales para el contador de caracteres */
+.char-counter {
+  font-size: 0.8rem;
+  color: var(--natural-gray);
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+.char-counter.warning {
+  color: #f39c12;
+  font-weight: bold;
+}
+
+.char-counter.error {
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+/* Asegurar que los mensajes de error estén ocultos inicialmente para cédula y dirección */
+#error-cedula,
+#error-direccion {
+  display: none;
+}
+
+/* Mostrar mensajes de error cuando el campo es inválido y ha sido tocado */
+.is-invalid ~ #error-cedula,
+.is-invalid ~ #error-direccion {
+  display: block;
+}
+
+/* Ajustes para campos en la misma fila */
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -15px;
+  gap: 1rem 0;
+}
+
+.form-col {
+  padding: 0 15px;
+  flex: 1 0 0%;
+  min-width: 200px;
+  margin-bottom: 1rem;
+}
+
+/* Asegurar que los campos sean responsivos */
+@media (max-width: 768px) {
+  .form-col {
+    flex: 0 0 100%;
+  }
+}
+
+/* Estilos para campos de información (solo lectura) */
+.info-field {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 1.5rem;
+}
+
+.info-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.info-item strong {
+  color: var(--dark-gray);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.info-item span {
+  color: var(--primary-green);
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid var(--border-gray);
+}
+
+.cedula-completa {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: var(--primary-blue) !important;
+}
+
+.info-note {
+  color: var(--natural-gray);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 15px;
+  background: rgba(52, 152, 181, 0.1);
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-blue);
+}
+
+.info-note i {
+  color: var(--primary-blue);
+}
+
+/* Asegurar que los mensajes de error se muestren correctamente */
+.error-msg {
+  color: #e74c3c;
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+  display: none;
+}
+
+.is-invalid ~ .error-msg {
+  display: block;
+}
+
+/* Responsive para campos de información */
+@media (max-width: 768px) {
+  .info-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-field {
+    padding: 15px;
+  }
+}

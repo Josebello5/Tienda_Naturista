@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ventana Emergente de Éxito</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Estilos para la ventana emergente */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: scale(0.7);
+            opacity: 0;
+            transition: all 0.4s ease;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .modal-overlay.active .modal {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        .modal-icon {
+            font-size: 70px;
+            color: #4CAF50;
+            margin-bottom: 20px;
+            animation: bounce 0.8s ease;
+        }
+        
+        .modal h2 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        
+        .modal p {
+            color: #388e3c;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        
+        .modal button {
+            background: linear-gradient(to right, #4CAF50, #2e7d32);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            max-width: 200px;
+            width: 100%;
+        }
+        
+        .modal button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .leaf {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #4CAF50;
+            border-radius: 50% 0;
+            opacity: 0;
+            z-index: -1;
+        }
+        
+        /* Animaciones */
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-20px);
+            }
+            60% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Ventana emergente de éxito -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal">
+            <div class="modal-icon">
+                <i class="fas fa-leaf"></i>
+            </div>
+            <h2>¡Registro Exitoso!</h2>
+            <p>Bienvenido/a a la familia NaturVida. Tu cuenta ha sido creada exitosamente y hemos enviado un correo de confirmación.</p>
+            <p><strong>Tu código de descuento: NATUR15</strong></p>
+            <button id="closeModal">Continuar</button>
+        </div>
+    </div>
+
+    <script>
+        // Función para mostrar el modal
+        function showSuccessModal() {
+            document.getElementById('successModal').classList.add('active');
+            createFloatingLeaves();
+        }
+        
+        // Función para cerrar el modal
+        document.getElementById('closeModal').addEventListener('click', function() {
+            document.getElementById('successModal').classList.remove('active');
+            // Limpiar hojas flotantes
+            document.querySelectorAll('.leaf').forEach(el => el.remove());
+        });
+        
+        // Función para crear el efecto de hojas flotantes
+        function createFloatingLeaves() {
+            const modal = document.querySelector('.modal');
+            const colors = ['#4caf50', '#81c784', '#a5d6a7', '#66bb6a'];
+            
+            for (let i = 0; i < 15; i++) {
+                const leaf = document.createElement('div');
+                leaf.className = 'leaf';
+                leaf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                leaf.style.left = Math.random() * 100 + '%';
+                leaf.style.top = Math.random() * 100 + '%';
+                leaf.style.width = Math.random() * 20 + 15 + 'px';
+                leaf.style.height = Math.random() * 20 + 15 + 'px';
+                leaf.style.animation = `float ${Math.random() * 3 + 2}s ease-in-out forwards`;
+                leaf.style.animationDelay = Math.random() * 1 + 's';
+                
+                modal.appendChild(leaf);
+            }
+        }
+        
+        // Ejemplo de uso: mostrar el modal después de un registro exitoso
+        // showSuccessModal();
+    </script>
+</body>
+</html>

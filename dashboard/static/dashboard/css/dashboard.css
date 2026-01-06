@@ -1,0 +1,456 @@
+/* ===== VARIABLES DE COLOR ===== */
+:root {
+  --primary-green: #3A8C6E;
+  --primary-blue: #3498B5;
+  --white-base: #F9FCFA;
+  --accent-green: #5CB85C;
+  --soft-blue: #E6F4F8;
+  --detail-green: #8DC26F;
+  --natural-gray: #7F8C8D;
+  --dark-gray: #34495E;
+  --error-red: #e74c3c;
+  --warning-orange: #f39c12;
+  --success-green: #27ae60;
+  --border-gray: #dee2e6;
+  --light-gray: #f8f9fa;
+  --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-medium: 0 5px 15px rgba(0, 0, 0, 0.1);
+  --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== ESTILOS PARA EL INPUT DE TASA ===== */
+.tasa-input-container {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.tasa-input {
+    width: 100%;
+    padding: 16px 20px 16px 50px;
+    border: 2px solid var(--border-gray);
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    background: var(--white-base);
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-light);
+    color: var(--dark-gray);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: right;
+    direction: ltr;
+}
+
+.tasa-input:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.15);
+    background: white;
+    transform: translateY(-2px);
+}
+
+.tasa-input:hover {
+    border-color: var(--primary-blue);
+}
+
+.tasa-input.input-error {
+    border-color: var(--error-red);
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
+    background: rgba(231, 76, 60, 0.02);
+}
+
+.tasa-input-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--natural-gray);
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.tasa-input:focus + .tasa-input-icon {
+    color: var(--primary-green);
+}
+
+.tasa-input.input-error + .tasa-input-icon {
+    color: var(--error-red);
+}
+
+/* ===== ESTILOS PARA MENSAJES DE ERROR ===== */
+.error-message {
+    color: var(--error-red);
+    font-size: 0.9rem;
+    margin-top: 8px;
+    display: none;
+    font-weight: 500;
+    padding-left: 5px;
+    animation: fadeIn 0.3s ease;
+    padding: 8px 12px;
+    background: rgba(231, 76, 60, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.error-message.show {
+    display: block;
+}
+
+/* ===== MENSAJES DE ÉXITO ===== */
+.alert {
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+    animation: slideIn 0.3s ease-out;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.alert.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.alert-success {
+    background-color: rgba(92, 184, 92, 0.15);
+    color: var(--success-green);
+    border: 1px solid var(--success-green);
+}
+
+.alert-error {
+    background-color: rgba(231, 76, 60, 0.15);
+    color: var(--error-red);
+    border: 1px solid var(--error-red);
+}
+
+.alert i {
+    font-size: 1.2rem;
+}
+
+/* ===== ANIMACIONES ===== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(-10px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* ===== ESTILOS ESPECÍFICOS PARA DASHBOARD ===== */
+
+/* Contenedor del dashboard */
+.dashboard-content {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 25px;
+  margin-top: 25px;
+}
+
+.dashboard-form-section,
+.dashboard-table-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tarjeta compacta de resumen */
+.compact-summary-card {
+  background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+  color: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 25px;
+  box-shadow: var(--shadow-heavy);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+  overflow: hidden;
+}
+
+.compact-summary-card::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+.compact-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  position: relative;
+  z-index: 2;
+}
+
+.compact-header i {
+  font-size: 1.5rem;
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.compact-info h4 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1rem;
+  color: white;
+}
+
+.rate-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 2px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  color: white;
+}
+
+.compact-details {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  position: relative;
+  z-index: 2;
+}
+
+.user-info,
+.date-info {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: white;
+}
+
+.user-info i,
+.date-info i {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.compact-actions {
+  position: relative;
+  z-index: 2;
+}
+
+.btn-refresh {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.btn-refresh:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(180deg);
+}
+
+/* Tarjetas de formulario y tabla */
+.form-card,
+.table-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: var(--shadow-heavy);
+  height: fit-content;
+}
+
+.form-card .card-header,
+.table-card .card-header {
+  background: linear-gradient(to right, var(--primary-green), var(--primary-blue));
+  color: white;
+  padding: 20px 25px;
+  border-bottom: none;
+}
+
+.form-card .card-header h5,
+.table-card .card-header h5 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.form-card .card-body,
+.table-card .card-body {
+  padding: 25px;
+}
+
+/* Estilos del formulario */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: var(--dark-gray);
+  font-size: 1rem;
+}
+
+.help-text {
+  font-size: 0.85rem;
+  color: var(--natural-gray);
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* Botones */
+.btn {
+  padding: 14px 28px;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  font-size: 1rem;
+  box-shadow: var(--shadow-light);
+  text-decoration: none;
+  text-align: center;
+  justify-content: center;
+  min-width: 160px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.btn-primary {
+  background: var(--primary-green);
+  color: white;
+  box-shadow: 0 4px 15px rgba(58, 140, 110, 0.3);
+}
+
+.btn-primary:hover {
+  background: #2d7058;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(58, 140, 110, 0.4);
+  color: white;
+}
+
+.btn-primary:disabled {
+  background: var(--natural-gray);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.table-responsive {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-medium);
+  border: 1px solid var(--border-gray);
+  background: white;
+  overflow-x: auto;
+  max-height: 500px;
+}
+
+.badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.bg-primary {
+  background: var(--primary-blue) !important;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .dashboard-content {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .dashboard-form-section,
+  .dashboard-table-section {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .compact-summary-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 15px;
+  }
+  
+  .compact-header {
+    justify-content: center;
+  }
+  
+  .compact-details {
+    align-items: center;
+  }
+  
+  .form-card .card-body,
+  .table-card .card-body {
+    padding: 20px;
+  }
+  
+  .btn {
+    padding: 12px 24px;
+    min-width: 140px;
+    font-size: 0.9rem;
+  }
+  
+  .tasa-input {
+    padding: 14px 16px 14px 45px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .compact-summary-card {
+    padding: 15px;
+  }
+  
+  .rate-value {
+    font-size: 1.3rem;
+  }
+  
+  .form-card .card-body,
+  .table-card .card-body {
+    padding: 15px;
+  }
+  
+  .tasa-input {
+    padding: 12px 14px 12px 40px;
+    font-size: 0.95rem;
+  }
+  
+  .tasa-input-icon {
+    left: 15px;
+    font-size: 1rem;
+  }
+}

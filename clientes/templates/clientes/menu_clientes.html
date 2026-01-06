@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Clientes - Tienda Naturista{% endblock %}
+
+{% block content %}
+<!-- ===== TARJETA DE BIENVENIDA ===== -->
+<div class="welcome-card">
+  <h2>Gestión de Clientes</h2>
+  <p>Administración de clientes de la tienda</p>
+</div>
+
+<!-- ===== MENSAJES ===== -->
+{% if messages %}
+<div class="messages-container">
+  {% for message in messages %}
+    {% if message.tags != 'success' %}  {# Excluir mensajes de éxito #}
+      <div class="alert alert-{{ message.tags }}">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+        {{ message }}
+      </div>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ===== CONTENEDOR PRINCIPAL DE CLIENTES ===== -->
+<div class="clientes-container">
+  <div class="clientes-main">
+    
+    <!-- ===== BARRA DE HERRAMIENTAS ===== -->
+    <div class="clientes-toolbar">
+      <div class="filtros-container">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Buscar clientes...">
+        </div>
+        
+        <div class="filtro-select">
+          <select id="filterCedulaTipo">
+            <option value="">Tipo de Identificación</option>
+            <option value="V">V</option>
+            <option value="E">E</option>
+            <option value="J">J</option>
+          </select>
+        </div>
+        
+        <div class="filtro-select">
+          <select id="filterTipoCliente">
+            <option value="">Tipo de cliente</option>
+            <option value="particular">Particular</option>
+            <option value="mayorista">Mayorista</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="toolbar-actions">
+        <a href="{% url 'clientes:registrar' %}" class="btn btn-primary" id="addBtn">
+          <i class="fas fa-plus-circle"></i> Registrar Cliente
+        </a>
+        <button class="btn btn-secondary" id="printBtn">
+          <i class="fas fa-print"></i> Imprimir
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== TABLA DE CLIENTES ===== -->
+    <div class="table-container">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Cédula</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Teléfono</th>
+            <th>Dirección</th>
+            <th>Tipo Cliente</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% for cliente in clientes %}
+          <tr data-cliente-id="{{ cliente.id }}">
+            <td>{{ cliente.cedula }}</td>
+            <td>{{ cliente.nombre }}</td>
+            <td>{{ cliente.apellido }}</td>
+            <td>{{ cliente.telefono }}</td>
+            <td>{{ cliente.direccion }}</td>
+            <td>
+              <span class="badge {% if cliente.tipo_cliente == 'particular' %}badge-primary{% else %}badge-secondary{% endif %}">
+                {{ cliente.get_tipo_cliente_display }}
+              </span>
+            </td>
+            <td class="actions">
+              <a href="{% url 'clientes:editar_cliente' cliente.id %}" class="btn-action btn-edit" title="Editar Cliente">
+                <i class="fas fa-edit"></i>
+              </a>
+              <button class="btn-action btn-delete" title="Eliminar Cliente" data-id="{{ cliente.id }}" data-nombre="{{ cliente.nombre }} {{ cliente.apellido }}">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <!-- Estado inicial: No hay clientes registrados -->
+          <tr class="empty-row initial-empty">
+            <td colspan="7">
+              <div class="no-results">
+                <i class="fas fa-users"></i>
+                <h3>No hay clientes registrados</h3>
+                <p>Haz clic en "Registrar Cliente" para comenzar</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          <!-- Fila para cuando no hay resultados en búsqueda (inicialmente oculta) -->
+          <tr class="empty-row no-results" style="display: none;">
+            <td colspan="7">
+              <div class="no-results">
+                <i class="fas fa-search"></i>
+                <h3>No se encontraron clientes</h3>
+                <p>Intenta con otros términos de búsqueda o ajusta los filtros</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL DE CONFIRMACIÓN PARA ELIMINAR CLIENTE ===== -->
+<div id="modalEliminarCliente" class="modal-filtro">
+  <div class="modal-contenido">
+    <div class="modal-header" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+      <h3>Confirmar Eliminación</h3>
+      <button class="btn-cerrar" id="btnCerrarModalEliminar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #e74c3c; margin-bottom: 15px;"></i>
+        <h4 style="color: #e74c3c; margin-bottom: 10px;">¿Está seguro de eliminar este cliente?</h4>
+      </div>
+      <p>Está a punto de eliminar al cliente: <strong id="nombreClienteEliminar"></strong></p>
+      <p style="color: #e74c3c; font-weight: bold;">
+        <i class="fas fa-exclamation-circle"></i> Esta acción no se puede deshacer
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelarEliminar">Cancelar</button>
+      <form id="formEliminarCliente" method="POST" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger" id="btnConfirmarEliminar">
+          <i class="fas fa-trash"></i> Eliminar
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL DE ÉXITO PARA ACCIONES ===== -->
+<div id="successModal" class="modal-overlay">
+  <div class="modal-success">
+    <div class="modal-success-icon">
+      <i class="fas fa-leaf"></i>
+    </div>
+    <h2 id="successModalTitle">¡Éxito!</h2>
+    <p id="successModalMessage">La acción se ha realizado correctamente.</p>
+    <button id="closeSuccessModal">Continuar</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<!-- ===== ESTILOS ESPECÍFICOS PARA CLIENTES ===== -->
+<link rel="stylesheet" href="{% static 'clientes/css/menu_clientes.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Pasar URLs de Django al JavaScript
+    const GENERAR_PDF_URL = "{% url 'clientes:generar_pdf' %}";
+    const REGISTRO_EXITOSO = {% if registro_exitoso %}true{% else %}false{% endif %};
+    const EDICION_EXITOSA = {% if edicion_exitosa %}true{% else %}false{% endif %};
+    const ELIMINACION_EXITOSA = {% if eliminacion_exitosa %}true{% else %}false{% endif %};
+    
+    // Auto-ocultar mensajes después de 5 segundos (solo para errores)
+    document.addEventListener('DOMContentLoaded', function() {
+        const messages = document.querySelectorAll('.alert');
+        messages.forEach(function(message) {
+            setTimeout(function() {
+                message.style.opacity = '0';
+                message.style.transition = 'opacity 0.5s ease';
+                setTimeout(function() {
+                    message.remove();
+                }, 500);
+            }, 5000);
+        });
+    });
+</script>
+<script src="{% static 'clientes/js/menu_clientes.js' %}"></script>
+{% endblock %}

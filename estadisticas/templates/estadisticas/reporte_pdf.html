@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>{{ titulo }}</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 2cm;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #27ae60;
+            font-size: 16pt;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .meta-info {
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 9pt;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+        }
+
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+
+        .rank-col {
+            width: 50px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Tienda Naturista</h1>
+        <p>{{ titulo }}</p>
+    </div>
+
+    <table class="meta-info">
+        <tr>
+            <td><strong>Desde:</strong> {{ fecha_ini|date:"d/m/Y" }}</td>
+            <td class="text-right"><strong>Hasta:</strong> {{ fecha_fin|date:"d/m/Y" }}</td>
+        </tr>
+        <tr>
+            <td><strong>Generado el:</strong> {{ fecha_generacion|date:"d/m/Y H:i" }}</td>
+            <td class="text-right"></td>
+        </tr>
+    </table>
+
+    <table>
+        <thead>
+            <tr>
+                {% if tipo_reporte == 'productos' %}
+                <th class="rank-col">#</th>
+                <th>Producto</th>
+                <th>ID</th>
+                <th class="text-right">Total Vendido</th>
+                {% elif tipo_reporte == 'clientes' %}
+                <th class="rank-col">#</th>
+                <th>Cliente</th>
+                <th>Cédula</th>
+                <th class="text-center">Compras</th>
+                <th class="text-right">Total Gastado</th>
+                {% elif tipo_reporte == 'vencimiento' %}
+                <th>Producto</th>
+                <th>Lote</th>
+                <th class="text-center">Disponible</th>
+                <th class="text-right">Fecha Vencimiento</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in datos %}
+            <tr>
+                {% if tipo_reporte == 'productos' %}
+                <td class="rank-col">{{ forloop.counter }}</td>
+                <td>{{ item.ID_lote__id_producto__nombre_pro }}</td>
+                <td>{{ item.ID_lote__id_producto__ID_producto }}</td>
+                <td class="text-right">{{ item.total_cantidad }}</td>
+                {% elif tipo_reporte == 'clientes' %}
+                <td class="rank-col">{{ forloop.counter }}</td>
+                <td>{{ item.Cedula__nombre }} {{ item.Cedula__apellido }}</td>
+                <td>{{ item.Cedula__cedula }}</td>
+                <td class="text-center">{{ item.total_compras }}</td>
+                <td class="text-right">Bs {{ item.total_gastado|floatformat:2 }}</td>
+                {% elif tipo_reporte == 'vencimiento' %}
+                <td>{{ item.id_producto.nombre_pro }}</td>
+                <td>{{ item.codigo_lote }}</td>
+                <td class="text-center">{{ item.cantidad_disponible }}</td>
+                <td class="text-right">{{ item.fecha_vencimiento|date:"d/m/Y" }}</td>
+                {% endif %}
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No hay datos para este rango de fechas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Reporte generado por Sistema de Gestión - Tienda Naturista
+    </div>
+</body>
+
+</html>

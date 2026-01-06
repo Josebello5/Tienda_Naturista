@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Django
+db.sqlite3
+/staticfiles/
+/media/
+/static/
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.bak
+
+# Antigravity / Gemini
+.gemini/
+antigravity/
+brain/
+task.md
+implementation_plan.md
+walkthrough.md

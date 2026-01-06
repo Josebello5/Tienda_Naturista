@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Comprobante de Venta - {{ venta.ID_Ventas }}</title>
+    <style>
+        /* RESET Y ESTILOS BASE PARA TICKET 80x60 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial Narrow', Arial, sans-serif;
+        }
+
+        body {
+            width: 80mm;
+            min-height: 60mm;
+            margin: 0 auto;
+            padding: 0;
+            font-size: 9px;
+            line-height: 1.2;
+            color: #000;
+            background: white;
+        }
+
+        .ticket-container {
+            width: 100%;
+            padding: 5mm 3mm;
+            border: 1px dashed #ccc;
+            min-height: 60mm;
+            page-break-inside: avoid;
+            page-break-after: avoid;
+            page-break-before: avoid;
+        }
+
+        /* ENCABEZADO */
+        .header {
+            text-align: center;
+            margin-bottom: 5px;
+            padding-bottom: 4px;
+            border-bottom: 1px dashed #000;
+        }
+
+        .header h1 {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        .header .subtitle {
+            font-size: 9px;
+            font-style: italic;
+            margin: 2px 0;
+            color: #555;
+        }
+
+        .document-type {
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 3px;
+            padding: 2px;
+            background: #f0f0f0;
+            border-radius: 2px;
+        }
+
+        /* INFORMACIÓN DE LA VENTA */
+        .info-venta {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 3px;
+            margin-bottom: 8px;
+            font-size: 8px;
+        }
+
+        .info-item {
+            margin-bottom: 2px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            display: inline-block;
+            min-width: 40px;
+        }
+
+        /* TABLA DE PRODUCTOS COMPACTA */
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+            font-size: 8px;
+        }
+
+        .product-table thead th {
+            background: #f0f0f0;
+            padding: 4px 2px;
+            text-align: left;
+            border-bottom: 2px solid #000;
+            font-weight: bold;
+        }
+
+        .product-table tbody td {
+            padding: 3px 2px;
+            border-bottom: 1px dashed #ddd;
+            vertical-align: top;
+        }
+
+        .product-name {
+            max-width: 35mm;
+            word-wrap: break-word;
+        }
+
+        .product-quantity {
+            text-align: center;
+            width: 8mm;
+        }
+
+        .product-price {
+            text-align: right;
+            width: 15mm;
+        }
+
+        .product-total {
+            text-align: right;
+            width: 15mm;
+            font-weight: bold;
+        }
+
+        /* TOTALES */
+        .totals-section {
+            margin-top: 8px;
+            margin-bottom: 8px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            border-bottom: 1px dashed #ddd;
+        }
+
+        .total-label {
+            font-weight: bold;
+        }
+
+        .total-value {
+            font-weight: bold;
+            text-align: right;
+            min-width: 20mm;
+        }
+
+        .grand-total {
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
+            padding: 5px 0;
+            margin-top: 5px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        /* INFORMACIÓN DE CRÉDITO */
+        .credit-info {
+            background: #fff8dc;
+            border: 1px solid #ffd700;
+            border-radius: 3px;
+            padding: 5px;
+            margin: 8px 0;
+            font-size: 8px;
+        }
+
+        .credit-info h3 {
+            font-size: 9px;
+            margin-bottom: 3px;
+            color: #856404;
+            border-bottom: 1px solid #ffd700;
+            padding-bottom: 2px;
+        }
+
+        .credit-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 3px;
+        }
+
+        /* PAGOS */
+        .payments-section {
+            margin-top: 8px;
+            font-size: 8px;
+        }
+
+        .payments-section h3 {
+            font-size: 9px;
+            margin-bottom: 3px;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 2px;
+        }
+
+        .payment-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            border-bottom: 1px dotted #ddd;
+        }
+
+        .payment-method {
+            font-weight: bold;
+        }
+
+        .payment-total {
+            background: #f0f0f0;
+            padding: 4px;
+            margin-top: 4px;
+            border-radius: 2px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* CAMBIO */
+        .change-section {
+            background: #e8f5e8;
+            border: 1px solid #c3e6cb;
+            border-radius: 3px;
+            padding: 5px;
+            margin: 8px 0;
+            font-size: 8px;
+        }
+
+        /* PIE DE PÁGINA */
+        .footer {
+            text-align: center;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px dashed #000;
+            font-size: 7px;
+            color: #666;
+        }
+
+        .thank-you {
+            font-weight: bold;
+            color: #27ae60;
+            margin-bottom: 5px;
+            font-size: 9px;
+        }
+
+        /* FIRMAS */
+        .signatures {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10mm;
+            margin-top: 15mm;
+            padding-top: 5mm;
+            border-top: 1px dashed #000;
+        }
+
+        .signature-line {
+            border-top: 1px solid #000;
+            margin-top: 20px;
+            padding-top: 3px;
+            text-align: center;
+            font-size: 7px;
+        }
+
+        /* CONTROLES DE IMPRESIÓN */
+        @media print {
+            body {
+                width: 80mm !important;
+                min-height: 60mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .ticket-container {
+                border: none;
+                padding: 5mm 3mm;
+                min-height: 60mm;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            /* EVITAR SALTO DE PÁGINA */
+            .ticket-container, 
+            .product-table, 
+            .totals-section,
+            .credit-info,
+            .payments-section {
+                page-break-inside: avoid !important;
+                page-break-after: avoid !important;
+                page-break-before: avoid !important;
+            }
+
+            /* AJUSTAR ALTURA DINÁMICA */
+            html, body {
+                height: auto !important;
+                min-height: 60mm !important;
+            }
+        }
+
+        /* BOTONES PARA VISTA PREVIA */
+        .print-controls {
+            text-align: center;
+            margin: 10mm auto;
+            padding: 5mm;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            width: 80mm;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-print {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-print:hover {
+            background: #2980b9;
+        }
+
+        .btn-close {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-close:hover {
+            background: #7f8c8d;
+        }
+
+        .btn-download {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #219a52;
+        }
+
+        /* AJUSTES PARA CONTENIDO LARGO */
+        .expandable {
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        /* ESTILOS PARA PRODUCTOS LARGOS */
+        .product-row-compact {
+            margin-bottom: 2px;
+            padding-bottom: 2px;
+            border-bottom: 1px dotted #eee;
+        }
+
+        .product-name-compact {
+            display: block;
+            font-size: 8px;
+            line-height: 1.1;
+            margin-bottom: 1px;
+        }
+
+        .product-details-compact {
+            display: flex;
+            justify-content: space-between;
+            font-size: 7px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Controles de impresión (no se imprimen) -->
+    <div class="print-controls no-print">
+        <button onclick="window.print()" class="btn btn-print">
+            <i class="fas fa-print"></i> Imprimir Ticket
+        </button>
+        <button onclick="window.close()" class="btn btn-close">
+            <i class="fas fa-times"></i> Cerrar
+        </button>
+        <button onclick="descargarPDF()" class="btn btn-download">
+            <i class="fas fa-download"></i> Descargar PDF
+        </button>
+    </div>
+
+    <!-- Contenedor principal del ticket -->
+    <div class="ticket-container" id="ticketContent">
+        <!-- Encabezado -->
+        <div class="header">
+            <h1>TIENDA NATURISTA</h1>
+            <p class="subtitle">"Algo más para tu salud"</p>
+            <div class="document-type">COMPROBANTE DE VENTA</div>
+        </div>
+
+        <!-- Información de la venta -->
+        <div class="info-venta">
+            <div class="info-item">
+                <span class="info-label">N°:</span> {{ venta.ID_Ventas }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Fecha:</span> {{ venta.Fecha_Venta|date:"d/m/Y" }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Hora:</span> {{ venta.Fecha_Venta|date:"H:i" }}
+            </div>
+            <div class="info-item">
+                <span class="info-label">Tipo:</span> {{ venta.get_Tipo_Venta_display }}
+            </div>
+        </div>
+
+        <!-- Información del cliente -->
+        <div class="info-venta">
+            <div class="info-item" style="grid-column: span 2;">
+                <span class="info-label">Cliente:</span> {{ venta.Cedula.nombre }} {{ venta.Cedula.apellido }}
+            </div>
+            <div class="info-item" style="grid-column: span 2;">
+                <span class="info-label">Cédula:</span> {{ venta.Cedula.cedula }}
+            </div>
+        </div>
+
+        <!-- Tabla de productos -->
+        <table class="product-table">
+            <thead>
+                <tr>
+                    <th class="product-name">Producto</th>
+                    <th class="product-quantity">Cant</th>
+                    <th class="product-price">P.Unit</th>
+                    <th class="product-total">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detalle in detalles %}
+                <tr>
+                    <td class="product-name">
+                        {{ detalle.ID_lote.id_producto.nombre_pro|truncatechars:30 }}
+                    </td>
+                    <td class="product-quantity">{{ detalle.Cantidad }}</td>
+                    <td class="product-price">Bs {{ detalle.Precio_Unitario|floatformat:2 }}</td>
+                    <td class="product-total">Bs {{ detalle.Subtotal_Detalle|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Totales -->
+        <div class="totals-section">
+            <div class="total-row">
+                <span class="total-label">Subtotal:</span>
+                <span class="total-value">Bs {{ venta.Subtotal|floatformat:2 }}</span>
+            </div>
+            <div class="total-row">
+                <span class="total-label">IVA (16%):</span>
+                <span class="total-value">Bs {{ venta.IVA|floatformat:2 }}</span>
+            </div>
+            <div class="total-row grand-total">
+                <span class="total-label">TOTAL:</span>
+                <span class="total-value">Bs {{ venta.Total|floatformat:2 }}</span>
+            </div>
+        </div>
+
+        <!-- Información de crédito si aplica -->
+        {% if venta.Tipo_Venta == 'credito' %}
+        <div class="credit-info">
+            <h3>INFORMACIÓN DE CRÉDITO</h3>
+            <div class="credit-details">
+                <div>
+                    <span class="info-label">Abono:</span> Bs {{ venta.Abono_Inicial|floatformat:2 }}
+                </div>
+                <div>
+                    <span class="info-label">Saldo:</span> Bs {{ venta.Saldo_Pendiente|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Pagos realizados -->
+        {% if pagos %}
+        <div class="payments-section">
+            <h3>PAGOS REGISTRADOS</h3>
+            {% for pago in pagos %}
+                {% if pago.Monto > 0 %}
+                <div class="payment-item">
+                    <span class="payment-method">{{ pago.get_Metodo_Pago_display }}:</span>
+                    <span>
+                        {% if pago.Metodo_Pago == 'efectivo_usd' %}
+                            ${{ pago.Monto|floatformat:2 }}
+                            (Bs {{ pago.Monto_Bs|floatformat:2 }})
+                        {% else %}
+                            Bs {{ pago.Monto|floatformat:2 }}
+                        {% endif %}
+                        {% if pago.Comprobante and pago.Comprobante != 'N/A' %}
+                            - Ref: {{ pago.Comprobante|truncatechars:10 }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% endif %}
+            {% endfor %}
+            <div class="payment-total">
+                Total Pagado: Bs {{ venta.Abono_Inicial|floatformat:2 }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Cambio entregado -->
+        {% with cambio_total=0 %}
+            {% for pago in pagos %}
+                {% if pago.Monto < 0 %}
+                    {% with cambio_total=cambio_total|add:pago.Monto_Bs %}
+                    {% endwith %}
+                {% endif %}
+            {% endfor %}
+            {% if cambio_total < 0 %}
+            <div class="change-section">
+                <strong>CAMBIO ENTREGADO:</strong> Bs {{ cambio_total|abs|floatformat:2 }}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Firmas -->
+        <div class="signatures no-print">
+            <div class="signature-line">
+                <p>Firma del Cliente</p>
+            </div>
+            <div class="signature-line">
+                <p>Firma del Vendedor</p>
+            </div>
+        </div>
+
+        <!-- Pie de página -->
+        <div class="footer">
+            <p class="thank-you">¡Gracias por su compra!</p>
+            <p>Sistema de Gestión - Tienda Naturista</p>
+            <p>Comprobante generado el {% now "d/m/Y H:i" %}</p>
+            <p>Para consultas o reclamos, presente este comprobante</p>
+        </div>
+    </div>
+
+    <script>
+        // Función para ajustar dinámicamente la altura
+        function ajustarAlturaTicket() {
+            const ticket = document.getElementById('ticketContent');
+            const contenidoHeight = ticket.scrollHeight;
+            const mmHeight = contenidoHeight * 0.264583; // Convertir píxeles a mm
+            
+            // Establecer altura mínima de 60mm o la altura del contenido
+            const alturaFinal = Math.max(60, mmHeight);
+            
+            // Aplicar altura al body y contenedor
+            document.body.style.minHeight = alturaFinal + 'mm';
+            ticket.style.minHeight = alturaFinal + 'mm';
+            
+            console.log(`Altura calculada: ${alturaFinal.toFixed(1)}mm`);
+        }
+
+        // Función para descargar PDF
+        function descargarPDF() {
+            // En un entorno real, esto llamaría al endpoint de descarga de PDF
+            window.open(`/ventas/descargar-comprobante/{{ venta.ID_Ventas }}/`, '_blank');
+        }
+
+        // Auto-ajustar al cargar y después de imprimir
+        window.addEventListener('load', ajustarAlturaTicket);
+        window.addEventListener('afterprint', ajustarAlturaTicket);
+
+        // Auto-imprimir si se desea
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('autoPrint') === 'true') {
+            window.print();
+        }
+
+        // Configurar impresión para evitar cortes
+        window.addEventListener('beforeprint', function() {
+            // Asegurar que todo el contenido sea visible
+            document.querySelectorAll('.ticket-container, .product-table, .totals-section')
+                .forEach(el => {
+                    el.style.pageBreakInside = 'avoid';
+                    el.style.breakInside = 'avoid';
+                });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1128 @@
+/* ===== VARIABLES DE COLOR ===== */
+:root {
+  --primary-green: #3A8C6E;
+  --primary-blue: #3498B5;
+  --white-base: #F9FCFA;
+  --accent-green: #5CB85C;
+  --soft-blue: #E6F4F8;
+  --detail-green: #8DC26F;
+  --natural-gray: #7F8C8D;
+  --dark-gray: #34495E;
+  --error-red: #e74c3c;
+  --warning-orange: #f39c12;
+  --success-green: #5CB85C;
+  --border-color: #ddd;
+  --shadow-light: rgba(0, 0, 0, 0.08);
+  --shadow-medium: rgba(0, 0, 0, 0.1);
+  --light-green-hover: #e8f5e8;
+  --hover-blue: #2980b9;
+  --border-gray: #bdc3c7;
+  --light-gray: #f8f9fa;
+}
+
+/* ===== ESTILOS BASE ===== */
+body {
+  background-color: var(--soft-blue);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+}
+
+/* ===== CONTENEDOR DEL FORMULARIO ===== */
+.form-container {
+  background-color: var(--white-base);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px var(--shadow-light);
+  overflow: hidden;
+  max-width: 800px;
+  margin: 2rem auto;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+  animation: fadeIn 0.6s ease forwards;
+}
+
+/* ===== CABECERA DEL FORMULARIO ===== */
+.form-header {
+  background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+  padding: 1.8rem 2rem;
+  color: white;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efecto de onda decorativa */
+.form-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.form-header h2 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  position: relative;
+  display: inline-block;
+  font-size: 1.8rem;
+  letter-spacing: 0.5px;
+}
+
+/* Línea decorativa bajo el título */
+.form-header h2::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: var(--accent-green);
+  border-radius: 2px;
+}
+
+.form-header p {
+  opacity: 0.95;
+  margin-top: 0.8rem;
+  font-size: 1rem;
+  font-weight: 300;
+}
+
+/* ===== CUERPO DEL FORMULARIO ===== */
+.form-body {
+  padding: 2.5rem 2rem;
+}
+
+/* ===== DISPOSICIÓN DE FILAS Y COLUMNAS ===== */
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -12px;
+  gap: 0;
+}
+
+.form-col {
+  padding: 0 12px;
+  flex: 1 0 calc(50% - 24px);
+  min-width: 280px;
+  margin-bottom: 1.8rem;
+}
+
+/* Columna de ancho completo */
+.full-width {
+  flex: 0 0 100% !important;
+  min-width: 100%;
+}
+
+/* ===== ETIQUETAS DE FORMULARIO ===== */
+.form-label {
+  display: block;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+  color: var(--dark-gray);
+  position: relative;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+}
+
+/* Asterisco para campos obligatorios */
+.form-label::after {
+  content: '*';
+  color: var(--error-red);
+  margin-left: 4px;
+  font-weight: bold;
+}
+
+/* ===== CAMPOS DE FORMULARIO ===== */
+.form-control {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: 8px;
+  background-color: white;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  color: var(--dark-gray);
+  font-family: inherit;
+}
+
+/* Estado focus de los campos */
+.form-control:focus {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.15);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+/* Campo con error de validación */
+.form-control.is-invalid {
+  border-color: var(--error-red) !important;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15);
+  background-color: rgba(231, 76, 60, 0.02);
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Campo válido */
+.form-control.is-valid {
+  border-color: var(--success-green) !important;
+  box-shadow: 0 0 0 3px rgba(92, 184, 92, 0.15);
+  background-color: rgba(92, 184, 92, 0.02);
+}
+
+/* ===== CAMPOS CON ICONOS ===== */
+.input-icon {
+  position: relative;
+}
+
+.input-icon i {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--natural-gray);
+  font-size: 1.1rem;
+  z-index: 2;
+  transition: color 0.3s ease;
+}
+
+/* Campos de entrada con icono */
+.input-icon input,
+.input-icon select,
+.input-icon textarea {
+  padding-left: 45px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Cambiar color de icono al enfocar */
+.input-icon .form-control:focus + i {
+  color: var(--primary-green);
+}
+
+/* ===== BOTONES EN FILA ===== */
+.form-buttons-row {
+  display: flex;
+  gap: 15px;
+  justify-content: space-between;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-back {
+  background: var(--natural-gray);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-width: 140px;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-back:hover {
+  background: #6c757d;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: white;
+  text-decoration: none;
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(58, 140, 110, 0.3);
+  min-width: 160px;
+}
+
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(58, 140, 110, 0.4);
+  background: linear-gradient(135deg, var(--accent-green), var(--primary-blue));
+}
+
+.btn-submit:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(58, 140, 110, 0.3);
+}
+
+/* ===== MENSAJES DEL SISTEMA ===== */
+
+/* Mensajes de error */
+.error-msg {
+  color: var(--error-red);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  display: none;
+  font-weight: 500;
+  padding-left: 5px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.error-msg:not(:empty) {
+  display: block;
+}
+
+/* Contenedor de mensajes */
+.messages-container {
+  margin-bottom: 1.8rem;
+}
+
+.alert {
+  padding: 1rem 1.2rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+  animation: slideIn 0.3s ease-out;
+}
+
+.alert-success {
+  background-color: rgba(92, 184, 92, 0.15);
+  color: var(--success-green);
+  border: 1.5px solid var(--success-green);
+}
+
+.alert-error {
+  background-color: rgba(231, 76, 60, 0.1);
+  color: var(--error-red);
+  border: 1.5px solid var(--error-red);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.alert-error i {
+  color: var(--error-red);
+  font-size: 1.1rem;
+}
+
+.alert-warning {
+  background-color: rgba(243, 156, 18, 0.15);
+  color: var(--warning-orange);
+  border: 1.5px solid var(--warning-orange);
+}
+
+/* Contenedor de mensajes de error generales */
+.error-msg-container {
+  background-color: rgba(231, 76, 60, 0.1);
+  padding: 1.2rem;
+  border-radius: 8px;
+  margin-bottom: 1.8rem;
+  border: 1.5px solid rgba(231, 76, 60, 0.3);
+}
+
+.error-msg-container .error-msg {
+  text-align: center;
+  font-weight: 500;
+  font-size: 1rem;
+  margin-top: 0;
+}
+
+/* ===== INFORMACIÓN DEL CÓDIGO ===== */
+.info-box {
+  background-color: rgba(52, 152, 181, 0.1);
+  border: 1.5px solid var(--primary-blue);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  color: var(--dark-gray);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.info-box i {
+  color: var(--primary-blue);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.info-box code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: bold;
+  color: var(--dark-gray);
+}
+
+.info-box ul {
+  margin: 5px 0 0 0;
+  padding-left: 20px;
+}
+
+.info-box li {
+  margin-bottom: 3px;
+}
+
+/* ===== SUGERENCIAS DE PRODUCTOS Y PROVEEDORES ===== */
+.sugerencias-container {
+  position: absolute;
+  top: 100%;
+  left: 12px;
+  right: 12px;
+  background: white;
+  border: 1.5px solid var(--primary-green);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+  display: none;
+}
+
+.sugerencia-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  background-color: white;
+}
+
+/* COLOR MÁS CLARO PARA HOVER */
+.sugerencia-item:hover {
+  background-color: var(--light-green-hover) !important;
+  color: var(--dark-gray);
+}
+
+.sugerencia-item:last-child {
+  border-bottom: none;
+}
+
+/* ===== PIE DEL FORMULARIO ===== */
+.form-footer {
+  margin-top: 2rem;
+  padding-top: 1.8rem;
+  border-top: 1.5px solid rgba(0, 0, 0, 0.08);
+  text-align: center;
+  color: var(--natural-gray);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* ===== ANIMACIONES ===== */
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(15px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Placeholder para campos vacíos */
+.form-control:placeholder-shown {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Mejora en el focus para campos inválidos */
+.form-control.is-invalid:focus {
+  border-color: var(--error-red) !important;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.15) !important;
+}
+
+/* Estilo para campos deshabilitados en el datepicker */
+input[type="date"]:invalid {
+  color: var(--natural-gray);
+}
+
+/* ===== INFORMACIÓN DEL CÓDIGO DE LOTE ===== */
+.codigo-lote-info {
+  background-color: rgba(58, 140, 110, 0.1);
+  border: 1.5px solid var(--primary-green);
+  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  color: var(--dark-gray);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.codigo-lote-info i {
+  color: var(--primary-green);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.codigo-lote-info code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: var(--dark-gray);
+  font-size: 0.85rem;
+}
+
+.codigo-lote-info strong {
+  color: var(--primary-green);
+  display: inline;
+}
+
+/* ===== ESTILOS PARA EL BOTÓN AGREGAR PROVEEDOR ===== */
+.proveedor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.btn-agregar-proveedor {
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-agregar-proveedor:hover {
+  background: var(--hover-blue);
+  transform: translateY(-1px);
+}
+
+/* Botón agregar en sugerencias */
+.btn-agregar-proveedor-sugerencia {
+  background: var(--accent-green);
+  color: white;
+  border: none;
+  border-radius: 15px;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-agregar-proveedor-sugerencia:hover {
+  background: var(--primary-green);
+}
+
+.agregar-proveedor {
+  background-color: rgba(92, 184, 92, 0.1) !important;
+  border-left: 3px solid var(--accent-green) !important;
+}
+
+.agregar-proveedor:hover {
+  background-color: rgba(92, 184, 92, 0.2) !important;
+}
+
+/* ===== MODAL PROVEEDOR - CORREGIDO ===== */
+.modal-filtro {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-contenido {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 500px;
+  overflow: hidden;
+  animation: slideIn 0.3s ease;
+}
+
+.modal-header {
+  padding: 20px 25px;
+  background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.btn-cerrar {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.btn-cerrar:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+/* ===== CORRECCIÓN ESPECÍFICA PARA ICONOS EN MODAL ===== */
+.modal-body .input-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.modal-body .input-icon i {
+  position: absolute;
+  left: 12px;
+  z-index: 2;
+  color: var(--natural-gray);
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.modal-body .input-icon input {
+  width: 100%;
+  padding: 12px 12px 12px 40px; /* Padding izquierdo aumentado para iconos */
+  border: 2px solid var(--border-gray);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background-color: white;
+  box-sizing: border-box;
+}
+
+.modal-body .input-icon input:focus {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.1);
+  outline: none;
+}
+
+.modal-footer {
+  padding: 20px 25px;
+  background: var(--light-gray);
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.modal-footer .btn {
+  min-width: 120px;
+}
+
+.modal-body .form-group {
+  margin-bottom: 1rem;
+}
+
+.modal-body .form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--dark-gray);
+}
+
+.modal-body .form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--border-gray);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.modal-body .form-control:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.1);
+}
+
+.form-text.text-muted {
+  font-size: 0.85rem;
+  color: var(--natural-gray);
+  margin-top: 0.25rem;
+}
+
+/* Animaciones para el modal */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+      opacity: 0;
+      transform: translateY(-20px);
+  }
+  to {
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
+
+/* Mensajes de error en el modal */
+.modal-body .error-msg {
+  color: var(--error-red);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  display: none;
+  font-weight: 500;
+  padding-left: 5px;
+}
+
+.modal-body .error-msg:not(:empty) {
+  display: block;
+}
+
+/* ===== ESTILOS PARA BOTONES EN MODAL ===== */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--accent-green), var(--hover-blue));
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--natural-gray);
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #6c757d;
+  transform: translateY(-1px);
+}
+
+/* ===== DISEÑO RESPONSIVE ===== */
+
+/* Tablets */
+@media (max-width: 768px) {
+  .form-col {
+    flex: 0 0 100%;
+    min-width: 100%;
+  }
+  
+  .form-header {
+    padding: 1.5rem 1.2rem;
+  }
+  
+  .form-header h2 {
+    font-size: 1.6rem;
+  }
+  
+  .form-body {
+    padding: 2rem 1.5rem;
+  }
+  
+  .form-row {
+    margin: 0 -8px;
+  }
+  
+  .form-col {
+    padding: 0 8px;
+  }
+  
+  .sugerencias-container {
+    left: 8px;
+    right: 8px;
+  }
+
+  .form-buttons-row {
+    flex-direction: column;
+  }
+
+  .btn-back,
+  .btn-submit {
+    flex: 1;
+    min-width: auto;
+  }
+}
+
+/* Dispositivos móviles */
+@media (max-width: 480px) {
+  .form-container {
+    margin: 1rem auto;
+    border-radius: 10px;
+  }
+  
+  .form-header {
+    padding: 1.2rem 1rem;
+  }
+  
+  .form-header h2 {
+    font-size: 1.4rem;
+  }
+  
+  .form-body {
+    padding: 1.5rem 1rem;
+  }
+  
+  .form-control {
+    padding: 0.8rem 0.9rem;
+    font-size: 0.9rem;
+  }
+  
+  .input-icon i {
+    left: 12px;
+    font-size: 1rem;
+  }
+  
+  .input-icon input,
+  .input-icon select,
+  .input-icon textarea {
+    padding-left: 40px;
+  }
+  
+  .btn-submit {
+    padding: 0.9rem 1.5rem;
+    font-size: 1rem;
+  }
+  
+  .sugerencias-container {
+    left: 8px;
+    right: 8px;
+  }
+
+  .modal-contenido {
+    width: 95%;
+    margin: 1rem;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+  }
+
+  .modal-footer .btn {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+/* Pantallas grandes */
+@media (min-width: 1200px) {
+  .form-container {
+    max-width: 850px;
+  }
+}
+
+/* ===== ESTILOS ADICIONALES PARA MEJOR VISUALIZACIÓN ===== */
+
+/* Mejora en la información de la caja de información */
+.info-box strong {
+  color: var(--dark-gray);
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* Estilo para el mensaje de error general cuando se muestra */
+#error-general {
+  margin-bottom: 1.5rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Estilo para campos requeridos cuando están vacíos */
+.form-control:required:not(:focus):placeholder-shown {
+  border-color: var(--border-color);
+}
+
+.form-control:required:focus:placeholder-shown {
+  border-color: var(--primary-green);
+}
+
+/* Mejora en la visualización de las sugerencias en dispositivos táctiles */
+@media (hover: none) {
+  .sugerencia-item:hover {
+    background-color: white;
+  }
+  
+  .sugerencia-item:active {
+    background-color: var(--light-green-hover);
+  }
+}
+
+/* Estilo para mejorar la accesibilidad en focus */
+.form-control:focus-visible {
+  outline: 2px solid var(--primary-green);
+  outline-offset: 2px;
+}
+
+/* Mejora en la legibilidad de los placeholders */
+.form-control::placeholder {
+  color: var(--natural-gray);
+  opacity: 0.7;
+}
+
+/* Estilo para los mensajes de ayuda contextual */
+.help-text {
+  color: var(--natural-gray);
+  font-size: 0.8rem;
+  margin-top: 0.3rem;
+  font-style: italic;
+}
+
+/* ===== ESTILOS MEJORADOS PARA INFORMACIÓN DE LOTE ===== */
+.info-field {
+  background: linear-gradient(135deg, rgba(52, 152, 181, 0.1), rgba(58, 140, 110, 0.1));
+  border: 2px solid var(--primary-blue);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.info-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 2px solid rgba(52, 152, 181, 0.3);
+}
+
+.info-header i {
+  color: var(--primary-blue);
+  font-size: 1.3rem;
+}
+
+.info-header h3 {
+  margin: 0;
+  color: var(--dark-gray);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.info-content {
+  margin-bottom: 1.2rem;
+}
+
+.info-row {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 0.8rem;
+}
+
+.info-item {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.info-item strong {
+  color: var(--dark-gray);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.info-item span {
+  color: var(--natural-gray);
+  font-weight: 500;
+  text-align: right;
+}
+
+.info-item .codigo-lote {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: var(--primary-green);
+  background: rgba(58, 140, 110, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.info-note {
+  background: rgba(243, 156, 18, 0.1);
+  border: 1px solid rgba(243, 156, 18, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: var(--dark-gray);
+}
+
+.info-note i {
+  color: var(--warning-orange);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.info-note strong {
+  color: var(--warning-orange);
+}
+
+/* Responsive para información del lote */
+@media (max-width: 768px) {
+  .info-row {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .info-item span {
+    text-align: left;
+  }
+}
+
+/* Estilos para las sugerencias de búsqueda */
+.sugerencias-container {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1.5px solid var(--primary-green);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+  display: none;
+  margin-top: -2px; /* Ajuste para que quede pegado al campo */
+}
+
+.sugerencia-item {
+  padding: 8px 12px; /* Reducir padding para que quede más compacto */
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.2s ease;
+  font-size: 0.9rem; /* Tamaño de fuente ligeramente menor */
+  background-color: white;
+}
+
+.sugerencia-item:hover {
+  background-color: var(--light-green-hover);
+}
+
+.sugerencia-item:last-child {
+  border-bottom: none;
+}
+
+.sugerencia-item.no-results {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--natural-gray);
+  cursor: default;
+}
+
+.sugerencia-item.no-results:hover {
+  background-color: white;
+}
+
+.sugerencia-item.agregar-proveedor {
+  background-color: rgba(92, 184, 92, 0.1);
+  border-left: 3px solid var(--accent-green);
+}
+
+.sugerencia-item.agregar-proveedor:hover {
+  background-color: rgba(92, 184, 92, 0.2);
+}
+
+.btn-agregar-proveedor-sugerencia {
+  background: var(--accent-green);
+  color: white;
+  border: none;
+  border-radius: 15px;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-agregar-proveedor-sugerencia:hover {
+  background: var(--primary-green);
+}

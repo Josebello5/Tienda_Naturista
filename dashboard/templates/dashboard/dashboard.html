@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Panel Principal - Tienda Naturista{% endblock %}
+
+{% block content %}
+<!-- ===== TARJETA DE BIENVENIDA ===== -->
+<div class="welcome-card">
+  <h2>Bienvenido {{ user.first_name|title }} {{ user.last_name|title }}</h2>
+  <p>Gestiona las tasas cambiarias del sistema</p>
+</div>
+
+<!-- ===== MENSAJES ===== -->
+{% if messages %}
+<div class="messages-container">
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+      <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+      {{ message }}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ===== CONTENEDOR PRINCIPAL DEL DASHBOARD ===== -->
+<div class="clientes-container">
+  <div class="clientes-main">
+    
+    <!-- ===== TARJETA COMPACTA DE ÚLTIMA TASA ===== -->
+    <div id="tarjetaCompactaContainer">
+      {% include 'dashboard/partials/tarjeta_compacta.html' with ultima_tasa=ultima_tasa %}
+    </div>
+
+    <div class="dashboard-content">
+      <!-- ===== FORMULARIO DE TASA ===== -->
+      <div class="dashboard-form-section">
+        <div class="form-card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-plus-circle me-2"></i>Agregar Nueva Tasa
+            </h5>
+          </div>
+          <div class="card-body">
+            <form id="tasaForm" method="post">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="{{ form.valor.id_for_label }}" class="form-label">{{ form.valor.label }}</label>
+                <div class="tasa-input-container">
+                  {{ form.valor }}
+                  <i class="fas fa-dollar-sign tasa-input-icon"></i>
+                </div>
+                <div class="error-message" id="valor-error">
+                  {% for error in form.valor.errors %}
+                    {{ error }}
+                  {% endfor %}
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary w-100" id="btnGuardar">
+                <i class="fas fa-save me-2"></i>Guardar Tasa
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TABLA DE TASAS ===== -->
+      <div class="dashboard-table-section">
+        <div class="table-card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-history me-2"></i>Historial de Tasas de Hoy
+            </h5>
+            <span class="badge bg-primary">{{ tasas.count }} registros</span>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive" id="tablaTasasContainer">
+              {% include 'dashboard/partials/tabla_tasas.html' %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'dashboard/js/dashboard.js' %}"></script>
+{% endblock %}

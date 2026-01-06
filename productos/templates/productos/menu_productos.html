@@ -1,0 +1,488 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Productos - Tienda Naturista{% endblock %}
+
+{% block content %}
+<!-- ===== TARJETA DE BIENVENIDA ===== -->
+<div class="welcome-card">
+  <h2>Panel de Productos</h2>
+  <p>Gestión de productos</p>
+</div>
+
+<!-- ===== MENSAJES ===== -->
+{% if messages %}
+<div class="messages-container">
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+      <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+      {{ message }}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ===== CONTENEDOR PRINCIPAL DE PRODUCTOS ===== -->
+<div class="productos-container">
+  <div class="productos-main">
+    
+    <!-- ===== BARRA DE HERRAMIENTAS MEJORADA ===== -->
+    <div class="productos-toolbar">
+      <div class="filtros-container">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Buscar por nombre..." value="{{ query }}">
+        </div>
+        
+        <!-- Nuevo filtro por Serial -->
+        <div class="search-box">
+          <i class="fas fa-barcode"></i>
+          <input type="text" id="serialInput" placeholder="Buscar por serial..." value="{{ serial_filtro }}">
+        </div>
+        
+        <!-- Filtro de Categoría con sugerencias -->
+        <div class="search-box" style="position: relative;">
+          <i class="fas fa-layer-group"></i>
+          <input type="text" id="categoriaInput" placeholder="Buscar categoría..." value="{{ categoria_filtro }}">
+          <div id="sugerencias-categoria" class="sugerencias-container"></div>
+        </div>
+        
+        <!-- Filtro de Patología con sugerencias -->
+        <div class="search-box" style="position: relative;">
+          <i class="fas fa-stethoscope"></i>
+          <input type="text" id="patologiaInput" placeholder="Buscar patología..." value="{{ patologia_filtro }}">
+          <div id="sugerencias-patologia" class="sugerencias-container"></div>
+        </div>
+        
+        <div class="filtro-select">
+          <select id="estadoSelect">
+            <option value="">Todos los estados</option>
+            <option value="activo" {% if estado_filtro == 'activo' %}selected{% endif %}>Activo</option>
+            <option value="inactivo" {% if estado_filtro == 'inactivo' %}selected{% endif %}>Inactivo</option>
+            <option value="agotado" {% if estado_filtro == 'agotado' %}selected{% endif %}>Agotado</option>
+          </select>
+        </div>
+        <div class="filtro-select">
+          <select id="sujetoIvaSelect">
+            <option value="">Todos (IVA)</option>
+            <option value="si" {% if sujeto_iva_filtro == 'si' %}selected{% endif %}>Sujeto a IVA</option>
+            <option value="no" {% if sujeto_iva_filtro == 'no' %}selected{% endif %}>Exento de IVA</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="toolbar-actions">
+        <!-- Grupo de acciones principales -->
+        <div class="action-group">
+          <a href="{% url 'productos:registrar_producto' %}" class="btn btn-primary" id="addBtn">
+            <i class="fas fa-plus-circle"></i> Agregar Producto
+          </a>
+        </div>
+        
+        <!-- Grupo de gestión de categorías y patologías -->
+        <div class="action-group">
+          <button class="btn btn-info" id="categoriasBtn">
+            <i class="fas fa-tags"></i> Categorías
+          </button>
+          <button class="btn btn-info" id="patologiasBtn">
+            <i class="fas fa-stethoscope"></i> Patologías
+          </button>
+        </div>
+        
+        <!-- Grupo de utilidades -->
+        <div class="action-group">
+          <button class="btn btn-secondary" id="printBtn">
+            <i class="fas fa-print"></i> Imprimir
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TABLA DE PRODUCTOS ===== -->
+    <div class="table-container">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Serial</th>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Patología</th>
+            <th>Ubicación</th>
+            <th>IVA</th>
+            <th>Precio</th>
+            <th>Stock Mínimo</th>
+            <th>Stock Actual</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% for producto in productos %}
+          <tr data-producto-id="{{ producto.ID_producto }}" data-estado="{{ producto.estado }}">
+            <td>{{ producto.ID_producto }}</td>
+            <td>{{ producto.serial }}</td>
+            <td>{{ producto.nombre_pro }}</td>
+            <td>{{ producto.categoria.nombre }}</td>
+            <td>{{ producto.patologia.nombre|default:"-" }}</td>
+            <td>{{ producto.ubicacion|default:"-" }}</td>
+            <!-- CORRECCIÓN: Cambiar el filtro yesno por una condición directa -->
+            <td>{% if producto.sujeto_iva == 'si' %}Sí{% else %}No{% endif %}</td>
+            <td class="editable-precio" data-producto-id="{{ producto.ID_producto }}" data-precio-actual="{{ producto.precio_venta }}">
+              ${{ producto.precio_venta }}
+            </td>
+            <td>
+              <span class="status 
+                {% if producto.stock_minimo == 0 %} status-inactive
+                {% elif producto.stock_minimo < 5 %} status-low
+                {% else %} status-active {% endif %}">
+                {{ producto.stock_minimo }} unidades
+              </span>
+            </td>
+            <td>
+              <span class="status 
+                {% if producto.stock_actual == 0 or not producto.stock_actual %} status-inactive
+                {% elif producto.stock_actual < 5 %} status-low
+                {% else %} status-active {% endif %}">
+                {{ producto.stock_actual|default:0 }} unidades
+              </span>
+            </td>
+            <td>
+              <span class="status 
+                {% if producto.estado == 'activo' %} status-active
+                {% elif producto.estado == 'inactivo' %} status-inactive
+                {% else %} status-agotado {% endif %}">
+                {{ producto.get_estado_display }}
+              </span>
+            </td>
+            <td class="actions">
+              <!-- Botón para editar producto -->
+              <a href="{% url 'productos:editar_producto' producto.ID_producto %}" class="btn-action btn-editar" title="Editar Producto">
+                <i class="fas fa-edit"></i>
+              </a>
+              
+              <!-- Botón para editar precio -->
+              <button class="btn-action btn-edit-precio" title="Editar Precio" data-producto-id="{{ producto.ID_producto }}">
+                <i class="fas fa-dollar-sign"></i>
+              </button>
+              
+              <!-- Botón para cambiar estado -->
+              <button class="btn-action btn-cambiar-estado" title="Cambiar Estado" data-producto-id="{{ producto.ID_producto }}" data-estado-actual="{{ producto.estado }}">
+                <i class="fas fa-toggle-{% if producto.estado == 'activo' %}on{% else %}off{% endif %}"></i>
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr class="empty-row">
+            <td colspan="12">
+              <div class="no-results">
+                <i class="fas fa-box-open"></i>
+                <h3>No hay productos registrados</h3>
+                <p>Haz clic en "Agregar Producto" para comenzar</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL PARA EDITAR PRECIO ===== -->
+<div id="modalEditarPrecio" class="modal-filtro">
+  <div class="modal-contenido">
+    <div class="modal-header">
+      <h3>Editar Precio de Venta</h3>
+      <button class="btn-cerrar" id="btnCerrarModalPrecio">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="formEditarPrecio">
+        <input type="hidden" id="productoIdPrecio">
+        <div class="form-group">
+          <label for="nuevoPrecioVenta">Nuevo Precio de Venta:</label>
+          <input type="number" step="0.01" min="0.01" max="9999.99" id="nuevoPrecioVenta" class="form-control" required>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelarPrecio">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarPrecio">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL PARA GESTIÓN DE CATEGORÍAS ===== -->
+<div id="modalCategorias" class="modal-filtro">
+  <div class="modal-contenido modal-lg">
+    <div class="modal-header">
+      <h3>Gestión de Categorías</h3>
+      <button class="btn-cerrar" id="btnCerrarModalCategorias">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-toolbar">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchCategorias" placeholder="Buscar categoría...">
+        </div>
+        <button class="btn btn-primary" id="btnAgregarCategoria">
+          <i class="fas fa-plus"></i> Agregar Categoría
+        </button>
+        <button class="btn btn-secondary" id="btnImprimirCategorias">
+          <i class="fas fa-print"></i> Imprimir
+        </button>
+      </div>
+      <div class="table-container">
+        <table id="tablaCategorias">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Fecha Creación</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyCategorias">
+            <!-- Las categorías se cargarán dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCerrarCategorias">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL PARA GESTIÓN DE PATOLOGÍAS ===== -->
+<div id="modalPatologias" class="modal-filtro">
+  <div class="modal-contenido modal-lg">
+    <div class="modal-header">
+      <h3>Gestión de Patologías</h3>
+      <button class="btn-cerrar" id="btnCerrarModalPatologias">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-toolbar">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchPatologias" placeholder="Buscar patología...">
+        </div>
+        <button class="btn btn-primary" id="btnAgregarPatologia">
+          <i class="fas fa-plus"></i> Agregar Patología
+        </button>
+        <button class="btn btn-secondary" id="btnImprimirPatologias">
+          <i class="fas fa-print"></i> Imprimir
+        </button>
+      </div>
+      <div class="table-container">
+        <table id="tablaPatologias">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Fecha Creación</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyPatologias">
+            <!-- Las patologías se cargarán dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCerrarPatologias">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL PARA EDITAR/AGREGAR CATEGORÍA ===== -->
+<div id="modalEditarCategoria" class="modal-filtro">
+  <div class="modal-contenido">
+    <div class="modal-header">
+      <h3 id="tituloModalCategoria">Editar Categoría</h3>
+      <button class="btn-cerrar" id="btnCerrarModalEditarCategoria">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="formEditarCategoria">
+        <input type="hidden" id="categoriaId">
+        <div class="form-group">
+          <label for="nombreCategoria">Nombre de la categoría:</label>
+          <div class="input-icon">
+            <i class="fas fa-tag"></i>
+            <input type="text" id="nombreCategoria" class="form-control" required maxlength="20" placeholder="Solo letras, máximo 20 caracteres" autocomplete="off">
+          </div>
+          <small class="form-text text-muted">Solo letras, sin espacios, máximo 20 caracteres.</small>
+          <span class="error-msg" id="errorNombreCategoria" style="display: none;"></span>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelarCategoria">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarCategoria">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL PARA EDITAR/AGREGAR PATOLOGÍA ===== -->
+<div id="modalEditarPatologia" class="modal-filtro">
+  <div class="modal-contenido">
+    <div class="modal-header">
+      <h3 id="tituloModalPatologia">Editar Patología</h3>
+      <button class="btn-cerrar" id="btnCerrarModalEditarPatologia">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="formEditarPatologia">
+        <input type="hidden" id="patologiaId">
+        <div class="form-group">
+          <label for="nombrePatologia">Nombre de la patología:</label>
+          <div class="input-icon">
+            <i class="fas fa-stethoscope"></i>
+            <input type="text" id="nombrePatologia" class="form-control" required maxlength="20" placeholder="Solo letras, máximo 20 caracteres" autocomplete="off">
+          </div>
+          <small class="form-text text-muted">Solo letras, sin espacios, máximo 20 caracteres.</small>
+          <span class="error-msg" id="errorNombrePatologia" style="display: none;"></span>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelarPatologia">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarPatologia">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODALES PARA MENSAJES ===== -->
+<div id="successModal" class="modal-overlay">
+    <div class="modal-success">
+        <div class="modal-success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h2 id="successModalTitle">¡Éxito!</h2>
+        <p id="successModalMessage">La acción se ha realizado correctamente.</p>
+        <button id="closeSuccessModal" class="btn-aceptar">Continuar</button>
+    </div>
+</div>
+
+<div id="deleteModal" class="modal-overlay">
+    <div class="modal-delete">
+        <div class="modal-delete-icon">
+            <i class="fas fa-trash-alt"></i>
+        </div>
+        <h2 id="deleteModalTitle">¡Eliminado Exitosamente!</h2>
+        <p id="deleteModalMessage">El elemento ha sido eliminado correctamente del sistema.</p>
+        <button id="closeDeleteModal" class="btn-aceptar">Continuar</button>
+    </div>
+</div>
+
+<div id="errorModal" class="modal-overlay">
+    <div class="modal-error">
+        <div class="modal-error-icon">
+            <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <h2 id="errorModalTitle">¡Error!</h2>
+        <p id="errorModalMessage">Ha ocurrido un error inesperado.</p>
+        <button id="closeErrorModal" class="btn-aceptar-error">Continuar</button>
+    </div>
+</div>
+
+<div id="confirmDeleteModal" class="modal-overlay">
+    <div class="modal-confirm">
+        <div class="modal-confirm-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h2>Confirmar Eliminación</h2>
+        <p id="confirmDeleteMessage">¿Está seguro de que desea eliminar este elemento?</p>
+        <div class="modal-confirm-actions">
+            <button id="cancelDelete" class="btn-cancel">Cancelar</button>
+            <button id="confirmDelete" class="btn-confirm">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<!-- ===== ESTILOS ESPECÍFICOS PARA PRODUCTOS ===== -->
+<link rel="stylesheet" href="{% static 'productos/css/productos.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Pasar URLs de Django al JavaScript
+  const ACTUALIZAR_PRECIO_URL = "{% url 'productos:actualizar_precio_producto' 0 %}".replace('/0/', '/');
+  const CAMBIAR_ESTADO_URL = "{% url 'productos:cambiar_estado_producto' 0 %}".replace('/0/', '/');
+  const CATEGORIAS_JSON_URL = "{% url 'productos:lista_categorias_json' %}";
+  const PATOLOGIAS_JSON_URL = "{% url 'productos:lista_patologias_json' %}";
+  const EDITAR_CATEGORIA_URL = "{% url 'productos:editar_categoria' 0 %}".replace('/0/', '/');
+  const ELIMINAR_CATEGORIA_URL = "{% url 'productos:eliminar_categoria' 0 %}".replace('/0/', '/');
+  const EDITAR_PATOLOGIA_URL = "{% url 'productos:editar_patologia' 0 %}".replace('/0/', '/');
+  const ELIMINAR_PATOLOGIA_URL = "{% url 'productos:eliminar_patologia' 0 %}".replace('/0/', '/');
+  const IMPRIMIR_CATEGORIAS_URL = "{% url 'productos:imprimir_categorias' %}";
+  const IMPRIMIR_PATOLOGIAS_URL = "{% url 'productos:imprimir_patologias' %}";
+  
+  // CORRECCIÓN: Detectar tanto registro como edición exitosa
+  const urlParams = new URLSearchParams(window.location.search);
+  const registroExitoso = urlParams.get('registro_exitoso');
+  const edicionExitosa = urlParams.get('edicion_exitosa');
+  const nombreProducto = urlParams.get('nombre_producto');
+  
+  // Función para mostrar modal de éxito y limpiar URL
+  function mostrarExitoYLimpiarURL(titulo, mensaje) {
+      if (typeof mostrarModalExito === 'function') {
+          mostrarModalExito(titulo, mensaje);
+          
+          // Limpiar la URL para evitar que se muestre el modal al recargar
+          const nuevaURL = window.location.pathname;
+          window.history.replaceState({}, document.title, nuevaURL);
+      }
+  }
+  
+  if (registroExitoso === 'true' && nombreProducto) {
+      // Mostrar modal de éxito después de cargar la página
+      document.addEventListener('DOMContentLoaded', function() {
+          setTimeout(function() {
+              mostrarExitoYLimpiarURL(
+                  '¡Producto Registrado!', 
+                  `El producto "${nombreProducto}" ha sido registrado exitosamente.`
+              );
+          }, 500);
+      });
+  }
+  
+  // CORRECCIÓN: Agregar detección para edición exitosa
+  if (edicionExitosa === 'true' && nombreProducto) {
+      document.addEventListener('DOMContentLoaded', function() {
+          setTimeout(function() {
+              mostrarExitoYLimpiarURL(
+                  '¡Producto Actualizado!', 
+                  `El producto "${nombreProducto}" ha sido actualizado exitosamente.`
+              );
+          }, 500);
+      });
+  }
+  
+  // Auto-ocultar mensajes después de 5 segundos
+  document.addEventListener('DOMContentLoaded', function() {
+      const messages = document.querySelectorAll('.alert');
+      messages.forEach(function(message) {
+          setTimeout(function() {
+              message.style.opacity = '0';
+              message.style.transition = 'opacity 0.5s ease';
+              setTimeout(function() {
+                  if (message.parentNode) {
+                      message.remove();
+                  }
+              }, 500);
+          }, 5000);
+      });
+      
+      // Inicializar modales
+      if (typeof inicializarModales === 'function') {
+          inicializarModales();
+      }
+  });
+</script>
+<script src="{% static 'productos/js/productos.js' %}"></script>
+<script src="{% static 'productos/js/gestion_categorias_patologias.js' %}"></script>
+{% endblock %}

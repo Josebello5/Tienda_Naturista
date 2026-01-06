@@ -1,0 +1,626 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'ventas/css/registrar_venta.css' %}">
+
+<div class="venta-container">
+    <div class="venta-header">
+        <h2>Registro de Venta</h2>
+        <p>Complete la información de la venta</p>
+    </div>
+
+    <!-- Mensajes fijos en la parte superior -->
+    <div id="messagesContainer" class="messages-fixed"></div>
+
+    <!-- Mensaje de advertencia si no hay tasa -->
+    {% if not tasa_actual %}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        No hay tasa cambiaria configurada para el día de hoy. No se pueden registrar ventas.
+    </div>
+    {% endif %}
+
+    <div class="venta-body">
+        <!-- Cliente -->
+        <div class="form-section">
+            <h3><i class="fas fa-user"></i> Datos del Cliente</h3>
+            <div class="form-group">
+                <label for="cedulaCliente">Buscar Cliente</label>
+                <div class="search-client-container">
+                    <input type="text" id="cedulaCliente" class="form-control"
+                        placeholder="Ingrese cédula, nombre o apellido..." autocomplete="off">
+                    <div id="clienteResult" class="result-container"></div>
+                </div>
+                <small class="text-muted">Comience a escribir para buscar (mínimo 2 caracteres)</small>
+            </div>
+
+            <!-- Información del cliente seleccionado -->
+            <div id="clienteInfo" class="cliente-info" style="display: none;">
+                <div class="cliente-selected">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="clienteNombre">Cliente seleccionado</span>
+                    <button type="button" id="btnCambiarCliente" class="btn btn-sm btn-outline">
+                        <i class="fas fa-sync"></i> Cambiar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formulario de cliente con validaciones -->
+            <div id="clienteFormContainer" class="cliente-form-container" style="display: none;">
+                <div class="form-header">
+                    <h2>Registro de Cliente</h2>
+                    <p>Complete todos los campos requeridos para registrar un nuevo cliente</p>
+                </div>
+                
+                <div class="form-body">
+                    <!-- Mostrar solo mensajes de error generales -->
+                    <div id="clienteErrorContainer" class="error-msg-container" style="display: none;">
+                        <div class="error-msg" id="error-nonfield">
+                            <i class="fas fa-exclamation-circle"></i> <span id="clienteErrorMessage"></span>
+                        </div>
+                    </div>
+                    
+                    <form id="formClienteVenta" novalidate>
+                        {% csrf_token %}
+                        <div class="form-row">
+                            <!-- Campo Tipo de Cédula -->
+                            <div class="form-col">
+                                <label for="cedula_tipo" class="form-label">Tipo de Identificación</label>
+                                <div class="input-icon">
+                                    <i class="fas fa-id-card"></i>
+                                    <select id="cedula_tipo" name="cedula_tipo" class="form-control" required>
+                                        <option value="V">V</option>
+                                        <option value="E">E</option>
+                                        <option value="J">J</option>
+                                    </select>
+                                </div>
+                                <span class="error-msg" id="error-cedula-tipo"></span>
+                            </div>
+                            
+                            <!-- Campo Número de Cédula -->
+                            <div class="form-col">
+                                <label for="cedula_numero" class="form-label">Número de Identificación</label>
+                                <div class="input-icon">
+                                    <i class="fas fa-hashtag"></i>
+                                    <input type="text" id="cedula_numero" name="cedula_numero" class="form-control" 
+                                        required placeholder="7-8 dígitos" maxlength="8">
+                                </div>
+                                <span class="error-msg" id="error-cedula-numero"></span>
+                            </div>
+                            
+                            <!-- Campo Tipo de Cliente -->
+                            <div class="form-col">
+                                <label for="tipo_cliente" class="form-label">Tipo de Cliente</label>
+                                <div class="input-icon">
+                                    <i class="fas fa-users"></i>
+                                    <select id="tipo_cliente" name="tipo_cliente" class="form-control" required>
+                                        <option value="particular">Particular</option>
+                                        <option value="mayorista">Mayorista</option>
+                                    </select>
+                                </div>
+                                <span class="error-msg" id="error-tipo-cliente"></span>
+                            </div>
+                            
+                            <!-- Campo Prefijo Teléfono -->
+                            <div class="form-col">
+                                <label for="telefono_prefijo" class="form-label">Prefijo Teléfono</label>
+                                <div class="input-icon">
+                                    <i class="fas fa-phone"></i>
+                                    <select id="telefono_prefijo" name="telefono_prefijo" class="form-control" required>
+                                        <option value="0412">0412</option>
+                                        <option value="0414">0414</option>
+                                        <option value="0416">0416</option>
+                                        <option value="0426">0426</option>
+                                        <option value="0422">0422</option>
+                                        <option value="0424">0424</option>
+                                    </select>
+                                </div>
+                                <span class="error-msg" id="error-telefono-prefijo"></span>
+                            </div>
+                            
+                            <!-- Campo Número Teléfono -->
+                            <div class="form-col">
+                                <label for="telefono_numero" class="form-label">Número de Teléfono</label>
+                                <div class="input-icon">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    <input type="text" id="telefono_numero" name="telefono_numero" class="form-control" 
+                                        required placeholder="7 dígitos" maxlength="7">
+                                </div>
+                                <span class="error-msg" id="error-telefono-numero"></span>
+                            </div>
+                            
+                            <!-- Campo Nombre -->
+                            <div class="form-col">
+                                <label for="nombre" class="form-label">Nombre</label>
+                                <div class="input-icon">
+                                    <i class="fas fa-user"></i>
+                                    <input type="text" id="nombre" name="nombre" class="form-control" 
+                                        required placeholder="Nombre (max 10)" maxlength="10">
+                                </div>
+                                <span class="error-msg" id="error-nombre"></span>
+                            </div>
+                            
+                            <!-- Campo Apellido -->
+                            <div class="form-col">
+                                <label for="apellido" class="form-label">Apellido</label>
+                                <div class="input-icon">
+                                    <i class="fas fa-signature"></i>
+                                    <input type="text" id="apellido" name="apellido" class="form-control" 
+                                        required placeholder="Apellido (max 10)" maxlength="10">
+                                </div>
+                                <span class="error-msg" id="error-apellido"></span>
+                            </div>
+                            
+                            <!-- Campo Dirección -->
+                            <div class="form-col" style="flex: 0 0 100%;">
+                                <label for="direccion" class="form-label">Dirección</label>
+                                <div class="input-icon">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <textarea id="direccion" name="direccion" class="form-control" 
+                                            required placeholder="Dirección completa (10-20 caracteres)" 
+                                            rows="2" maxlength="20"></textarea>
+                                </div>
+                                <span class="error-msg" id="error-direccion"></span>
+                                <div class="char-counter" id="direccion-counter">0/20 caracteres</div>
+                            </div>
+                        </div>
+                        
+                        {% if form.non_field_errors %}
+                            <div class="error-msg-container">
+                                <div class="error-msg" id="error-nonfield">
+                                    <i class="fas fa-exclamation-circle"></i> {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- BOTONES ALINEADOS EN LA MISMA FILA -->
+                        <div class="form-buttons-row">
+                            <button type="button" id="btnCancelarCliente" class="btn btn-back">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button type="button" id="btnRegistrarCliente" class="btn btn-submit">
+                                <i class="fas fa-user-plus"></i> Registrar Cliente
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="form-footer">
+                    <p>Sistema de Gestión • Todos los campos son obligatorios</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos -->
+        <div class="form-section">
+            <h3><i class="fas fa-boxes"></i> Productos</h3>
+            <div class="form-group">
+                <label for="buscarProducto">Buscar Producto</label>
+                <input type="text" id="buscarProducto" class="form-control" 
+                    placeholder="Nombre o serial del producto..." autocomplete="off">
+                <small class="text-muted">Comience a escribir para buscar (mínimo 2 caracteres)</small>
+                <div id="productosResult" class="result-container"></div>
+            </div>
+
+            <div class="productos-table">
+                <h4>Productos en la Venta</h4>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Precio ($)</th>
+                                <th>Precio (Bs)</th>
+                                <th>Cantidad</th>
+                                <th>Subtotal (Bs)</th>
+                                <th>IVA</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyProductos"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen -->
+        <div class="form-section">
+            <h3><i class="fas fa-calculator"></i> Resumen</h3>
+            <div class="resumen">
+                <div class="resumen-item">
+                    <span>Subtotal:</span>
+                    <span id="subtotal">Bs 0,00</span>
+                </div>
+                <div class="resumen-item">
+                    <span>IVA (16%):</span>
+                    <span id="iva">Bs 0,00</span>
+                </div>
+                <div class="resumen-item total">
+                    <span>Total (Bs):</span>
+                    <span id="total">Bs 0,00</span>
+                </div>
+                <div class="resumen-item">
+                    <span>Total (USD):</span>
+                    <span id="total_usd">$ 0,00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tipo de Venta CORREGIDO -->
+        <div class="form-section">
+            <h3><i class="fas fa-credit-card"></i> Tipo de Venta</h3>
+            <div class="form-group">
+                <div class="radio-group">
+                    <label class="radio-option" id="radioContado">
+                        <input type="radio" name="tipoVenta" value="contado" checked>
+                        <span class="radio-text">Contado</span>
+                    </label>
+                    <label class="radio-option" id="radioCredito">
+                        <input type="radio" name="tipoVenta" value="credito">
+                        <span class="radio-text">Crédito</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Información del abono inicial para crédito -->
+            <div id="abonoInfoSection" style="display: none;">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Venta a Crédito:</strong> Debe realizar un abono inicial entre el 20% y 80% del total.
+                    El abono se registrará a través de los métodos de pago.
+                </div>
+                <div class="resumen">
+                    <div class="resumen-item">
+                        <span>Abono Mínimo (20%):</span>
+                        <span id="abonoMinimo">Bs 0,00</span>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Abono Máximo (80%):</span>
+                        <span id="abonoMaximo">Bs 0,00</span>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Abono Actual:</span>
+                        <span id="abonoActual">Bs 0,00</span>
+                    </div>
+                    <div class="resumen-item total">
+                        <span>Saldo Pendiente:</span>
+                        <span id="saldoPendiente">Bs 0,00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Métodos de Pago -->
+        <div class="form-section">
+            <h3><i class="fas fa-money-bill-wave"></i> Métodos de Pago</h3>
+            <div class="form-group">
+                <button type="button" id="btnAgregarMetodo" class="btn btn-secondary" disabled>
+                    <i class="fas fa-plus"></i> Agregar Método de Pago
+                </button>
+                {% if not tasa_actual %}
+                <small class="text-danger">No se puede agregar métodos de pago sin tasa cambiaria</small>
+                {% endif %}
+            </div>
+            
+            <div id="listaMetodosPago" class="metodos-pago-container">
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
+                    <p>No hay métodos de pago agregados</p>
+                    <small>Agregue productos primero para habilitar los métodos de pago</small>
+                </div>
+            </div>
+            
+            <div class="resumen">
+                <div class="resumen-item">
+                    <span>Total Pagado:</span>
+                    <span id="totalPagado">Bs 0,00</span>
+                </div>
+                <div class="resumen-item">
+                    <span>Restante por Pagar:</span>
+                    <span id="restantePagar">Bs 0,00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de Devolución -->
+        <div id="seccionDevolucion" class="form-section" style="display: none;">
+            <h3><i class="fas fa-exchange-alt"></i> Devolución de Cambio</h3>
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                El pago excede el total de la venta. Puede distribuir el cambio entre múltiples métodos.
+            </div>
+
+            <div class="resumen-devolucion">
+                <h4>Montos a Devolver</h4>
+                <div class="resumen">
+                    <div class="resumen-item">
+                        <span>Total a Devolver (Bs):</span>
+                        <span id="totalDevolverBs">Bs 0,00</span>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Total a Devolver (USD):</span>
+                        <span id="totalDevolverUsd">$ 0,00</span>
+                    </div>
+                    <div class="resumen-item" style="border-top: 2px solid var(--primary);">
+                        <span>Restante por Devolver (Bs):</span>
+                        <span id="restanteDevolverBs">Bs 0,00</span>
+                    </div>
+                    <div class="resumen-item">
+                        <span>Restante por Devolver (USD):</span>
+                        <span id="restanteDevolverUsd">$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario para agregar devolución -->
+            <div class="devolucion-form">
+                <h5>Agregar Método de Devolución</h5>
+                
+                <div class="form-group">
+                    <label for="selectMetodoDevolucion">Método de Devolución</label>
+                    <select id="selectMetodoDevolucion" class="form-control">
+                        <option value="">Seleccione...</option>
+                        <option value="efectivo_bs">Efectivo (Bs)</option>
+                        <option value="efectivo_usd">Efectivo ($)</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="pago_movil">Pago Móvil</option>
+                    </select>
+                </div>
+
+                <!-- Campos para efectivo BS -->
+                <div id="divDevolucionEfectivoBs" class="devolucion-campos" style="display: none;">
+                    <div class="form-group">
+                        <label for="montoDevolucionBs">Monto a Devolver (Bs)</label>
+                        <input type="text" id="montoDevolucionBs" class="form-control formatted-number-input" placeholder="0,00">
+                    </div>
+                </div>
+
+                <!-- Campos para efectivo USD -->
+                <div id="divDevolucionEfectivoUsd" class="devolucion-campos" style="display: none;">
+                    <div class="form-group">
+                        <label for="montoDevolucionUsd">Monto a Devolver ($)</label>
+                        <input type="text" id="montoDevolucionUsd" class="form-control formatted-number-input" placeholder="0,00">
+                    </div>
+                </div>
+
+                <!-- Campos para transferencia -->
+                <div id="divDevolucionTransferencia" class="devolucion-campos" style="display: none;">
+                    <div class="form-group">
+                        <label for="comprobanteDevolucionTransferencia">Número de Comprobante <span class="required">*</span></label>
+                        <input type="text" id="comprobanteDevolucionTransferencia" class="form-control" placeholder="Solo números">
+                        <small class="error-msg">Solo se permiten números</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="montoDevolucionTransferencia">Monto a Devolver (Bs) <span class="required">*</span></label>
+                        <input type="text" id="montoDevolucionTransferencia" class="form-control formatted-number-input" placeholder="0,00">
+                    </div>
+                </div>
+
+                <!-- Campos para pago móvil -->
+                <div id="divDevolucionPagoMovil" class="devolucion-campos" style="display: none;">
+                    <div class="form-group">
+                        <label for="comprobanteDevolucionPagoMovil">Número de Referencia <span class="required">*</span></label>
+                        <input type="text" id="comprobanteDevolucionPagoMovil" class="form-control" placeholder="Solo números">
+                        <small class="error-msg">Solo se permiten números</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="montoDevolucionPagoMovil">Monto a Devolver (Bs) <span class="required">*</span></label>
+                        <input type="text" id="montoDevolucionPagoMovil" class="form-control formatted-number-input" placeholder="0,00">
+                    </div>
+                </div>
+
+                <button type="button" id="btnAgregarDevolucion" class="btn btn-secondary" style="width: 100%;">
+                    <i class="fas fa-plus"></i> Agregar Devolución
+                </button>
+            </div>
+
+            <!-- Lista de devoluciones agregadas -->
+            <div class="devoluciones-lista">
+                <h5>Devoluciones Agregadas</h5>
+                <div id="listaDevoluciones" class="devoluciones-container">
+                    <div class="text-center py-3 text-muted">
+                        <i class="fas fa-exchange-alt fa-2x mb-2"></i>
+                        <p>No hay devoluciones agregadas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="form-actions">
+            <a href="{% url 'ventas:menu_ventas' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver al Menú
+            </a>
+            <button id="btnProcesarVenta" class="btn btn-primary" disabled {% if not tasa_actual %}disabled{% endif %}>
+                <i class="fas fa-check"></i> Procesar Venta
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Método de Pago CORREGIDO -->
+<div id="modalMetodoPago" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Agregar Método de Pago</h3>
+            <button class="btn-cerrar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="infoPagoModal" class="alert" style="display: none;">
+                <i class="fas fa-info-circle"></i>
+                <span id="textoInfoModal"></span>
+            </div>
+            <div class="form-group">
+                <label for="selectMetodoPago">Método de Pago <span class="required">*</span></label>
+                <select id="selectMetodoPago" class="form-control">
+                    <option value="">Seleccione...</option>
+                    <option value="efectivo_bs">Efectivo (Bs)</option>
+                    <option value="efectivo_usd">Efectivo ($)</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="pago_movil">Pago Móvil</option>
+                    <option value="punto_venta">Punto de Venta</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="montoPago">Monto <span class="required">*</span></label>
+                <input type="text" id="montoPago" class="form-control formatted-number-input" placeholder="Ingrese el monto (ej: 1.234,56)">
+            </div>
+            <div id="divTasaCambio" style="display: none;">
+                <div class="form-group">
+                    <label for="tasaCambio">Tasa de Cambio (Bs/$)</label>
+                    <input type="text" id="tasaCambio" class="form-control formatted-number-input" value="{{ tasa_actual.valor|default:0 }}" readonly>
+                    <small class="text-muted">Tasa actual automática</small>
+                </div>
+            </div>
+            <div id="divComprobante" style="display: none;">
+                <div class="form-group">
+                    <label for="comprobantePago">Número de Comprobante <span class="required">*</span></label>
+                    <input type="text" id="comprobantePago" class="form-control" placeholder="Solo números">
+                    <small class="error-msg">Solo se permiten números</small>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary btn-cancelar-modal">Cancelar</button>
+            <button class="btn btn-primary" id="btnAgregarPago">Agregar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Pasar la tasa y URLs como variables globales -->
+<script>
+    window.TASA_ACTUAL = {{ tasa_actual.valor|default:0 }};
+    window.MENU_VENTAS_URL = "{% url 'ventas:menu_ventas' %}";
+</script>
+<script src="{% static 'ventas/js/registrar_venta.js' %}"></script>
+
+<style>
+    /* Estilos adicionales para mejorar la visualización */
+    .abono-equivalencia {
+        font-size: 0.85rem;
+        color: var(--secondary);
+        font-weight: 500;
+        margin-left: 5px;
+    }
+
+    /* Mejoras en la visualización de información de crédito */
+    .resumen-item .abono-info {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .resumen-item .abono-detalle {
+        text-align: right;
+        font-size: 0.9rem;
+    }
+
+    /* Estilos para evitar duplicación en modal */
+    #textoInfoModal br {
+        display: block;
+        margin: 3px 0;
+    }
+
+    /* Mejoras en la visualización de métodos de pago */
+    .pago-item {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr auto;
+        gap: 15px;
+        padding: 15px;
+        border-bottom: 1px solid var(--light-gray);
+        align-items: center;
+        background: white;
+        margin-bottom: 8px;
+        border-radius: 6px;
+        border-left: 4px solid var(--secondary);
+        transition: all 0.3s ease;
+    }
+
+    .pago-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transform: translateY(-1px);
+    }
+
+    .pago-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .pago-item span {
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .pago-item .monto-pago {
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+        color: var(--primary);
+        text-align: right;
+    }
+
+    .pago-item .tasa-pago {
+        font-family: 'Courier New', monospace;
+        color: var(--secondary);
+        font-size: 0.8rem;
+        text-align: right;
+    }
+
+    /* Estilos para la equivalencia en dólares en crédito */
+    .equivalencia-usd {
+        font-size: 0.8rem;
+        color: var(--secondary);
+        font-weight: 500;
+        display: block;
+        margin-top: 2px;
+    }
+
+    /* Mejoras en la visualización de resumen de crédito */
+    .resumen-item span:last-child {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+    
+    /* Estilos para inputs de números formateados */
+    .formatted-number-input {
+        font-family: 'Courier New', monospace !important;
+        text-align: right !important;
+        letter-spacing: 0.5px !important;
+        background-color: #f9f9f9;
+    }
+    
+    .formatted-number-input:focus {
+        background-color: white;
+    }
+    
+    /* Estilo para números en tablas */
+    .table td {
+        font-family: 'Courier New', monospace;
+    }
+    
+    /* Alineación de números a la derecha */
+    .numero-derecha {
+        text-align: right;
+        font-family: 'Courier New', monospace;
+    }
+    
+    /* Estilos para mensajes de error en inputs */
+    .form-control.is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+    }
+    
+    /* Placeholder para inputs de números */
+    .formatted-number-input::placeholder {
+        color: #999;
+        font-style: italic;
+        text-align: left;
+    }
+    
+    /* Animación para cambios en números */
+    .number-transition {
+        transition: all 0.3s ease;
+    }
+</style>
+{% endblock %}

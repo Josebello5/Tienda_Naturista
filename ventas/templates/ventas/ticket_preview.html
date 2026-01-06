@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista Previa - Ticket de Venta #{{ venta.ID_Ventas }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            width: 300px;
+            margin: 20px auto;
+            padding: 15px;
+            line-height: 1.3;
+            background: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .ticket-header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px dashed #000;
+            padding-bottom: 10px;
+        }
+        
+        .ticket-header h1 {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 8px 0;
+            text-transform: uppercase;
+        }
+        
+        .ticket-header .subtitle {
+            font-size: 12px;
+            margin: 4px 0;
+        }
+        
+        .venta-info {
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px dashed #000;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 4px 0;
+        }
+        
+        .info-label {
+            font-weight: bold;
+        }
+        
+        .productos-table {
+            width: 100%;
+            margin: 15px 0;
+            border-collapse: collapse;
+            table-layout: fixed; /* Añadido para controlar anchos */
+        }
+        
+        .productos-table th {
+            text-align: left;
+            border-bottom: 2px solid #000;
+            padding: 6px 0;
+            font-weight: bold;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .productos-table td {
+            padding: 5px 0;
+            vertical-align: top;
+            font-size: 12px;
+        }
+        
+        .productos-table .cantidad {
+            width: 12%;
+            text-align: center;
+            padding-right: 5px;
+        }
+        
+        .productos-table .descripcion {
+            width: 45%;
+            word-wrap: break-word;
+            padding-right: 8px;
+        }
+        
+        .productos-table .precio {
+            width: 20%;
+            text-align: right;
+            padding-right: 10px; /* Más espacio entre precio y total */
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+        }
+        
+        .productos-table .total {
+            width: 23%;
+            text-align: right;
+            padding-left: 5px;
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+        }
+        
+        .totales {
+            margin-top: 15px;
+            border-top: 2px dashed #000;
+            padding-top: 10px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 6px 0;
+        }
+        
+        .total-row.total-final {
+            font-weight: bold;
+            font-size: 16px;
+            border-top: 3px solid #000;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        
+        .pagos-section {
+            margin-top: 15px;
+            border-top: 2px dashed #000;
+            padding-top: 10px;
+        }
+        
+        .pago-item {
+            margin: 5px 0;
+        }
+        
+        .cambio-section {
+            margin-top: 15px;
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px dashed #666;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 11px;
+            color: #666;
+            border-top: 2px dashed #000;
+            padding-top: 10px;
+        }
+        
+        .tasa-info {
+            text-align: center;
+            font-size: 11px;
+            margin: 8px 0;
+            padding: 5px;
+            background: #f0f0f0;
+            border-radius: 3px;
+        }
+        
+        .iva-detalle {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .nombre-producto {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 2px;
+        }
+        
+        .print-button {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .print-button button {
+            background: #3A8C6E;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+        
+        .print-button button:hover {
+            background: #2d7058;
+        }
+        
+        /* Separador visual entre columnas */
+        .col-separator {
+            width: 15px;
+            text-align: center;
+            color: #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="ticket-header">
+        <h1>TIENDA NATURISTA</h1>
+        <div class="subtitle">Algo más para tu salud</div>
+        <div class="subtitle">Ticket de Venta</div>
+    </div>
+    
+    <div class="venta-info">
+        <div class="info-row">
+            <span class="info-label">Venta #:</span>
+            <span>{{ venta.ID_Ventas }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Fecha:</span>
+            <span>{{ fecha_formateada }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Cliente:</span>
+            <span>{{ venta.Cedula.nombre }} {{ venta.Cedula.apellido }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Cédula:</span>
+            <span>{{ venta.Cedula.cedula }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Tipo:</span>
+            <span>{{ venta.get_Tipo_Venta_display }}</span>
+        </div>
+        {% if tasa_venta %}
+        <div class="tasa-info">
+            <strong>Tasa de Cambio:</strong> Bs {{ tasa_venta|floatformat:2 }}/$
+        </div>
+        {% endif %}
+    </div>
+    
+    <table class="productos-table">
+        <thead>
+            <tr>
+                <th class="cantidad">Cant</th>
+                <th class="descripcion">Descripción</th>
+                <th class="precio">Precio</th>
+                <th class="total">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto_id, datos in productos_agrupados.items %}
+            <tr>
+                <td class="cantidad">{{ datos.cantidad }}</td>
+                <td class="descripcion">
+                    <span class="nombre-producto">{{ datos.nombre }}</span>
+                </td>
+                <td class="precio">Bs {{ datos.precio_unitario_formatted }}</td>
+                <td class="total">Bs {{ datos.subtotal_formatted }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="totales">
+        <div class="total-row">
+            <span>Subtotal:</span>
+            <span>Bs {{ subtotal_formatted }}</span>
+        </div>
+        <div class="total-row">
+            <span>IVA (16%):</span>
+            <span>Bs {{ iva_formatted }}</span>
+        </div>
+        <div class="total-row total-final">
+            <span>TOTAL:</span>
+            <span>Bs {{ total_formatted }}</span>
+        </div>
+        {% if venta.Tipo_Venta == 'credito' %}
+        <div class="total-row">
+            <span>Abono Inicial:</span>
+            <span>Bs {{ abono_formatted }}</span>
+        </div>
+        <div class="total-row">
+            <span>Saldo Pendiente:</span>
+            <span>Bs {{ saldo_formatted }}</span>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% if pagos_positivos %}
+    <div class="pagos-section">
+        <div class="info-row" style="font-weight: bold; margin-bottom: 8px;">
+            <span>PAGOS RECIBIDOS</span>
+        </div>
+        {% for pago in pagos_positivos %}
+        <div class="pago-item">
+            <div class="info-row">
+                <span>{{ pago.get_Metodo_Pago_display }}:</span>
+                <span>{{ pago.Monto_formatted }}</span>
+            </div>
+            {% if pago.Metodo_Pago == 'efectivo_usd' %}
+            <div class="iva-detalle">Equivalente: {{ pago.Monto_Bs_formatted }}</div>
+            {% endif %}
+            {% if pago.Comprobante and pago.Comprobante != 'N/A' %}
+            <div class="iva-detalle">Comprobante: {{ pago.Comprobante }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if cambio_bs > 0 %}
+    <div class="cambio-section">
+        <div class="info-row" style="font-weight: bold;">
+            <span>CAMBIO DEVUELTO</span>
+        </div>
+        <div class="info-row">
+            <span>Efectivo (Bs):</span>
+            <span>Bs {{ cambio_bs_formatted }}</span>
+        </div>
+        {% if cambio_usd > 0 %}
+        <div class="info-row">
+            <span>Efectivo ($):</span>
+            <span>$ {{ cambio_usd_formatted }}</span>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <div class="footer">
+        <div>¡Gracias por su compra!</div>
+        <div>Vuelva pronto</div>
+        <div>Sistema de Gestión - Tienda Naturista</div>
+        <div>Ticket generado: {% now "d/m/Y H:i" %}</div>
+    </div>
+    
+    <div class="print-button">
+        <button onclick="window.print()">🖨️ Imprimir Ticket</button>
+    </div>
+    
+    <script>
+        document.querySelector('button').addEventListener('click', function() {
+            window.print();
+        });
+    </script>
+</body>
+</html>

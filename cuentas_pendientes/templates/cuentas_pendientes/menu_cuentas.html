@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cuentas Pendientes - Tienda Naturista{% endblock %}
+
+{% block content %}
+<!-- ===== TARJETA DE BIENVENIDA ===== -->
+<div class="welcome-card">
+  <h2>Cuentas Pendientes</h2>
+  <p>Gestión de ventas a crédito y abonos de clientes</p>
+</div>
+
+<!-- ===== RESUMEN DE TOTALES ===== -->
+<div class="resumen-totales">
+  <div class="tarjeta-total">
+    <div class="icono-total">
+      <i class="fas fa-clock"></i>
+    </div>
+    <div class="info-total">
+      <h3 id="totalCuentas">{{ total_cuentas }}</h3>
+      <p>Ventas Pendientes</p>
+    </div>
+  </div>
+
+  <div class="tarjeta-total">
+    <div class="icono-total">
+      <i class="fas fa-money-bill-wave"></i>
+    </div>
+    <div class="info-total">
+      <h3 id="totalSaldoBs">Bs {{ total_saldo_pendiente|floatformat:2 }}</h3>
+      <p id="totalSaldoUsd">$ {{ total_usd|floatformat:2 }}</p>
+      <span>Saldo Total Pendiente</span>
+    </div>
+  </div>
+
+  <div class="tarjeta-total">
+    <div class="icono-total">
+      <i class="fas fa-users"></i>
+    </div>
+    <div class="info-total">
+      <h3 id="totalClientes">{{ clientes_deuda_detallada|length }}</h3>
+      <p>Clientes con Deuda</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOP 5 CLIENTES CON MAYOR DEUDA ===== -->
+<div class="panel-deudas-clientes">
+  <h3><i class="fas fa-chart-bar"></i> Top 5 Clientes con Mayor Deuda</h3>
+  <div class="clientes-lista">
+    {% for cliente_data in clientes_top_5 %}
+    <div class="cliente-deuda-item">
+      <div class="cliente-info">
+        <strong>{{ cliente_data.cliente.nombre }} {{ cliente_data.cliente.apellido }}</strong>
+        <small>{{ cliente_data.cliente.cedula }}</small>
+      </div>
+      <div class="deuda-info">
+        <span class="deuda-total">Bs {{ cliente_data.deuda_total|floatformat:2 }}</span>
+        <small>{{ cliente_data.ventas_pendientes }} venta{{ cliente_data.ventas_pendientes|pluralize }} pendiente{{ cliente_data.ventas_pendientes|pluralize }}</small>
+      </div>
+      <div class="acciones-cliente">
+        <a href="{% url 'cuentas_pendientes:gestionar_abono_cliente' cliente_data.cliente.cedula %}"
+          class="btn-action btn-abonar" title="Gestionar Abono">
+          <i class="fas fa-money-bill"></i>
+        </a>
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+      <i class="fas fa-smile-beam"></i>
+      <p>¡No hay clientes con deuda pendiente!</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ===== CONTENEDOR PRINCIPAL ===== -->
+<div class="productos-container">
+  <div class="productos-main">
+
+    <!-- ===== BARRA DE HERRAMIENTAS ===== -->
+    <div class="productos-toolbar">
+      <div class="filtros-container">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Buscar por cliente o cédula...">
+        </div>
+
+        <div class="filtro-select">
+          <select id="estadoPagoSelect">
+            <option value="">Todos los clientes</option>
+            <option value="alta">Deuda Alta (> 30 días)</option>
+            <option value="media">Deuda Media (15-30 días)</option>
+            <option value="baja">Deuda Baja (< 15 días)</option>
+          </select>
+        </div>
+
+        <button class="btn btn-secondary" id="btnGenerarReporte">
+          <i class="fas fa-file-pdf"></i> Generar Reporte
+        </button>
+      </div>
+
+      <div class="toolbar-actions">
+        <!-- Removed Registrar Abono button as requested -->
+      </div>
+    </div>
+
+    <!-- ===== TABLA DE CLIENTES CON DEUDA ===== -->
+    <div class="table-container">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Ventas Pendientes</th>
+            <th>Deuda Total</th>
+            <th>Días desde 1ra Venta</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% for cliente_data in clientes_deuda_detallada %}
+          <tr data-cliente-id="{{ cliente_data.cliente.cedula }}"
+            data-deuda="{{ cliente_data.deuda_total|floatformat:2 }}" data-dias="{{ cliente_data.dias_transcurridos }}">
+            <td>
+              <strong>{{ cliente_data.cliente.nombre }} {{ cliente_data.cliente.apellido }}</strong>
+              <br><small>{{ cliente_data.cliente.cedula }}</small>
+              <br><small>{{ cliente_data.cliente.telefono|default:"Sin teléfono" }}</small>
+            </td>
+            <td class="text-center">
+              <span class="badge-dias">{{ cliente_data.ventas_pendientes }}</span>
+            </td>
+            <td class="text-right">
+              <span class="text-danger deuda-total">Bs {{ cliente_data.deuda_total|floatformat:2 }}</span>
+            </td>
+            <td class="text-center">
+              <span class="badge-dias {{ cliente_data.badge_class }}">
+                {{ cliente_data.dias_transcurridos }} día{{ cliente_data.dias_transcurridos|pluralize }}
+              </span>
+            </td>
+            <td class="actions">
+              <div class="acciones-venta">
+                <!-- Gestionar abono -->
+                <a href="{% url 'cuentas_pendientes:gestionar_abono_cliente' cliente_data.cliente.cedula %}"
+                  class="btn-action btn-abonar" title="Gestionar Abono">
+                  <i class="fas fa-money-bill"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr class="empty-row">
+            <td colspan="5">
+              <i class="fas fa-check-circle"></i>
+              <h3>¡No hay clientes con deuda pendiente!</h3>
+              <p>Todos los clientes están al día con sus pagos</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ABONOS RECIENTES ===== -->
+<div class="panel-abonos-recientes">
+  <h3><i class="fas fa-history"></i> Abonos Recientes (Últimos 30 días)</h3>
+  <div class="abonos-lista">
+    {% for abono in abonos_recientes %}
+    <div class="abono-item">
+      <div class="abono-fecha">
+        <strong>{{ abono.Fecha_Abono|date:"d/m/Y" }}</strong>
+        <small>{{ abono.Fecha_Abono|time:"H:i" }}</small>
+      </div>
+      <div class="abono-info">
+        <span class="abono-cliente">{{ abono.Cliente.nombre }} {{ abono.Cliente.apellido }}</span>
+        <small>Venta #{{ abono.ID_Ventas.ID_Ventas }}</small>
+      </div>
+      <div class="abono-monto">
+        <strong class="text-success">Bs {{ abono.Monto_Abono_Bs|floatformat:2 }}</strong>
+        <small>{{ abono.get_Metodo_Pago_display }}</small>
+      </div>
+      <div class="abono-acciones">
+        <span class="badge badge-success">Registrado</span>
+      </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+      <i class="fas fa-coins"></i>
+      <p>No hay abonos recientes</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'cuentas_pendientes/css/menu_cuentas.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'cuentas_pendientes/js/menu_cuentas.js' %}"></script>
+{% endblock %}

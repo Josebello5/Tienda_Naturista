@@ -1,0 +1,611 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestionar Abonos - {{ cliente.nombre }} {{ cliente.apellido }}{% endblock %}
+
+{% block content %}
+<!-- ===== TARJETA DE BIENVENIDA ===== -->
+<div class="welcome-card">
+  <h2>Gestionar Abonos</h2>
+  <p>Cliente: {{ cliente.nombre }} {{ cliente.apellido }} - Cédula: {{ cliente.cedula }}</p>
+</div>
+
+<!-- ===== RESUMEN DE TOTALES ===== -->
+<div class="resumen-totales">
+  <div class="tarjeta-total">
+    <div class="icono-total">
+      <i class="fas fa-clock"></i>
+    </div>
+    <div class="info-total">
+      <h3 id="totalVentasPendientes">{{ ventas_pendientes|length }}</h3>
+      <p>Ventas Pendientes</p>
+    </div>
+  </div>
+
+  <div class="tarjeta-total">
+    <div class="icono-total">
+      <i class="fas fa-money-bill-wave"></i>
+    </div>
+    <div class="info-total">
+      <h3 id="totalDeudaCliente">Bs {{ deuda_total|floatformat:2 }}</h3>
+      <p id="totalDeudaClienteUsd" style="display: none;">$ {{ deuda_usd|floatformat:2 }}</p>
+      <span>Deuda Total</span>
+    </div>
+  </div>
+
+  <div class="tarjeta-total">
+    <div class="icono-total">
+      <i class="fas fa-calendar-day"></i>
+    </div>
+    <div class="info-total">
+      <h3 id="diasUltimaCompra">{{ dias_ultima_compra }}</h3>
+      <p>Días desde última compra</p>
+    </div>
+  </div>
+
+  <div class="tarjeta-total total-general">
+    <div class="icono-total">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <div class="info-total">
+      <h3 id="ventasAtrasadas">{{ ventas_atrasadas }}</h3>
+      <p>Ventas Atrasadas</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RESUMEN DE PAGO ===== -->
+<div id="resumenPagoContainer" class="panel-resumen-pago" style="display: none;">
+  <div class="resumen-pago-header">
+    <h3><i class="fas fa-money-check-alt"></i> Resumen de Pago</h3>
+    <button id="btnCerrarResumen" class="btn-cerrar-resumen">&times;</button>
+  </div>
+  <div class="resumen-pago-body">
+    <div class="resumen-pago-totales">
+      <div class="resumen-item">
+        <span>Total a Pagar:</span>
+        <span id="totalAPagar" class="total-a-pagar">Bs 0,00</span>
+      </div>
+      <div class="resumen-item">
+        <span>Pagado:</span>
+        <span id="totalPagado" class="total-pagado">Bs 0,00</span>
+      </div>
+      <div class="resumen-item">
+        <span>Restante:</span>
+        <span id="restantePagar" class="restante-pagar">Bs 0,00</span>
+      </div>
+    </div>
+
+    <div class="metodos-pago-lista" id="metodosPagoLista">
+      <!-- Aquí se mostrarán los métodos de pago -->
+    </div>
+
+    <div class="acciones-resumen">
+      <button id="btnAgregarMetodo" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Agregar Método de Pago
+      </button>
+      <button id="btnProcesarPago" class="btn btn-success" disabled>
+        <i class="fas fa-check"></i> Procesar Pago
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MENSAJES ===== -->
+<div id="messagesContainer" class="messages-container"></div>
+
+<!-- ===== CONTENEDOR PRINCIPAL ===== -->
+<div class="productos-container">
+  <div class="productos-main">
+
+    <!-- ===== BARRA DE HERRAMIENTAS ===== -->
+    <div class="productos-toolbar">
+      <div class="filtros-container">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Buscar por ID de venta...">
+        </div>
+
+        <!-- Filtro por fecha -->
+        <button class="btn-filtro-fecha" id="btnFiltroFechaVenta">
+          <i class="fas fa-calendar-day"></i> Fecha de Venta
+        </button>
+
+        <!-- Filtro por estado de pago -->
+        <div class="filtro-select">
+          <select id="estadoPagoSelect">
+            <option value="" {% if not estado_pago_filtro %}selected{% endif %}>Todos los estados</option>
+            <option value="parcial" {% if estado_pago_filtro == "parcial" %}selected{% endif %}>Pago Parcial</option>
+            <option value="completo" {% if estado_pago_filtro == "completo" %}selected{% endif %}>Pago Completo</option>
+          </select>
+        </div>
+
+        <!-- Botón para limpiar filtros -->
+        <button class="btn btn-secondary" id="btnLimpiarFiltros">
+          <i class="fas fa-times"></i> Limpiar
+        </button>
+      </div>
+
+      <div class="toolbar-actions">
+        <button id="btnPagarSeleccionadas" class="btn btn-success" disabled>
+          <i class="fas fa-money-bill-wave"></i> Pagar Seleccionadas
+        </button>
+        <a href="{% url 'cuentas_pendientes:menu_cuentas' %}" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Volver al Menú
+        </a>
+      </div>
+    </div>
+
+    <!-- ===== TABLA DE VENTAS PENDIENTES ===== -->
+    <div class="table-container">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th width="50">
+              <input type="checkbox" id="selectAll">
+            </th>
+            <th>ID Venta</th>
+            <th>Fecha Venta</th>
+            <th>Total Venta</th>
+            <th>Abono Inicial</th>
+            <th>Saldo Pendiente</th>
+            <th>Días</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% for venta in ventas_pendientes %}
+          <tr data-venta-id="{{ venta.ID_Ventas }}" data-fecha-venta="{{ venta.Fecha_Venta|date:'Y-m-d H:i' }}"
+            data-estado-pago="{{ venta.Estado_Pago }}" data-dias="{{ venta.dias_transcurridos }}"
+            data-saldo="{{ venta.Saldo_Pendiente|floatformat:2 }}" data-total="{{ venta.Total|floatformat:2 }}"
+            data-abono-inicial="{{ venta.Abono_Inicial|floatformat:2 }}" data-badge-class="{{ venta.badge_class }}">
+            <td class="text-center">
+              <input type="checkbox" class="venta-checkbox" data-venta-id="{{ venta.ID_Ventas }}"
+                data-saldo="{{ venta.Saldo_Pendiente|floatformat:2 }}">
+            </td>
+            <td>#{{ venta.ID_Ventas }}</td>
+            <td>{{ venta.Fecha_Venta|date:"d/m/Y" }}</td>
+            <td class="text-right">
+              <strong>Bs {{ venta.Total|floatformat:2 }}</strong>
+            </td>
+            <td class="text-right">
+              <span class="text-success">Bs {{ venta.Abono_Inicial|floatformat:2 }}</span>
+            </td>
+            <td class="text-right">
+              <span class="text-danger saldo-pendiente">Bs {{ venta.Saldo_Pendiente|floatformat:2 }}</span>
+            </td>
+            <td class="text-center">
+              <span class="badge-dias {{ venta.badge_class }}">
+                {{ venta.dias_transcurridos }} día{{ venta.dias_transcurridos|pluralize }}
+              </span>
+            </td>
+            <td>
+              <span class="status status-{{ venta.Estado_Pago }}">
+                {{ venta.get_Estado_Pago_display }}
+              </span>
+            </td>
+            <td class="actions">
+              <div class="acciones-venta">
+                <!-- Ver comprobante -->
+                <a href="{% url 'ventas:ver_comprobante' venta.ID_Ventas %}" target="_blank" class="btn-action btn-info"
+                  title="Ver Comprobante">
+                  <i class="fas fa-eye"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr class="empty-row">
+            <td colspan="9">
+              <i class="fas fa-check-circle"></i>
+              <h3>¡No hay ventas pendientes!</h3>
+              <p>Este cliente está al día con sus pagos</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HISTORIAL DE ABONOS DEL CLIENTE ===== -->
+<div class="panel-historial-abonos">
+  <div class="panel-header">
+    <h3><i class="fas fa-history"></i> Historial de Abonos</h3>
+    <button id="btnToggleHistorial" class="btn-toggle">
+      <i class="fas fa-chevron-down"></i>
+    </button>
+  </div>
+  <div class="panel-body" id="historialBody" style="display: none;">
+    <div class="historial-filtros">
+      <input type="text" id="filterHistorial" placeholder="Filtrar por método o monto..." class="form-control">
+      <input type="date" id="fechaHistorial" class="form-control">
+    </div>
+    <div class="historial-lista" id="listaHistorialAbonos">
+      <!-- Aquí se cargará el historial dinámicamente -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL PARA MÉTODO DE PAGO ===== -->
+<div id="modalMetodoPago" class="modal-filtro">
+  <div class="modal-contenido" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3 id="modalTitulo">Agregar Método de Pago</h3>
+      <button class="btn-cerrar" id="btnCerrarModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="infoPagoModal" class="alert alert-info" style="display: none;">
+        <i class="fas fa-info-circle"></i>
+        <span id="textoInfoModal"></span>
+      </div>
+      <div class="form-group">
+        <label for="selectMetodoPago">Método de Pago <span class="required">*</span></label>
+        <select id="selectMetodoPago" class="form-control">
+          <option value="">Seleccione...</option>
+          <option value="efectivo_bs">Efectivo (Bs)</option>
+          <option value="efectivo_usd">Efectivo ($)</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="pago_movil">Pago Móvil</option>
+          <option value="tarjeta">Tarjeta</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="montoPago">Monto <span class="required">*</span></label>
+        <input type="text" id="montoPago" class="form-control formatted-number-input"
+          placeholder="Ingrese el monto (ej: 1.234,56)">
+      </div>
+      <div id="divTasaCambio" style="display: none;">
+        <div class="form-group">
+          <label for="tasaCambio">Tasa de Cambio (Bs/$)</label>
+          <input type="text" id="tasaCambio" class="form-control formatted-number-input"
+            value="{{ tasa_actual.valor|floatformat:2|default:'0,00' }}" readonly>
+          <small class="text-muted">Tasa actual automática</small>
+        </div>
+      </div>
+      <div id="divComprobante" style="display: none;">
+        <div class="form-group">
+          <label for="comprobantePago">Número de Comprobante <span class="required">*</span></label>
+          <input type="text" id="comprobantePago" class="form-control" placeholder="Solo números">
+          <small class="error-msg">Solo se permiten números</small>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-cancelar-modal">Cancelar</button>
+      <button class="btn btn-primary" id="btnAgregarPago">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL PARA FILTRO DE FECHAS ===== -->
+<div id="modalFiltroFechas" class="modal-filtro">
+  <div class="modal-contenido">
+    <div class="modal-header">
+      <h3 id="modalTitulo">Filtrar por Fecha de Venta</h3>
+      <button class="btn-cerrar" id="btnCerrarModalFecha">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="fecha-inputs">
+        <div class="fecha-group">
+          <label for="fechaDesde">Desde:</label>
+          <input type="date" id="fechaDesde">
+        </div>
+        <div class="fecha-group">
+          <label for="fechaHasta">Hasta:</label>
+          <input type="date" id="fechaHasta">
+        </div>
+      </div>
+      <div id="fechaError" class="error-message"
+        style="display: none; color: #e74c3c; font-size: 0.85rem; margin-top: 10px; text-align: center; padding: 8px; background: rgba(231, 76, 60, 0.1); border-radius: 5px;">
+        <i class="fas fa-exclamation-triangle"></i> La fecha "Hasta" no puede ser menor que la fecha "Desde"
+      </div>
+      <div class="opciones-rapidas">
+        <h4>Opciones Rápidas:</h4>
+        <div class="botones-opciones">
+          <button type="button" class="btn-opcion" data-dias="1">Hoy</button>
+          <button type="button" class="btn-opcion" data-dias="8">Última semana</button>
+          <button type="button" class="btn-opcion" data-dias="31">Último mes</button>
+          <button type="button" class="btn-opcion" data-dias="365">Último año</button>
+          <button type="button" class="btn-opcion btn-limpiar">Limpiar</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelarFecha">Cancelar</button>
+      <button class="btn btn-primary" id="btnAplicarFecha">Aplicar Filtro</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'cuentas_pendientes/css/menu_cuentas.css' %}">
+<style>
+  /* Estilos para el resumen de pago */
+  .panel-resumen-pago {
+    background: white;
+    border-radius: 10px;
+    padding: 0;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid var(--success);
+    animation: slideDown 0.3s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(-20px);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .resumen-pago-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, var(--success), #1e7e34);
+    color: white;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .resumen-pago-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-cerrar-resumen {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    opacity: 0.8;
+  }
+
+  .btn-cerrar-resumen:hover {
+    opacity: 1;
+  }
+
+  .resumen-pago-body {
+    padding: 20px;
+  }
+
+  .resumen-pago-totales {
+    background: var(--light);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .resumen-pago-totales .resumen-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 1.1rem;
+  }
+
+  .total-a-pagar {
+    color: var(--danger);
+    font-weight: bold;
+  }
+
+  .total-pagado {
+    color: var(--success);
+    font-weight: bold;
+  }
+
+  .restante-pagar {
+    color: var(--warning);
+    font-weight: bold;
+  }
+
+  .metodos-pago-lista {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .metodo-pago-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 6px;
+    border-left: 4px solid var(--secondary);
+    transition: all 0.3s ease;
+  }
+
+  .metodo-pago-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .metodo-pago-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .acciones-resumen {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  /* Panel de historial */
+  .panel-historial-abonos {
+    background: white;
+    border-radius: 10px;
+    margin-top: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid var(--info);
+  }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 2px solid var(--light-gray);
+    cursor: pointer;
+  }
+
+  .panel-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-toggle {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--gray);
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+
+  .btn-toggle.open {
+    transform: rotate(180deg);
+  }
+
+  .panel-body {
+    padding: 20px;
+    background: var(--light);
+  }
+
+  .historial-filtros {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .historial-filtros input {
+    flex: 1;
+  }
+
+  .historial-lista {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .historial-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 6px;
+    border-left: 4px solid var(--success);
+    transition: all 0.3s ease;
+  }
+
+  .historial-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .historial-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .historial-info {
+    flex: 1;
+  }
+
+  .historial-monto {
+    font-weight: bold;
+    color: var(--success);
+    margin-right: 15px;
+  }
+
+  /* Checkboxes */
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  #selectAll {
+    margin: 0;
+  }
+
+  .venta-checkbox {
+    margin: 0;
+  }
+
+  /* Mensajes */
+  .messages-container {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    z-index: 10000;
+    width: 350px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .messages-container .alert {
+    margin-bottom: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: slideInRight 0.3s ease;
+  }
+
+  @keyframes slideInRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'cuentas_pendientes/js/gestionar_abono.js' %}"></script>
+<script>
+  // Variables globales
+  window.CLIENTE_CEDULA = "{{ cliente.cedula }}";
+  window.TASA_ACTUAL = {{ tasa_actual.valor |default:0 }};
+</script>
+<script>
+  console.log('Cliente Cédula:', "{{ cliente.cedula }}");
+  console.log('Tasa Actual:', {{ tasa_actual.valor |default:0 }});
+
+  // Variables globales
+  window.CLIENTE_CEDULA = "{{ cliente.cedula }}";
+  window.TASA_ACTUAL = {{ tasa_actual.valor |default:0 }};
+
+  // Función para debug
+  function debugUrls() {
+    console.log('URL Procesar Pago:', '/cuentas_pendientes/procesar-pago-multiple/');
+    console.log('URL Historial:', `/cuentas_pendientes/api-historial-abonos-cliente/${window.CLIENTE_CEDULA}/`);
+  }
+
+  // Llamar al debug cuando se cargue
+  document.addEventListener('DOMContentLoaded', debugUrls);
+</script>
+{% endblock %}

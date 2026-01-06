@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cierre de Caja - Tienda Naturista{% endblock %}
+
+{% block content %}
+<!-- ===== TARJETA DE BIENVENIDA ===== -->
+<div class="welcome-card">
+    <h2><i class="fas fa-cash-register me-2"></i>Cierre de Caja Diario</h2>
+    <p>Conciliación de ventas del sistema vs. ingresos reales</p>
+</div>
+
+<!-- ===== MENSAJES ===== -->
+{% if messages %}
+<div class="messages-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- ===== SELECTOR DE FECHA ===== -->
+<div class="date-selector">
+    <button type="button" class="date-nav-btn" id="btnPrevDate" title="Día anterior">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+
+    <div class="date-input-container">
+        <h3><i class="far fa-calendar-alt me-2"></i></h3>
+        <input type="date" id="fechaCierre" value="{{ fecha_str }}" max="{{ es_hoy|yesno:'now,'|date:'Y-m-d' }}">
+    </div>
+
+    <button type="button" class="date-nav-btn" id="btnNextDate" title="Día siguiente" {% if es_hoy %}disabled
+        style="opacity: 0.5; cursor: default;" {% endif %}>
+        <i class="fas fa-chevron-right"></i>
+    </button>
+</div>
+
+<!-- ===== FORMULARIO DE CIERRE ===== -->
+<form method="post" id="cierreForm">
+    {% csrf_token %}
+
+    <div class="cierre-form-card">
+        <div class="card-header">
+            <h3>
+                Detalle de Ingresos por Método de Pago
+                {% if cierre_existente %}
+                <span class="status-badge cerrado ms-2"><i class="fas fa-check me-1"></i>Registrado</span>
+                {% else %}
+                <span class="status-badge abierto ms-2"><i class="fas fa-pen me-1"></i>Abierto</span>
+                {% endif %}
+            </h3>
+            <div class="header-actions">
+                {% if cierre_existente %}
+                <a href="{% url 'cierre_caja:ver_recibo_cierre' cierre_existente.ID_Cierre %}"
+                    class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-file-invoice me-1"></i>Ver Recibo
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="cierre-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%">Método de Pago</th>
+                            <th style="width: 25%">Sistema (Ventas)</th>
+                            <th style="width: 25%">Real (Caja)</th>
+                            <th style="width: 25%">Diferencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Efectivo Bs -->
+                        <tr>
+                            <td>
+                                <i class="fas fa-money-bill-wave method-icon"></i> Efectivo Bolívares
+                            </td>
+                            <td>
+                                <span class="amount-display amount-system"
+                                    data-raw="{{ montos_sistema.efectivo_bs|stringformat:'.2f' }}">
+                                    Bs {{ montos_sistema.efectivo_bs|floatformat:2 }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="amount-input-group">
+                                    <span class="currency-symbol">Bs</span>
+                                    <input type="text" name="real_efectivo_bs" class="amount-input"
+                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Efectivo_Bs|floatformat:2 }}{% else %}0,00{% endif %}"
+                                        autocomplete="off">
+                                </div>
+                            </td>
+                            <td><span class="difference-display diff-neutral">0,00</span></td>
+                        </tr>
+
+                        <!-- Efectivo USD -->
+                        <tr>
+                            <td>
+                                <i class="fas fa-dollar-sign method-icon"></i> Efectivo Dólares
+                            </td>
+                            <td>
+                                <span class="amount-display amount-system"
+                                    data-raw="{{ montos_sistema.efectivo_usd|stringformat:'.2f' }}">
+                                    $ {{ montos_sistema.efectivo_usd|floatformat:2 }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="amount-input-group">
+                                    <span class="currency-symbol">$</span>
+                                    <input type="text" name="real_efectivo_usd" class="amount-input"
+                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Efectivo_USD|floatformat:2 }}{% else %}0,00{% endif %}"
+                                        autocomplete="off">
+                                </div>
+                            </td>
+                            <td><span class="difference-display diff-neutral">0,00</span></td>
+                        </tr>
+
+                        <!-- Punto de Venta -->
+                        <tr>
+                            <td>
+                                <i class="fas fa-credit-card method-icon"></i> Punto de Venta
+                            </td>
+                            <td>
+                                <span class="amount-display amount-system"
+                                    data-raw="{{ montos_sistema.punto_venta|stringformat:'.2f' }}">
+                                    Bs {{ montos_sistema.punto_venta|floatformat:2 }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="amount-input-group">
+                                    <span class="currency-symbol">Bs</span>
+                                    <input type="text" name="real_punto_venta" class="amount-input"
+                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Punto_Venta|floatformat:2 }}{% else %}0,00{% endif %}"
+                                        autocomplete="off">
+                                </div>
+                            </td>
+                            <td><span class="difference-display diff-neutral">0,00</span></td>
+                        </tr>
+
+                        <!-- Pago Móvil -->
+                        <tr>
+                            <td>
+                                <i class="fas fa-mobile-alt method-icon"></i> Pago Móvil
+                            </td>
+                            <td>
+                                <span class="amount-display amount-system"
+                                    data-raw="{{ montos_sistema.pago_movil|stringformat:'.2f' }}">
+                                    Bs {{ montos_sistema.pago_movil|floatformat:2 }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="amount-input-group">
+                                    <span class="currency-symbol">Bs</span>
+                                    <input type="text" name="real_pago_movil" class="amount-input"
+                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Pago_Movil|floatformat:2 }}{% else %}0,00{% endif %}"
+                                        autocomplete="off">
+                                </div>
+                            </td>
+                            <td><span class="difference-display diff-neutral">0,00</span></td>
+                        </tr>
+
+                        <!-- Transferencia -->
+                        <tr>
+                            <td>
+                                <i class="fas fa-university method-icon"></i> Transferencia
+                            </td>
+                            <td>
+                                <span class="amount-display amount-system"
+                                    data-raw="{{ montos_sistema.transferencia|stringformat:'.2f' }}">
+                                    Bs {{ montos_sistema.transferencia|floatformat:2 }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="amount-input-group">
+                                    <span class="currency-symbol">Bs</span>
+                                    <input type="text" name="real_transferencia" class="amount-input"
+                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Transferencia|floatformat:2 }}{% else %}0,00{% endif %}"
+                                        autocomplete="off">
+                                </div>
+                            </td>
+                            <td><span class="difference-display diff-neutral">0,00</span></td>
+                        </tr>
+
+                        <!-- Tarjeta (Otros) -->
+                        <tr>
+                            <td>
+                                <i class="far fa-credit-card method-icon"></i> Otros / Tarjeta
+                            </td>
+                            <td>
+                                <span class="amount-display amount-system"
+                                    data-raw="{{ montos_sistema.tarjeta|stringformat:'.2f' }}">
+                                    Bs {{ montos_sistema.tarjeta|floatformat:2 }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="amount-input-group">
+                                    <span class="currency-symbol">Bs</span>
+                                    <input type="text" name="real_tarjeta" class="amount-input"
+                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Tarjeta|floatformat:2 }}{% else %}0,00{% endif %}"
+                                        autocomplete="off">
+                                </div>
+                            </td>
+                            <td><span class="difference-display diff-neutral">0,00</span></td>
+                        </tr>
+
+                        <!-- Totales -->
+                        <tr class="total-row">
+                            <td>TOTAL GENERAL</td>
+                            <td>
+                                <!-- Nota: no se muestra total sistema simple porque mezcla monedas, se calcula en backend -->
+                                <small class="text-muted">(Mezcla divisas)</small>
+                            </td>
+                            <td>
+                                <span class="amount-display" id="totalRealDisplay">0,00</span>
+                                <small class="text-muted">(Ref)</small>
+                            </td>
+                            <td>
+                                <span class="difference-display diff-neutral" id="totalDiffDisplay">0,00</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Notas -->
+            <div class="notes-section">
+                <label for="notas"><i class="fas fa-sticky-note me-2"></i>Notas / Observaciones:</label>
+                <textarea name="notas" id="notas" class="notes-input"
+                    placeholder="Ingrese cualquier observación sobre el cierre de caja...">{% if cierre_existente %}{{ cierre_existente.Notas }}{% endif %}</textarea>
+            </div>
+
+            <!-- Botones -->
+            <div class="form-actions">
+                <a href="{% url 'cierre_caja:historial_cierres' %}" class="btn-print"
+                    style="margin-right: auto; background: #6c757d;">
+                    <i class="fas fa-history"></i> Historial
+                </a>
+
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i>
+                    {% if cierre_existente %}Actualizar Cierre{% else %}Guardar Cierre{% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'cierre_caja/css/cierre_caja.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'cierre_caja/js/cierre_caja.js' %}"></script>
+{% endblock %}

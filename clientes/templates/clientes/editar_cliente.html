@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<!-- Enlace al archivo CSS -->
+<link rel="stylesheet" href="{% static 'clientes/css/registro_cliente.css' %}">
+
+<div class="form-container">
+  <div class="form-header">
+    <h2>Editar Cliente</h2>
+    <p>Modifique los campos que desea actualizar</p>
+  </div>
+  
+  <div class="form-body">
+    <!-- Mostrar solo mensajes de error generales -->
+    {% if messages %}
+      {% for message in messages %}
+        {% if message.tags == 'error' %}
+          <div class="error-msg-container">
+            <div class="error-msg">
+              <i class="fas fa-exclamation-circle"></i> {{ message }}
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    
+    <form method="POST" id="clienteForm" novalidate>
+      {% csrf_token %}
+      
+      <!-- Información de cédula (solo lectura) -->
+      <div class="form-row">
+        <div class="form-col" style="flex: 0 0 100%;">
+          <div class="info-field">
+            <label class="form-label">Información de Identificación</label>
+            <div class="info-content">
+              <div class="info-item">
+                <strong>Tipo de Identificación:</strong>
+                <span>{{ cliente.get_tipo_cedula }}</span>
+              </div>
+              <div class="info-item">
+                <strong>Número de Identificación:</strong>
+                <span>{{ cliente.get_numero_cedula }}</span>
+              </div>
+              <div class="info-item">
+                <strong>Cédula Completa:</strong>
+                <span class="cedula-completa">{{ cliente.cedula }}</span>
+              </div>
+            </div>
+            <p class="info-note">
+              <i class="fas fa-info-circle"></i> La información de identificación no se puede modificar.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <!-- Campo Tipo de Cliente -->
+        <div class="form-col">
+          <label for="id_tipo_cliente" class="form-label">Tipo de Cliente</label>
+          <div class="input-icon">
+            <i class="fas fa-users"></i>
+            <select id="id_tipo_cliente" name="tipo_cliente" class="form-control{% if form.tipo_cliente.errors %} is-invalid{% endif %}" required>
+              <option value="particular" {% if form.tipo_cliente.value == 'particular' %}selected{% endif %}>Particular</option>
+              <option value="mayorista" {% if form.tipo_cliente.value == 'mayorista' %}selected{% endif %}>Mayorista</option>
+            </select>
+          </div>
+          {% if form.tipo_cliente.errors %}
+          <span class="error-msg">
+            {% for error in form.tipo_cliente.errors %}{{ error }}{% endfor %}
+          </span>
+          {% endif %}
+        </div>
+        
+        <!-- Campo Prefijo Teléfono -->
+        <div class="form-col">
+          <label for="telefono_prefijo_editar" class="form-label">Prefijo Teléfono</label>
+          <div class="input-icon">
+            <i class="fas fa-phone"></i>
+            <select id="telefono_prefijo_editar" name="telefono_prefijo" class="form-control{% if form.telefono_prefijo.errors %} is-invalid{% endif %}" required>
+              <option value="0412" {% if form.telefono_prefijo.value == '0412' %}selected{% endif %}>0412</option>
+              <option value="0414" {% if form.telefono_prefijo.value == '0414' %}selected{% endif %}>0414</option>
+              <option value="0416" {% if form.telefono_prefijo.value == '0416' %}selected{% endif %}>0416</option>
+              <option value="0426" {% if form.telefono_prefijo.value == '0426' %}selected{% endif %}>0426</option>
+              <option value="0422" {% if form.telefono_prefijo.value == '0422' %}selected{% endif %}>0422</option>
+              <option value="0424" {% if form.telefono_prefijo.value == '0424' %}selected{% endif %}>0424</option>
+            </select>
+          </div>
+          {% if form.telefono_prefijo.errors %}
+          <span class="error-msg">
+            {% for error in form.telefono_prefijo.errors %}{{ error }}{% endfor %}
+          </span>
+          {% endif %}
+        </div>
+        
+        <!-- Campo Número Teléfono -->
+        <div class="form-col">
+          <label for="telefono_numero_editar" class="form-label">Número de Teléfono</label>
+          <div class="input-icon">
+            <i class="fas fa-mobile-alt"></i>
+            <input type="text" id="telefono_numero_editar" name="telefono_numero" class="form-control{% if form.telefono_numero.errors %} is-invalid{% endif %}" 
+                  value="{{ form.telefono_numero.value|default_if_none:'' }}" required placeholder="7 dígitos" maxlength="7">
+          </div>
+          {% if form.telefono_numero.errors %}
+          <span class="error-msg">
+            {% for error in form.telefono_numero.errors %}{{ error }}{% endfor %}
+          </span>
+          {% endif %}
+        </div>
+        
+        <div class="form-col">
+          <label for="id_nombre" class="form-label">Nombre</label>
+          <div class="input-icon">
+            <i class="fas fa-user"></i>
+            <input type="text" id="id_nombre" name="nombre" class="form-control{% if form.nombre.errors %} is-invalid{% endif %}" 
+                  value="{{ form.nombre.value|default_if_none:'' }}" required placeholder="Nombre (max 10)" maxlength="10">
+          </div>
+          {% if form.nombre.errors %}
+          <span class="error-msg">
+            {% for error in form.nombre.errors %}{{ error }}{% endfor %}
+          </span>
+          {% endif %}
+        </div>
+        
+        <div class="form-col">
+          <label for="id_apellido" class="form-label">Apellido</label>
+          <div class="input-icon">
+            <i class="fas fa-signature"></i>
+            <input type="text" id="id_apellido" name="apellido" class="form-control{% if form.apellido.errors %} is-invalid{% endif %}" 
+                  value="{{ form.apellido.value|default_if_none:'' }}" required placeholder="Apellido (max 10)" maxlength="10">
+          </div>
+          {% if form.apellido.errors %}
+          <span class="error-msg">
+            {% for error in form.apellido.errors %}{{ error }}{% endfor %}
+          </span>
+          {% endif %}
+        </div>
+        
+        <div class="form-col" style="flex: 0 0 100%;">
+          <label for="id_direccion" class="form-label">Dirección</label>
+          <div class="input-icon">
+            <i class="fas fa-map-marker-alt"></i>
+            <textarea id="id_direccion" name="direccion" class="form-control{% if form.direccion.errors %} is-invalid{% endif %}" 
+                      required placeholder="Dirección completa (10-20 caracteres)" 
+                      rows="2" maxlength="20">{{ form.direccion.value|default_if_none:'' }}</textarea>
+          </div>
+          {% if form.direccion.errors %}
+          <span class="error-msg">
+            {% for error in form.direccion.errors %}{{ error }}{% endfor %}
+          </span>
+          {% endif %}
+          <div class="char-counter" id="direccion-counter">0/20 caracteres</div>
+        </div>
+      </div>
+      
+      <!-- Campo oculto para enviar teléfono combinado -->
+      <input type="hidden" name="telefono" id="telefono_completo">
+      
+      {% if form.non_field_errors %}
+        <div class="error-msg-container">
+          <div class="error-msg" id="error-nonfield">
+            <i class="fas fa-exclamation-circle"></i> {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      
+      <!-- BOTONES ALINEADOS EN LA MISMA FILA -->
+      <div class="form-buttons-row">
+        <a href="{% url 'clientes:menu_clientes' %}" class="btn btn-back">
+          <i class="fas fa-arrow-left"></i> Volver al Menú
+        </a>
+        <button type="submit" class="btn btn-submit">
+          <i class="fas fa-save"></i> Guardar Cambios
+        </button>
+      </div>
+    </form>
+  </div>
+  
+  <div class="form-footer">
+    <p>Sistema de Gestión de Clientes • Modifique los campos necesarios</p>
+  </div>
+</div>
+
+<!-- Enlace al archivo JavaScript -->
+<script src="{% static 'clientes/js/editar_cliente.js' %}"></script>
+
+<!-- Script para scroll automático a errores -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Esperar a que se renderice la página
+    setTimeout(function() {
+        // Buscar el primer campo con error
+        const firstErrorField = document.querySelector('.is-invalid');
+        if (firstErrorField) {
+            // Hacer scroll suave al campo con error
+            firstErrorField.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center'
+            });
+            
+            // Enfocar el campo
+            firstErrorField.focus();
+        }
+    }, 100);
+});
+</script>
+
+{% endblock %}

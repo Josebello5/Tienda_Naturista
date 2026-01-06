@@ -1,0 +1,884 @@
+/* ===== VARIABLES GLOBALES ===== */
+:root {
+  --primary-green: #3A8C6E;
+  --primary-blue: #3498B5;
+  --white-base: #F9FCFA;
+  --accent-green: #5CB85C;
+  --soft-blue: #E6F4F8;
+  --detail-green: #8DC26F;
+  --natural-gray: #7F8C8D;
+  --dark-gray: #34495E;
+  --error-red: #e74c3c;
+  --warning-orange: #f39c12;
+  --success-green: #5CB85C;
+  --light-gray: #f8f9fa;
+  --medium-gray: #e9ecef;
+  --border-gray: #dee2e6;
+  --hover-gray: #e9ecef;
+  --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-medium: 0 5px 15px rgba(0, 0, 0, 0.1);
+  --shadow-heavy: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== CONTENEDOR PRINCIPAL DE CLIENTES ===== */
+.clientes-container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ===== CONTENEDOR DE CONTENIDO PRINCIPAL ===== */
+.clientes-main {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: var(--shadow-heavy);
+  padding: 30px;
+  margin-top: 20px;
+}
+
+/* ===== BARRA DE HERRAMIENTAS ===== */
+.clientes-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--soft-blue);
+}
+
+/* ===== CONTENEDOR DE FILTROS ===== */
+.filtros-container {
+  display: flex;
+  gap: 15px;
+  flex: 1;
+  max-width: 700px;
+  flex-wrap: wrap;
+}
+
+/* ===== BARRA DE BÚSQUEDA ===== */
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+
+.search-box i {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--natural-gray);
+  z-index: 2;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 14px 14px 14px 45px;
+  border: 2px solid var(--border-gray);
+  border-radius: 50px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+  position: relative;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.1);
+}
+
+/* ===== SELECTORES DE FILTRO - ESTILOS MEJORADOS ===== */
+.filtro-select {
+  position: relative;
+  flex: 1;
+  min-width: 160px;
+}
+
+.filtro-select::after {
+  content: '\f078';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary-green);
+  pointer-events: none;
+  z-index: 2;
+  font-size: 0.9rem;
+}
+
+.filtro-select select {
+  width: 100%;
+  padding: 14px 40px 14px 18px;
+  border: 2px solid var(--border-gray);
+  border-radius: 50px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: var(--light-gray);
+  appearance: none;
+  cursor: pointer;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 500;
+  color: var(--dark-gray);
+  background-image: none;
+  box-shadow: var(--shadow-light);
+}
+
+.filtro-select select:hover {
+  background: white;
+  border-color: var(--primary-green);
+  box-shadow: 0 4px 12px rgba(58, 140, 110, 0.1);
+  transform: translateY(-1px);
+}
+
+.filtro-select select:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.15);
+  transform: translateY(-1px);
+}
+
+/* ===== ACCIONES DE LA BARRA ===== */
+.toolbar-actions {
+  display: flex;
+  gap: 15px;
+}
+
+/* ===== ESTILOS DE BOTONES ===== */
+.btn {
+  padding: 14px 28px;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  font-size: 1rem;
+  box-shadow: var(--shadow-light);
+  text-decoration: none;
+  text-align: center;
+  justify-content: center;
+  min-width: 160px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Estilos específicos para enlaces que son botones */
+a.btn {
+  text-decoration: none;
+  color: #F9FCFA;
+}
+
+a.btn:hover, a.btn:focus {
+  text-decoration: none;
+  color: #F9FCFA;
+}
+
+/* ===== BOTÓN PRIMARIO (VERDE) ===== */
+.btn-primary {
+  background: var(--primary-green);
+  color: white;
+  box-shadow: 0 4px 15px rgba(58, 140, 110, 0.3);
+}
+
+.btn-primary:hover {
+  background: #2d7058;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(58, 140, 110, 0.4);
+  color: white;
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* ===== BOTÓN SECUNDARIO (AZUL) ===== */
+.btn-secondary {
+  background: var(--primary-blue);
+  color: white;
+  box-shadow: 0 4px 15px rgba(52, 152, 181, 0.3);
+}
+
+.btn-secondary:hover {
+  background: #2980b9;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(52, 152, 181, 0.4);
+  color: white;
+}
+
+/* ===== CONTENEDOR DE TABLA ===== */
+.table-container {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-medium);
+  border: 1px solid var(--border-gray);
+  background: white;
+  overflow-x: auto;
+}
+
+/* ===== ESTILOS DE TABLA ===== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  min-width: 1000px;
+}
+
+/* Cabecera de la tabla con gradiente */
+thead {
+  background: linear-gradient(to right, var(--primary-green), var(--primary-blue));
+  color: white;
+}
+
+/* Celdas de cabecera */
+th {
+  padding: 18px 15px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+/* Filas del cuerpo de la tabla */
+tbody tr {
+  border-bottom: 1px solid var(--border-gray);
+  transition: all 0.2s ease;
+}
+
+/* Efecto hover en filas */
+tbody tr:hover {
+  background-color: rgba(58, 140, 110, 0.03);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-light);
+}
+
+/* Celdas del cuerpo */
+td {
+  padding: 16px 15px;
+  color: var(--dark-gray);
+  vertical-align: middle;
+  font-size: 0.9rem;
+}
+
+/* Ajustar el ancho de las columnas para que quepan todas */
+th:nth-child(1), td:nth-child(1) { /* CÉDULA */
+  width: 120px;
+}
+
+th:nth-child(2), td:nth-child(2) { /* NOMBRE */
+  width: 150px;
+  min-width: 120px;
+}
+
+th:nth-child(3), td:nth-child(3) { /* APELLIDO */
+  width: 150px;
+  min-width: 120px;
+}
+
+th:nth-child(4), td:nth-child(4) { /* TELÉFONO */
+  width: 120px;
+}
+
+th:nth-child(5), td:nth-child(5) { /* DIRECCIÓN */
+  width: 200px;
+  min-width: 150px;
+}
+
+th:nth-child(6), td:nth-child(6) { /* TIPO CLIENTE */
+  width: 120px;
+  text-align: center;
+}
+
+th:nth-child(7), td:nth-child(7) { /* ACCIONES */
+  width: 120px;
+  text-align: center;
+}
+
+/* ===== CONTENEDOR DE ACCIONES ===== */
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* Botones de acción (editar, eliminar) */
+.btn-action {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  font-size: 1rem;
+  box-shadow: var(--shadow-light);
+}
+
+/* Botón editar */
+.btn-edit {
+  background: rgba(58, 140, 110, 0.15);
+  color: var(--primary-green);
+}
+
+.btn-edit:hover {
+  background: var(--primary-green);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(58, 140, 110, 0.3);
+}
+
+/* Botón eliminar */
+.btn-delete {
+  background: rgba(247, 37, 133, 0.15);
+  color: #f72585;
+}
+
+.btn-delete:hover {
+  background: #f72585;
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(247, 37, 133, 0.3);
+}
+
+/* ===== BADGES PARA TIPOS DE CLIENTE ===== */
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-block;
+  text-align: center;
+  min-width: 90px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.badge:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-light);
+}
+
+.badge-primary {
+  background: rgba(58, 140, 110, 0.15);
+  color: var(--primary-green);
+  border: 1px solid rgba(58, 140, 110, 0.3);
+}
+
+.badge-secondary {
+  background: rgba(52, 152, 181, 0.15);
+  color: var(--primary-blue);
+  border: 1px solid rgba(52, 152, 181, 0.3);
+}
+
+/* ===== ESTILOS PARA TABLA VACÍA ===== */
+.empty-row {
+  text-align: center;
+  padding: 60px 40px;
+  color: var(--natural-gray);
+}
+
+.empty-row i {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  color: #dee2e6;
+  opacity: 0.6;
+}
+
+.empty-row h3 {
+  font-weight: 500;
+  margin-bottom: 10px;
+  color: var(--dark-gray);
+}
+
+.empty-row p {
+  color: var(--natural-gray);
+  font-size: 1rem;
+}
+
+/* ===== ANIMACIONES ===== */
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* Aplicar animación a las filas */
+tbody tr {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+/* ===== MODALES ===== */
+.modal-filtro {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-contenido {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 500px;
+  overflow: hidden;
+  animation: slideIn 0.3s ease;
+}
+
+.modal-header {
+  padding: 20px 25px;
+  background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.btn-cerrar {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.btn-cerrar:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--dark-gray);
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--border-gray);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.1);
+}
+
+.modal-footer {
+  padding: 20px 25px;
+  background: var(--light-gray);
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.modal-footer .btn {
+  min-width: 120px;
+}
+
+/* ===== MODAL DE ÉXITO ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-success {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  transform: scale(0.7);
+  opacity: 0;
+  transition: all 0.4s ease;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-overlay.active .modal-success {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.modal-success-icon {
+  font-size: 70px;
+  color: #4CAF50;
+  margin-bottom: 20px;
+  animation: bounce 0.8s ease;
+}
+
+.modal-success h2 {
+  color: #2e7d32;
+  margin-bottom: 15px;
+  font-size: 24px;
+}
+
+.modal-success p {
+  color: #388e3c;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.modal-success button {
+  background: linear-gradient(to right, var(--primary-green), var(--primary-blue));
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  max-width: 200px;
+  width: 100%;
+}
+
+.modal-success button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+}
+
+.leaf {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  background-color: #4CAF50;
+  border-radius: 50% 0;
+  opacity: 0;
+  z-index: -1;
+}
+
+/* Animaciones para la modal de éxito */
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+  }
+  40% {
+      transform: translateY(-20px);
+  }
+  60% {
+      transform: translateY(-10px);
+  }
+}
+
+@keyframes float {
+  0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
+  }
+  100% {
+      transform: translateY(-100px) rotate(360deg);
+      opacity: 0;
+  }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* ===== MENSAJES - IGUAL QUE EN LOTES ===== */
+.messages-container {
+  margin-bottom: 20px;
+}
+
+.alert {
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+  animation: slideIn 0.3s ease-out;
+}
+
+.alert-success {
+  background-color: rgba(92, 184, 92, 0.15);
+  color: var(--success-green);
+  border: 1px solid var(--success-green);
+}
+
+.alert-error {
+  background-color: rgba(231, 76, 60, 0.15);
+  color: var(--error-red);
+  border: 1px solid var(--error-red);
+}
+
+.alert-warning {
+  background-color: rgba(255, 193, 7, 0.15);
+  color: var(--warning-orange);
+  border: 1px solid var(--warning-orange);
+}
+
+.alert i {
+  font-size: 1.2rem;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    overflow: hidden;
+  }
+}
+
+.alert {
+  animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 4.7s forwards;
+}
+
+/* ===== DISEÑO RESPONSIVE ===== */
+
+/* Tablets y pantallas medianas */
+@media (max-width: 768px) {
+  .clientes-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filtros-container {
+    max-width: 100%;
+    margin-bottom: 15px;
+  }
+  
+  .toolbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .toolbar-actions .btn {
+    flex: 1;
+    min-width: auto;
+  }
+  
+  .clientes-main {
+    padding: 20px;
+    margin: 10px;
+  }
+  
+  table {
+    min-width: 900px;
+  }
+}
+
+/* Dispositivos móviles */
+@media (max-width: 480px) {
+  .filtros-container {
+    flex-direction: column;
+  }
+  
+  .search-box, .filtro-select {
+    min-width: 100%;
+  }
+  
+  .filtro-select select {
+    padding: 12px 35px 12px 15px;
+  }
+  
+  .actions {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .btn-action {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+  
+  .badge {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+    min-width: 80px;
+  }
+  
+  .clientes-container {
+    padding: 10px;
+  }
+  
+  .btn {
+    padding: 12px 20px;
+    min-width: 140px;
+    font-size: 0.9rem;
+  }
+  
+  table {
+    min-width: 850px;
+  }
+  
+  th, td {
+    padding: 14px 10px;
+    font-size: 0.85rem;
+  }
+
+  .modal-contenido {
+    width: 95%;
+    margin: 10px;
+  }
+
+  .modal-body {
+    padding: 20px;
+  }
+
+  .modal-success {
+    padding: 20px;
+  }
+
+  .modal-success-icon {
+    font-size: 50px;
+  }
+
+  .modal-success h2 {
+    font-size: 20px;
+  }
+}
+
+/* Pantallas grandes */
+@media (min-width: 1200px) {
+  .clientes-container {
+    max-width: 1400px;
+  }
+  
+  table {
+    min-width: auto;
+  }
+}
+
+/* ===== ESTILOS PARA MENSAJES DE TABLA VACÍA ===== */
+.empty-row {
+  text-align: center;
+  padding: 60px 40px;
+  color: var(--natural-gray);
+}
+
+.empty-row .no-results i {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  color: var(--border-gray);
+  opacity: 0.6;
+}
+
+.empty-row .no-results h3 {
+  font-weight: 500;
+  margin-bottom: 10px;
+  color: var(--dark-gray);
+  font-size: 1.4rem;
+}
+
+.empty-row .no-results p {
+  color: var(--natural-gray);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* ===== ANIMACIONES PARA FILAS ===== */
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* Aplicar animación a las filas de clientes */
+tbody tr:not(.empty-row) {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+/* ===== RESPONSIVE ADICIONAL ===== */
+@media (max-width: 768px) {
+  .empty-row {
+    padding: 40px 20px;
+  }
+  
+  .empty-row .no-results i {
+    font-size: 3rem;
+  }
+  
+  .empty-row .no-results h3 {
+    font-size: 1.2rem;
+  }
+}

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Cierre de Caja #{{ cierre.ID_Cierre }}</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 2cm;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #27ae60;
+            font-size: 18pt;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            margin: 2px 0;
+            color: #7f8c8d;
+        }
+
+        .meta-info {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .meta-info td {
+            padding: 5px;
+        }
+
+        .section-title {
+            background-color: #f8f9fa;
+            padding: 8px 10px;
+            font-weight: bold;
+            border-bottom: 1px solid #ddd;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            font-size: 9pt;
+        }
+
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 9pt;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .summary-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-top: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .diff-positive {
+            color: #27ae60;
+        }
+
+        .diff-negative {
+            color: #c0392b;
+        }
+
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .signatures {
+            margin-top: 60px;
+            width: 100%;
+        }
+
+        .signature-line {
+            width: 40%;
+            border-top: 1px solid #000;
+            float: left;
+            text-align: center;
+            padding-top: 5px;
+        }
+
+        .signature-right {
+            float: right;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Tienda Naturista</h1>
+        <p>REPORTE DE CIERRE DE CAJA</p>
+    </div>
+
+    <table class="meta-info">
+        <tr>
+            <td width="50%">
+                <strong>Fecha de Cierre:</strong> {{ fecha_cierre_formateada }}<br>
+                <strong>ID Cierre:</strong> #{{ cierre.ID_Cierre }}
+            </td>
+            <td width="50%" class="text-right">
+                <strong>Generado el:</strong> {{ fecha_formateada }}<br>
+                <strong>Usuario:</strong> {{ cierre.Usuario.username }}
+            </td>
+        </tr>
+    </table>
+
+    <div class="summary-box">
+        <table style="width: 100%; margin: 0;">
+            <tr>
+                <td width="50%"><strong>Total Sistema (Ref):</strong></td>
+                <td width="50%" class="text-right">{{ total_sistema_formatted }}</td>
+            </tr>
+            <tr>
+                <td><strong>Total Real (Ref):</strong></td>
+                <td class="text-right">{{ total_real_formatted }}</td>
+            </tr>
+            <tr>
+                <td><strong>Diferencia Total (Ref):</strong></td>
+                <td
+                    class="text-right bold {% if cierre.Diferencia_Total >= 0 %}diff-positive{% else %}diff-negative{% endif %}">
+                    {{ diferencia_total_formatted }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section-title">DETALLE COMPARATIVO POR MÉTODO DE PAGO</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th width="30%">Método de Pago</th>
+                <th width="25%" class="text-right">Sistema</th>
+                <th width="25%" class="text-right">Real (Caja)</th>
+                <th width="20%" class="text-right">Diferencia</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Efectivo Bolívares</td>
+                <td class="text-right">Bs {{ sistema_efectivo_bs_formatted }}</td>
+                <td class="text-right">Bs {{ real_efectivo_bs_formatted }}</td>
+                <td
+                    class="text-right bold {% if diferencias.efectivo_bs < 0 %}diff-negative{% elif diferencias.efectivo_bs > 0 %}diff-positive{% endif %}">
+                    {{ dif_efectivo_bs_formatted }}
+                </td>
+            </tr>
+            <tr>
+                <td>Efectivo Dólares</td>
+                <td class="text-right">$ {{ sistema_efectivo_usd_formatted }}</td>
+                <td class="text-right">$ {{ real_efectivo_usd_formatted }}</td>
+                <td
+                    class="text-right bold {% if diferencias.efectivo_usd < 0 %}diff-negative{% elif diferencias.efectivo_usd > 0 %}diff-positive{% endif %}">
+                    {{ dif_efectivo_usd_formatted }}
+                </td>
+            </tr>
+            <tr>
+                <td>Punto de Venta</td>
+                <td class="text-right">Bs {{ sistema_punto_venta_formatted }}</td>
+                <td class="text-right">Bs {{ real_punto_venta_formatted }}</td>
+                <td
+                    class="text-right bold {% if diferencias.punto_venta < 0 %}diff-negative{% elif diferencias.punto_venta > 0 %}diff-positive{% endif %}">
+                    {{ dif_punto_venta_formatted }}
+                </td>
+            </tr>
+            <tr>
+                <td>Pago Móvil</td>
+                <td class="text-right">Bs {{ sistema_pago_movil_formatted }}</td>
+                <td class="text-right">Bs {{ real_pago_movil_formatted }}</td>
+                <td
+                    class="text-right bold {% if diferencias.pago_movil < 0 %}diff-negative{% elif diferencias.pago_movil > 0 %}diff-positive{% endif %}">
+                    {{ dif_pago_movil_formatted }}
+                </td>
+            </tr>
+            <tr>
+                <td>Transferencia</td>
+                <td class="text-right">Bs {{ sistema_transferencia_formatted }}</td>
+                <td class="text-right">Bs {{ real_transferencia_formatted }}</td>
+                <td
+                    class="text-right bold {% if diferencias.transferencia < 0 %}diff-negative{% elif diferencias.transferencia > 0 %}diff-positive{% endif %}">
+                    {{ dif_transferencia_formatted }}
+                </td>
+            </tr>
+            <tr>
+                <td>Otros / Tarjeta</td>
+                <td class="text-right">Bs {{ sistema_tarjeta_formatted }}</td>
+                <td class="text-right">Bs {{ real_tarjeta_formatted }}</td>
+                <td
+                    class="text-right bold {% if diferencias.tarjeta < 0 %}diff-negative{% elif diferencias.tarjeta > 0 %}diff-positive{% endif %}">
+                    {{ dif_tarjeta_formatted }}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    {% if cierre.Notas %}
+    <div class="section-title">NOTAS / OBSERVACIONES</div>
+    <div style="padding: 10px; border: 1px solid #eee; background-color: #f9f9f9; font-style: italic;">
+        {{ cierre.Notas|linebreaksbr }}
+    </div>
+    {% endif %}
+
+    <div class="signatures">
+        <div class="signature-line">
+            Firma Cajero/a
+        </div>
+        <div class="signature-line signature-right">
+            Firma Supervisor/a
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Sistema de Gestión - Tienda Naturista</p>
+    </div>
+</body>
+
+</html>

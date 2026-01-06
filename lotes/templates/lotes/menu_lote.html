@@ -1,0 +1,503 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lotes - Tienda Naturista{% endblock %}
+
+{% block content %}
+<!-- ===== TARJETA DE BIENVENIDA ===== -->
+<div class="welcome-card">
+  <h2>Gestión de Lotes</h2>
+  <p>Control de lotes de productos</p>
+</div>
+
+<!-- ===== MENSAJES ===== -->
+{% if messages %}
+<div class="messages-container">
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+      <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+      {{ message }}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ===== CONTENEDOR PRINCIPAL DE LOTES ===== -->
+<div class="productos-container">
+  <div class="productos-main">
+    
+    <!-- ===== BARRA DE HERRAMIENTAS ===== -->
+    <div class="productos-toolbar">
+      <div class="filtros-container">
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Buscar por código de lote...">
+        </div>
+        
+        <div class="producto-search-container">
+          <input type="text" id="productoSearchInput" class="producto-search-input" placeholder="Buscar producto...">
+          <div id="productoSuggestions" class="producto-suggestions"></div>
+        </div>
+
+        <div class="proveedor-search-container">
+          <input type="text" id="proveedorSearchInput" class="proveedor-search-input" placeholder="Buscar proveedor...">
+          <div id="proveedorSuggestions" class="proveedor-suggestions"></div>
+        </div>
+        
+        <!-- Botones para abrir modales de fecha -->
+        <button class="btn-filtro-fecha" id="btnFiltroRecibimiento">
+          <i class="fas fa-calendar-day"></i>
+          Fecha Recibimiento
+        </button>
+
+        <button class="btn-filtro-fecha" id="btnFiltroVencimiento">
+          <i class="fas fa-calendar-times"></i>
+          Fecha Vencimiento
+        </button>
+        
+        <div class="filtro-select">
+          <select id="estadoSelect">
+            <option value="">Todos los estados</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+            <option value="vencido">Vencido</option>
+            <option value="agotado">Agotado</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="toolbar-actions">
+        <a href="{% url 'lotes:registrar_lote' %}" class="btn btn-primary" id="addBtn">
+          <i class="fas fa-plus-circle"></i> Registrar Lote
+        </a>
+        <button class="btn btn-secondary" id="proveedoresBtn">
+          <i class="fas fa-truck"></i> Gestionar Proveedores
+        </button>
+        <button class="btn btn-secondary" id="printBtn">
+          <i class="fas fa-print"></i> Imprimir
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== TABLA DE LOTES ===== -->
+    <div class="table-container">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>ID Lote</th>
+            <th>Código Lote</th>
+            <th>Producto</th>
+            <th>Proveedor</th>
+            <th>Costo Unitario</th>
+            <th>Costo Total</th>
+            <th>Unidades del Lote</th>
+            <th>Fecha Recibimiento</th>
+            <th>Fecha Vencimiento</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% for lote in lotes %}
+          <tr data-producto-id="{{ lote.id_producto.ID_producto }}" 
+              data-lote-id="{{ lote.id_lote }}" 
+              data-estado="{{ lote.estado }}"
+              data-proveedor-id="{{ lote.proveedor.id_proveedor }}">
+            <td>{{ lote.id_lote }}</td>
+            <td>{{ lote.codigo_lote }}</td>
+            <td>{{ lote.id_producto.nombre_pro }}</td>
+            <td>{{ lote.proveedor.nombre }}</td>
+            <td class="centered editable-costo" data-lote-id="{{ lote.id_lote }}" data-costo-actual="{{ lote.costo_unitario }}">
+              ${{ lote.costo_unitario }}
+            </td>
+            <td class="centered costo-total" data-lote-id="{{ lote.id_lote }}">${{ lote.costo_total }}</td>
+            <td>{{ lote.cantidad }}</td>
+            <td>{{ lote.fecha_recibimiento|date:"d/m/Y" }}</td>
+            <td>{{ lote.fecha_vencimiento|date:"d/m/Y" }}</td>
+            <td>
+              <span class="status 
+                {% if lote.estado == 'activo' %} status-active
+                {% elif lote.estado == 'inactivo' %} status-inactive
+                {% elif lote.estado == 'vencido' %} status-expired
+                {% else %} status-empty {% endif %}">
+                {{ lote.get_estado_display }}
+              </span>
+            </td>
+            <td class="actions">
+              <!-- Botón para editar costo unitario -->
+              {% if lote.estado != 'vencido' and lote.estado != 'agotado' %}
+              <button class="btn-action btn-edit-costo" title="Editar Costo Unitario" data-lote-id="{{ lote.id_lote }}">
+                <i class="fas fa-dollar-sign"></i>
+              </button>
+              {% else %}
+              <button class="btn-action btn-estado-fijo" title="No se puede editar costo de lote {{ lote.get_estado_display|lower }}" disabled style="opacity: 0.5;">
+                <i class="fas fa-ban"></i>
+              </button>
+              {% endif %}
+              
+              <!-- Botón para editar lote -->
+              {% if lote.estado != 'vencido' and lote.estado != 'agotado' %}
+              <a href="{% url 'lotes:editar_lote' lote.id_lote %}" class="btn-action btn-editar-lote" title="Editar Lote">
+                <i class="fas fa-edit"></i>
+              </a>
+              {% else %}
+              <button class="btn-action btn-estado-fijo" title="No se puede editar lote {{ lote.get_estado_display|lower }}" disabled style="opacity: 0.5;">
+                <i class="fas fa-ban"></i>
+              </button>
+              {% endif %}
+              
+              <!-- Botón para cambiar estado (solo para activo/inactivo) -->
+              {% if lote.estado in 'activo,inactivo' %}
+              <button class="btn-action btn-cambiar-estado" title="Cambiar Estado" data-lote-id="{{ lote.id_lote }}" data-estado-actual="{{ lote.estado }}">
+                <i class="fas fa-toggle-{% if lote.estado == 'activo' %}on{% else %}off{% endif %}"></i>
+              </button>
+              {% else %}
+              <!-- Para lotes vencidos o agotados, mostrar ícono deshabilitado -->
+              <button class="btn-action btn-estado-fijo" title="Estado calculado automáticamente" disabled style="opacity: 0.5;">
+                <i class="fas fa-lock"></i>
+              </button>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr class="empty-row">
+            <td colspan="11">
+              <i class="fas fa-box-open"></i>
+              <h3>No hay lotes registrados</h3>
+              <p>Haz clic en "Registrar Lote" para comenzar</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ===== PAGINACIÓN ===== -->
+    {% if lotes.paginator.num_pages > 1 %}
+    <div class="pagination-container">
+      <div class="pagination-info">
+        Mostrando página {{ lotes.number }} de {{ lotes.paginator.num_pages }} 
+        (Total: {{ lotes.paginator.count }} registros)
+      </div>
+      <div class="pagination-controls">
+        {% if lotes.has_previous %}
+          <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">
+            <i class="fas fa-angle-double-left"></i> Primera
+          </a>
+          <a href="?page={{ lotes.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">
+            <i class="fas fa-angle-left"></i> Anterior
+          </a>
+        {% endif %}
+
+        {% for num in lotes.paginator.page_range %}
+          {% if lotes.number == num %}
+            <span class="pagination-current">{{ num }}</span>
+          {% elif num > lotes.number|add:'-3' and num < lotes.number|add:'3' %}
+            <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if lotes.has_next %}
+          <a href="?page={{ lotes.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">
+            Siguiente <i class="fas fa-angle-right"></i>
+          </a>
+          <a href="?page={{ lotes.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">
+            Última <i class="fas fa-angle-double-right"></i>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ===== MODAL PARA EDITAR COSTO UNITARIO ===== -->
+<div id="modalEditarCosto" class="modal-filtro">
+  <div class="modal-contenido">
+    <div class="modal-header">
+      <h3>Editar Costo Unitario</h3>
+      <button class="btn-cerrar" id="btnCerrarModalCosto">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="formEditarCosto">
+        <input type="hidden" id="loteIdCosto">
+        <div class="form-group">
+          <label for="nuevoCostoUnitario">Nuevo Costo Unitario:</label>
+          <input type="number" step="0.01" min="0.01" id="nuevoCostoUnitario" class="form-control" required>
+          <small class="form-text text-muted">El costo total se recalculará automáticamente</small>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelarCosto">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarCosto">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL FILTRO FECHAS ===== -->
+<div id="modalFiltroFechas" class="modal-filtro">
+  <div class="modal-contenido">
+    <div class="modal-header">
+      <h3 id="modalTitulo">Filtrar por Fechas</h3>
+      <button class="btn-cerrar" id="btnCerrarModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="fecha-inputs">
+        <div class="fecha-group">
+          <label for="fechaDesde">Desde:</label>
+          <input type="date" id="fechaDesde">
+        </div>
+        <div class="fecha-group">
+          <label for="fechaHasta">Hasta:</label>
+          <input type="date" id="fechaHasta">
+        </div>
+      </div>
+      <div class="opciones-rapidas">
+        <h4>Opciones rápidas:</h4>
+        <div class="botones-opciones">
+          <button type="button" class="btn-opcion" data-dias="1">Hoy</button>
+          <button type="button" class="btn-opcion" data-dias="8">Última semana</button>
+          <button type="button" class="btn-opcion" data-dias="31">Último mes</button>
+          <button type="button" class="btn-opcion" data-dias="365">Último año</button>
+          <button type="button" class="btn-opcion btn-limpiar">Limpiar</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelar">Cancelar</button>
+      <button class="btn btn-primary" id="btnAplicar">Aplicar Filtro</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL GESTIÓN PROVEEDORES ===== -->
+<div id="modalProveedores" class="modal-filtro">
+  <div class="modal-contenido" style="max-width: 900px;">
+    <div class="modal-header">
+      <h3>Gestión de Proveedores</h3>
+      <button class="btn-cerrar" id="btnCerrarModalProveedores">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="search-box" style="margin-bottom: 20px;">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchProveedores" placeholder="Buscar proveedor...">
+      </div>
+      <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+        <table style="min-width: 800px;">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Contacto</th>
+              <th>Fecha Creación</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyProveedores">
+            <!-- Los proveedores se cargarán aquí -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelarProveedores">Cerrar</button>
+      <button class="btn btn-primary" id="btnAgregarProveedor">
+        <i class="fas fa-plus"></i> Agregar Proveedor
+      </button>
+      <button class="btn btn-secondary" id="btnImprimirProveedores">
+        <i class="fas fa-print"></i> Imprimir
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL EDITAR PROVEEDOR ===== -->
+<div id="modalEditarProveedor" class="modal-filtro">
+  <div class="modal-contenido">
+    <div class="modal-header">
+      <h3 id="tituloModalProveedor">Agregar Proveedor</h3>
+      <button class="btn-cerrar" id="btnCerrarModalEditarProveedor">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="formEditarProveedor">
+        <input type="hidden" id="proveedorId">
+        <div class="form-group">
+          <label for="nombreProveedor" class="form-label">Nombre del Proveedor</label>
+          <div class="input-icon">
+            <i class="fas fa-truck"></i>
+            <input type="text" id="nombreProveedor" class="form-control" 
+                   maxlength="100" placeholder="Letras, números y puntos" autocomplete="off" required>
+          </div>
+          <small class="form-text text-muted">Máximo 100 caracteres. Letras, números y puntos.</small>
+          <span class="error-msg" id="errorNombreProveedor" style="display: none;"></span>
+        </div>
+        <div class="form-group">
+          <label for="contactoProveedor" class="form-label">Información de Contacto (Opcional)</label>
+          <div class="input-icon">
+            <i class="fas fa-address-book"></i>
+            <input type="text" id="contactoProveedor" class="form-control" 
+                   maxlength="200" placeholder="Información de contacto" autocomplete="off">
+          </div>
+          <small class="form-text text-muted">Máximo 200 caracteres.</small>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelarProveedor">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarProveedor">Guardar Proveedor</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODALES PARA MENSAJES ===== -->
+<div id="successModal" class="modal-overlay">
+    <div class="modal-success">
+        <div class="modal-success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h2 id="successModalTitle">¡Éxito!</h2>
+        <p id="successModalMessage">La acción se ha realizado correctamente.</p>
+        <button id="closeSuccessModal" class="btn-aceptar">Continuar</button>
+    </div>
+</div>
+
+<div id="errorModal" class="modal-overlay">
+    <div class="modal-error">
+        <div class="modal-error-icon">
+            <i class="fas fa-exclamation-circle"></i>
+        </div>
+        <h2 id="errorModalTitle">¡Error!</h2>
+        <p id="errorModalMessage">Ha ocurrido un error inesperado.</p>
+        <button id="closeErrorModal" class="btn-aceptar-error">Continuar</button>
+    </div>
+</div>
+
+<div id="confirmModal" class="modal-overlay">
+    <div class="modal-confirm">
+        <div class="modal-confirm-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h2>Confirmar Acción</h2>
+        <p id="confirmModalMessage">¿Está seguro de que desea realizar esta acción?</p>
+        <div class="modal-confirm-actions">
+            <button id="cancelConfirm" class="btn-cancel">Cancelar</button>
+            <button id="confirmAction" class="btn-confirm">Aceptar</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<!-- ===== ESTILOS ESPECÍFICOS PARA LOTES ===== -->
+<link rel="stylesheet" href="{% static 'lotes/css/menu_lote.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Pasar datos de productos al JavaScript - CORREGIDO
+  window.productosData = [
+      {% for producto in productos %}
+      {
+          id: "{{ producto.ID_producto }}",
+          nombre: "{{ producto.nombre_pro|escapejs }}",
+          serial: "{{ producto.serial|escapejs }}"  // AGREGAR ESTA LÍNEA
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+  ];
+  
+  // Pasar datos de proveedores para sugerencias
+  window.proveedoresData = [
+      {% for proveedor in proveedores %}
+      {
+          id: "{{ proveedor.id_proveedor }}",
+          nombre: "{{ proveedor.nombre|escapejs }}"
+      }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+  ];
+
+  // Pasar URLs de Django al JavaScript
+  const ACTUALIZAR_COSTO_URL = "{% url 'lotes:actualizar_costo_unitario' 0 %}".replace('/0/', '/');
+  const CAMBIAR_ESTADO_URL = "{% url 'lotes:cambiar_estado_lote' 0 %}".replace('/0/', '/');
+
+  // URLs para gestión de proveedores
+  const PROVEEDORES_JSON_URL = "{% url 'lotes:lista_proveedores_json' %}";
+  const CREAR_PROVEEDOR_URL = "{% url 'lotes:crear_proveedor' %}";
+  const EDITAR_PROVEEDOR_URL = "{% url 'lotes:editar_proveedor' 0 %}".replace('/0/', '/');
+  const ELIMINAR_PROVEEDOR_URL = "{% url 'lotes:eliminar_proveedor' 0 %}".replace('/0/', '/');
+  const IMPRIMIR_PROVEEDORES_URL = "{% url 'lotes:imprimir_proveedores' %}";
+
+  // Detectar si se debe mostrar modal de éxito al cargar la página
+  const urlParams = new URLSearchParams(window.location.search);
+  const registroExitoso = urlParams.get('registro_exitoso');
+  const edicionExitosa = urlParams.get('edicion_exitosa');
+  const codigoLote = urlParams.get('codigo_lote');
+
+  if (registroExitoso === 'true' && codigoLote) {
+      // Mostrar modal de éxito después de cargar la página
+      document.addEventListener('DOMContentLoaded', function() {
+          setTimeout(function() {
+              mostrarModalExito(
+                  '¡Lote Registrado!', 
+                  `El lote "${codigoLote}" ha sido registrado exitosamente.`
+              );
+          }, 500);
+      });
+  }
+
+  if (edicionExitosa === 'true' && codigoLote) {
+      // Mostrar modal de éxito después de cargar la página
+      document.addEventListener('DOMContentLoaded', function() {
+          setTimeout(function() {
+              mostrarModalExito(
+                  '¡Lote Actualizado!', 
+                  `El lote "${codigoLote}" ha sido actualizado exitosamente.`
+              );
+          }, 500);
+      });
+  }
+</script>
+<script src="{% static 'lotes/js/menu_lote.js' %}"></script>
+<script src="{% static 'lotes/js/gestion_proveedores.js' %}"></script>
+
+<!-- Script de diagnóstico para verificar que todo funcione -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 DIAGNÓSTICO: Verificando elementos...');
+    
+    // Verificar botón de proveedores
+    const proveedoresBtn = document.getElementById('proveedoresBtn');
+    console.log('✅ Botón proveedores encontrado:', !!proveedoresBtn);
+    
+    // Verificar modales
+    const modalProveedores = document.getElementById('modalProveedores');
+    console.log('✅ Modal proveedores encontrado:', !!modalProveedores);
+    
+    const modalEditarProveedor = document.getElementById('modalEditarProveedor');
+    console.log('✅ Modal editar proveedor encontrado:', !!modalEditarProveedor);
+    
+    // Verificar que las URLs estén definidas
+    console.log('✅ URL proveedores JSON:', PROVEEDORES_JSON_URL);
+    
+    // Forzar funcionalidad si es necesario
+    if (proveedoresBtn && !proveedoresBtn.hasListener) {
+        proveedoresBtn.hasListener = true;
+        proveedoresBtn.addEventListener('click', function() {
+            console.log('🎯 Botón de proveedores clickeado');
+            if (modalProveedores) {
+                modalProveedores.style.display = 'flex';
+                setTimeout(() => {
+                    modalProveedores.style.opacity = '1';
+                }, 10);
+                
+                // Cargar proveedores manualmente si es necesario
+                if (typeof cargarProveedores === 'function') {
+                    cargarProveedores();
+                }
+            }
+        });
+        console.log('✅ Listener manual agregado al botón de proveedores');
+    }
+});
+</script>
+{% endblock %}

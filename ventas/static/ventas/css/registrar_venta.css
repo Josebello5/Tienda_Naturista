@@ -1,0 +1,1542 @@
+:root {
+  --primary: #3A8C6E;
+  --primary-dark: #2d7058;
+  --secondary: #3498B5;
+  --success: #28a745;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --light: #f8f9fa;
+  --dark: #343a40;
+  --gray: #6c757d;
+  --light-gray: #e9ecef;
+  --border: #dee2e6;
+}
+
+/* Mensajes fijos */
+.messages-fixed {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  z-index: 10000;
+  width: 350px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.messages-fixed .alert {
+  margin-bottom: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Contenedor de búsqueda de cliente mejorado */
+.search-client-container {
+  position: relative;
+}
+
+.cliente-info {
+  background: linear-gradient(135deg, #d4edda, #e8f5e8);
+  border: 1px solid #c3e6cb;
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 10px;
+  animation: fadeIn 0.3s ease;
+}
+
+.cliente-selected {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #155724;
+}
+
+.cliente-selected i {
+  color: var(--success);
+  font-size: 1.2rem;
+}
+
+/* ===== BOTÓN NUEVO CLIENTE MEJORADO ===== */
+.btn-nuevo-cliente {
+  background: linear-gradient(135deg, var(--secondary), #138496);
+  color: white;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(23, 162, 184, 0.3);
+  border: none;
+  transition: all 0.4s ease;
+  font-weight: 600;
+  margin: 5px 0;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.btn-nuevo-cliente:hover {
+  background: linear-gradient(135deg, #138496, #117a8b);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(23, 162, 184, 0.4);
+}
+
+.btn-nuevo-cliente i {
+  font-size: 1rem;
+}
+
+/* ===== MEJORAS EN MÉTODOS DE PAGO ===== */
+.metodos-pago-container {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-top: 10px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.pago-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr auto;
+  gap: 15px;
+  padding: 15px;
+  border-bottom: 1px solid var(--light-gray);
+  align-items: center;
+  background: white;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  border-left: 4px solid var(--secondary);
+  transition: all 0.3s ease;
+}
+
+.pago-item:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+}
+
+.pago-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.pago-item span {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.pago-item .monto-pago {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.pago-item .tasa-pago {
+  font-family: 'Courier New', monospace;
+  color: var(--secondary);
+  font-size: 0.8rem;
+}
+
+/* Tabla de productos mejorada */
+.table td {
+  vertical-align: middle;
+  padding: 12px 8px;
+}
+
+.cantidad-cell {
+  position: relative;
+  min-width: 120px;
+}
+
+.stock-info {
+  font-size: 0.75rem;
+  color: var(--gray);
+  margin-top: 4px;
+  display: block;
+}
+
+.stock-info.disponible {
+  color: var(--success);
+}
+
+.stock-info.limitado {
+  color: var(--warning);
+  font-weight: bold;
+}
+
+.stock-info.agotado {
+  color: var(--danger);
+  font-weight: bold;
+}
+
+/* ===== ESTILOS PARA MENSAJES DE VALIDACIÓN ===== */
+#minimoAbono {
+  color: var(--primary);
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+#maximoAbono {
+  font-weight: bold;
+  margin-top: 5px;
+  color: var(--dark);
+}
+
+/* ===== ESTILOS PARA MODAL DE MÉTODO DE PAGO ===== */
+#restantePagarModal {
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  color: #856404;
+  font-weight: 600;
+  border-left: 4px solid var(--warning);
+}
+
+/* ===== ESTILOS PARA CAMPOS DE DEVOLUCIÓN MEJORADOS ===== */
+.devolucion-campos {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  margin: 10px 0;
+  border-left: 4px solid #3498db;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.devoluciones-lista {
+  margin-top: 20px;
+}
+
+.devoluciones-lista h5 {
+  color: var(--dark);
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 5px;
+}
+
+.devoluciones-container {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  background: var(--light);
+}
+
+.devolucion-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  margin-bottom: 8px;
+  background: white;
+  border-radius: 6px;
+  border-left: 4px solid var(--warning);
+  transition: all 0.3s ease;
+}
+
+.devolucion-item:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+}
+
+.devolucion-info {
+  flex: 1;
+  font-weight: 500;
+}
+
+.devolucion-form {
+  background: white;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  margin-bottom: 15px;
+}
+
+.devolucion-form h5 {
+  color: var(--dark);
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+/* Estilos para mensajes de advertencia en productos */
+.stock-advertencia {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #856404;
+  border-left: 4px solid #ffc107;
+}
+
+.stock-advertencia i {
+  color: #f39c12;
+  margin-right: 6px;
+}
+
+/* ===== ESTILOS PARA INPUTS CON ERROR ===== */
+.devolucion-campos input.error,
+.input-cantidad.error,
+.form-control.error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+}
+
+/* ===== ESTILOS PARA BOTONES DESHABILITADOS ===== */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+#btnAgregarDevolucion:disabled {
+  background-color: #dc3545 !important;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* ===== ESTILOS BASE ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+  line-height: 1.6;
+}
+
+.venta-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.venta-header {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  padding: 25px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.venta-header h2 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.venta-header p {
+  margin: 10px 0 0;
+  opacity: 0.9;
+  font-size: 1.1rem;
+}
+
+.form-section {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 1px solid var(--light-gray);
+}
+
+.form-section h3 {
+  color: var(--dark);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.3rem;
+  border-bottom: 2px solid var(--light-gray);
+  padding-bottom: 10px;
+}
+
+.form-section h3 i {
+  color: var(--primary);
+  font-size: 1.2rem;
+}
+
+.form-group {
+  margin-bottom: 15px;
+  position: relative; /* IMPORTANTE: Para posicionar el icono de error */
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.form-label .required {
+  color: var(--danger);
+  margin-left: 3px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+  padding-right: 2.5rem; /* Espacio para el icono de validación */
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.1);
+}
+
+/* CORRECCIÓN: Estilo para icono de error en campos de formulario */
+.form-control.is-invalid {
+  border-color: var(--danger);
+  padding-right: calc(1.5em + 0.75rem);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  z-index: 1;
+}
+
+/* Para inputs con formateo de números, ajustar el padding */
+.formatted-number-input.is-invalid {
+  padding-right: calc(2.5rem + 1.5em); /* Más espacio para el icono */
+}
+
+.form-control.is-valid {
+  border-color: var(--success);
+  padding-right: calc(1.5em + 0.75rem);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+
+.result-container {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-top: 10px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.result-item {
+  padding: 12px;
+  border-bottom: 1px solid var(--light-gray);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.result-item:hover {
+  background: linear-gradient(135deg, var(--light), #f0f8ff);
+  transform: translateX(5px);
+  border-left: 4px solid var(--primary);
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table th {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  padding: 15px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.table tbody tr:hover {
+  background: var(--light);
+}
+
+.input-cantidad {
+  width: 80px;
+  padding: 8px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.input-cantidad:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(58, 140, 110, 0.2);
+}
+
+.input-cantidad.error {
+  border-color: var(--danger);
+  background: #f8d7da;
+}
+
+.resumen {
+  background: var(--light);
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.resumen-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.resumen-item.total {
+  font-weight: bold;
+  font-size: 1.2em;
+  border-top: 2px solid var(--primary);
+  padding-top: 15px;
+  margin-top: 10px;
+  color: var(--primary);
+}
+
+.resumen-item span:last-child {
+  min-width: 120px;
+  text-align: right;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+}
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 18px 30px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  flex: 1;
+  justify-content: center;
+  background: white;
+  position: relative;
+  min-height: 70px;
+}
+
+.radio-option:hover {
+  border-color: var(--primary);
+  background: rgba(58, 140, 110, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+}
+
+.radio-option.selected {
+  border-color: var(--primary);
+  background: rgba(58, 140, 110, 0.15);
+  box-shadow: 0 6px 20px rgba(58, 140, 110, 0.25);
+}
+
+.radio-option input {
+  display: none;
+}
+
+.radio-text {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--dark);
+  transition: all 0.3s ease;
+}
+
+.radio-option input:checked ~ .radio-text {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid var(--light-gray);
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  box-shadow: 0 3px 8px rgba(58, 140, 110, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary-dark), #245c48);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(58, 140, 110, 0.4);
+}
+
+.btn-secondary {
+  background: var(--secondary);
+  color: white;
+  box-shadow: 0 3px 8px rgba(52, 152, 181, 0.3);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(52, 152, 181, 0.4);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c82333;
+  transform: translateY(-2px);
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-2px);
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--dark);
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.875rem;
+}
+
+.alert {
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideIn 0.3s ease;
+  border-left: 4px solid;
+}
+
+.alert-success {
+  background: #d4edda;
+  color: #155724;
+  border-left-color: var(--success);
+}
+
+.alert-error {
+  background: #f8d7da;
+  color: #721c24;
+  border-left-color: var(--danger);
+}
+
+.alert-warning {
+  background: #fff3cd;
+  color: #856404;
+  border-left-color: var(--warning);
+}
+
+.close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.close:hover {
+  opacity: 1;
+}
+
+.cliente-form-container {
+  background: var(--light);
+  padding: 25px;
+  border-radius: 8px;
+  margin-top: 15px;
+  border-left: 4px solid var(--primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.form-grid .full-width {
+  grid-column: 1 / -1;
+}
+
+.error-msg {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+  display: block;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  margin: 5% auto;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+  animation: slideUp 0.3s ease;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 20px 25px;
+  border-bottom: 1px solid var(--light-gray);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.btn-cerrar {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: white;
+  opacity: 0.8;
+}
+
+.btn-cerrar:hover {
+  opacity: 1;
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+.modal-footer {
+  padding: 20px 25px;
+  border-top: 1px solid var(--light-gray);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: var(--light);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-muted {
+  color: var(--gray);
+}
+
+.d-block {
+  display: block;
+}
+
+.py-4 {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.fa-2x {
+  font-size: 2rem;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(-50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .form-grid {
+      grid-template-columns: 1fr;
+  }
+  
+  .venta-container {
+      padding: 10px;
+  }
+  
+  .form-section {
+      padding: 15px;
+  }
+  
+  .pago-item {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      text-align: center;
+  }
+  
+  .radio-group {
+      flex-direction: column;
+      gap: 10px;
+  }
+  
+  .form-actions {
+      flex-direction: column;
+  }
+  
+  .btn {
+      width: 100%;
+      justify-content: center;
+  }
+
+  .messages-fixed {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    max-height: none;
+  }
+
+  .radio-option {
+      padding: 14px 20px;
+      min-height: 60px;
+  }
+
+  .radio-text {
+      font-size: 1.1rem;
+  }
+
+  .btn-nuevo-cliente {
+      padding: 10px 16px;
+      font-size: 0.85rem;
+  }
+
+  .devolucion-campos {
+      padding: 10px;
+  }
+  
+  .devolucion-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+  }
+  
+  .devolucion-info {
+      margin-bottom: 5px;
+  }
+}
+
+/* Mejoras en los mensajes */
+.messages-fixed .alert {
+  max-width: 500px;
+  word-wrap: break-word;
+}
+
+/* Agregar al final del archivo CSS existente */
+
+/* Estilos para campos con error */
+.form-control.is-invalid {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+}
+
+/* Estilos para mensajes de error específicos */
+#errorAbono {
+  font-weight: 600;
+  margin-top: 5px;
+}
+
+/* Mejoras en los inputs de cantidad */
+.input-cantidad.error {
+  border-color: var(--danger);
+  background: #f8d7da;
+}
+
+/* Estilos para campos de devolución */
+.devolucion-campos .form-control.is-invalid {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+}
+
+/* Mejoras en la visualización de mensajes */
+.messages-fixed .alert {
+  max-width: 500px;
+  word-wrap: break-word;
+  z-index: 10000;
+}
+
+/* Responsive para modales */
+@media (max-width: 768px) {
+  .modal-content {
+      width: 95%;
+      margin: 2% auto;
+  }
+  
+  .pago-item {
+      grid-template-columns: 1fr;
+      gap: 10px;
+      text-align: center;
+  }
+  
+  .devolucion-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+  }
+}
+
+/* Estilos para la sección de método de pago del abono */
+#metodoPagoAbonoSection {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  margin-top: 10px;
+  border-left: 4px solid var(--warning);
+}
+
+#comprobanteAbonoSection {
+  margin-top: 10px;
+  padding: 10px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+/* Estilos para equivalencia en dólares en crédito */
+.abono-equivalencia {
+  font-size: 0.85rem;
+  color: var(--secondary);
+  font-weight: 500;
+  margin-left: 5px;
+}
+
+/* Mejoras en la visualización de información de crédito */
+.resumen-item .abono-info {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.resumen-item .abono-detalle {
+  text-align: right;
+  font-size: 0.9rem;
+}
+
+/* Estilos para evitar duplicación en modal */
+#textoInfoModal br {
+  display: block;
+  margin: 3px 0;
+}
+
+/* Mejoras en la visualización de métodos de pago */
+.pago-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr auto;
+  gap: 15px;
+  padding: 15px;
+  border-bottom: 1px solid var(--light-gray);
+  align-items: center;
+  background: white;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  border-left: 4px solid var(--secondary);
+  transition: all 0.3s ease;
+}
+
+.pago-item:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+}
+
+.pago-item:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.pago-item span {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.pago-item .monto-pago {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.pago-item .tasa-pago {
+  font-family: 'Courier New', monospace;
+  color: var(--secondary);
+  font-size: 0.8rem;
+}
+
+
+.cliente-form-container {
+  background-color: var(--white-base);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  animation: fadeIn 0.6s ease forwards;
+  margin-top: 15px;
+}
+
+.cliente-form-container .form-header {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  padding: 1.5rem 2rem;
+  color: white;
+  text-align: center;
+  position: relative;
+}
+
+.cliente-form-container .form-header h2 {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  position: relative;
+  display: inline-block;
+  font-size: 1.5rem;
+}
+
+.cliente-form-container .form-header h2:after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 3px;
+  background: var(--accent-green);
+  border-radius: 2px;
+}
+
+.cliente-form-container .form-header p {
+  opacity: 0.9;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.cliente-form-container .form-body {
+  padding: 2rem;
+}
+
+/* Layout del formulario */
+.cliente-form-container .form-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -15px;
+}
+
+.cliente-form-container .form-col {
+  padding: 0 15px;
+  flex: 1 0 0%;
+  min-width: 250px;
+  margin-bottom: 1.5rem;
+}
+
+/* FILA DE BOTONES ALINEADOS */
+.cliente-form-container .form-buttons-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: space-between;
+}
+
+.cliente-form-container .form-buttons-row .btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+}
+
+/* Botón de volver */
+.cliente-form-container .btn-back {
+  background: var(--gray);
+  color: white;
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+}
+
+.cliente-form-container .btn-back:hover {
+  background: var(--hover-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(41, 128, 185, 0.3);
+  color: white;
+  text-decoration: none;
+}
+
+/* Botón de enviar */
+.cliente-form-container .btn-submit {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  box-shadow: 0 4px 12px rgba(58, 140, 110, 0.2);
+}
+
+.cliente-form-container .btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(58, 140, 110, 0.3);
+}
+
+/* Estados activos */
+.cliente-form-container .btn-back:active, 
+.cliente-form-container .btn-submit:active {
+  transform: translateY(0);
+}
+
+/* Etiquetas y controles del formulario */
+.cliente-form-container .form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--dark);
+  position: relative;
+}
+
+.cliente-form-container .form-label:after {
+  content: '*';
+  color: var(--danger);
+  margin-left: 3px;
+}
+
+/* Campos con iconos */
+.cliente-form-container .input-icon {
+  position: relative;
+}
+
+.cliente-form-container .input-icon i {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray);
+  font-size: 1rem;
+}
+
+.cliente-form-container .input-icon input,
+.cliente-form-container .input-icon select,
+.cliente-form-container .input-icon textarea {
+  padding-left: 40px;
+}
+
+/* Contador de caracteres para dirección */
+.cliente-form-container .char-counter {
+  font-size: 0.8rem;
+  color: var(--gray);
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+.cliente-form-container .char-counter.warning {
+  color: var(--warning);
+  font-weight: bold;
+}
+
+.cliente-form-container .char-counter.error {
+  color: var(--danger);
+  font-weight: bold;
+}
+
+/* Pie del formulario */
+.cliente-form-container .form-footer {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  text-align: center;
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+/* Mensajes de error y éxito */
+.cliente-form-container .error-msg-container {
+  background-color: rgba(220, 53, 69, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.cliente-form-container .error-msg {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+  display: none;
+}
+
+.cliente-form-container .form-control.is-invalid {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+}
+
+.cliente-form-container .form-control.is-invalid ~ .error-msg {
+  display: block;
+}
+
+/* Asegurar que los campos sean responsivos */
+@media (max-width: 768px) {
+  .cliente-form-container .form-col {
+      flex: 0 0 100%;
+  }
+  
+  .cliente-form-container .form-buttons-row {
+      flex-direction: column;
+      gap: 0.75rem;
+  }
+  
+  .cliente-form-container .form-buttons-row .btn {
+      width: 100%;
+  }
+  
+  .cliente-form-container .form-header {
+      padding: 1.2rem;
+  }
+  
+  .cliente-form-container .form-body {
+      padding: 1.5rem;
+  }
+}
+
+/* Variables adicionales */
+:root {
+  --accent-green: #5CB85C;
+  --hover-blue: #2980B9;
+  --white-base: #ffffff;
+}
+
+/* Estilos para validación en tiempo real */
+.form-control.is-valid {
+  border-color: var(--success);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  padding-right: 2.5rem;
+}
+
+.form-control.is-invalid {
+  border-color: var(--danger);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right calc(0.375em + 0.1875rem) center;
+  background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  padding-right: 2.5rem;
+}
+
+/* CORRECCIÓN ESPECIAL PARA INPUTS CON FORMATEO NUMÉRICO */
+.formatted-number-input.is-invalid,
+.formatted-number-input.is-valid {
+  background-position: right 10px center !important;
+  padding-right: 40px !important;
+  z-index: 2;
+  position: relative;
+}
+
+/* Contador de caracteres con estados */
+.char-counter {
+  font-size: 0.8rem;
+  color: var(--gray);
+  text-align: right;
+  margin-top: 0.25rem;
+  transition: all 0.3s ease;
+}
+
+.char-counter.warning {
+  color: var(--warning);
+  font-weight: bold;
+}
+
+.char-counter.error {
+  color: var(--danger);
+  font-weight: bold;
+}
+
+/* Mejoras en la visualización de errores */
+.error-msg {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin-top: 0.4rem;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.error-msg:not(:empty) {
+  display: block;
+}
+
+.input-icon .form-control.is-valid,
+.input-icon .form-control.is-invalid {
+  padding-left: 40px;
+  padding-right: 2.5rem;
+}
+
+/* Animación para mostrar/ocultar mensajes de error */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Estilos para inputs con formateo de números */
+.form-control.formatted-number {
+  text-align: right;
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Estilos para mostrar números con comas */
+.number-with-commas {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Mejoras en la visualización de montos */
+.monto-pago, .monto-pago * {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Asegurar que los inputs de monto tengan suficiente espacio */
+input[type="text"].monto-input {
+  min-width: 120px;
+  text-align: right;
+}
+
+/* Animación suave para cambios en números */
+.number-transition {
+  transition: all 0.3s ease;
+}
+
+/* Estilos para inputs durante el formateo */
+.form-control.formatting {
+  background-color: #f8f9fa;
+  border-color: #3A8C6E;
+}
+
+/* Mejoras en la visualización de tablas con números */
+.table td.number-cell {
+  text-align: right;
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+/* Estilos para el contador de caracteres en números */
+.char-counter.number-counter {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+}
+
+/* Validación visual para números */
+.form-control.valid-number {
+  border-color: #28a745;
+  background-color: rgba(40, 167, 69, 0.05);
+}
+
+.form-control.invalid-number {
+  border-color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.05);
+}
+
+/* Estilos específicos para el campo de monto en el modal */
+#montoPago {
+  font-family: 'Courier New', monospace;
+  text-align: right;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  background-color: #fff;
+  border: 2px solid #3A8C6E;
+}
+
+/* Estilo cuando el campo está enfocado */
+#montoPago:focus {
+  border-color: #2d7058;
+  box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.2);
+  background-color: #f8fff8;
+}
+
+/* Estilo para números formateados con comas */
+.number-with-commas {
+  font-family: 'Courier New', monospace;
+  text-align: right;
+  letter-spacing: 0.5px;
+}
+
+/* Clase para inputs que deben mostrar números con comas */
+.formatted-number-input {
+  font-family: 'Courier New', monospace !important;
+  text-align: right !important;
+  letter-spacing: 0.5px !important;
+  padding-right: 40px !important; /* Espacio para iconos de validación */
+}
+
+/* Asegurar que los inputs de monto tengan suficiente espacio */
+#montoPago,
+#montoDevolucionBs,
+#montoDevolucionUsd,
+#montoDevolucionTransferencia,
+#montoDevolucionPagoMovil {
+  min-width: 150px;
+  padding-right: 40px;
+}
+
+/* Mejoras visuales para el modal */
+.modal-body input[type="number"],
+.modal-body input[type="text"].monto-input {
+  background-color: #f9f9f9;
+  transition: all 0.3s ease;
+}
+
+.modal-body input[type="number"]:focus,
+.modal-body input[type="text"].monto-input:focus {
+  background-color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+/* Estilos para inputs durante el formateo */
+.input-formatting {
+  background-color: #e8f5e8 !important;
+  border-color: #3A8C6E !important;
+}
+
+/* Estilos para placeholder en campos de monto */
+#montoPago::placeholder {
+  color: #999;
+  font-style: italic;
+  text-align: left;
+}
+
+/* FIX: Para que los iconos de validación se vean bien en campos formateados */
+.formatted-number-input {
+  position: relative;
+  z-index: 1;
+}
+
+/* Asegurar que el fondo del input no tape el icono */
+.formatted-number-input.is-invalid,
+.formatted-number-input.is-valid {
+  background-color: white !important;
+}
+
+/* Ajustar posición de iconos para campos con formateo */
+.form-control.is-invalid:not(.formatted-number-input) {
+  background-position: right calc(0.375em + 0.1875rem) center;
+}
+
+/* Estilos para campos de error en modal */
+#modalMetodoPago .form-control.is-invalid {
+  padding-right: calc(1.5em + 0.75rem);
+}
+
+/* Asegurar que los iconos estén por encima del contenido */
+.form-control {
+  position: relative;
+  z-index: 1;
+}

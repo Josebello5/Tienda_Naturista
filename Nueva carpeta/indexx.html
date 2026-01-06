@@ -1,0 +1,212 @@
+{% comment %}
+PLANTILLA DE REFERENCIA PARA MENÚS
+Esta plantilla muestra la estructura estándar para páginas de listado
+como Productos, Clientes, etc. No extiende de base.html para mayor claridad.
+{% endcomment %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de [ENTIDAD] - Tienda Naturista</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ===== ESTILOS BASE PARA TODOS LOS MENÚS ===== */
+        
+        .[entidad]-container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Contenido Principal */
+        .[entidad]-main {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        /* Barra de Herramientas */
+        .[entidad]-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        /* Barra de Búsqueda */
+        .search-bar {
+            position: relative;
+            flex-grow: 1;
+            max-width: 400px;
+        }
+
+        .search-bar i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7F8C8D;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            border: 1px solid #dee2e6;
+            border-radius: 50px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar input:focus {
+            border-color: #3A8C6E;
+            box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.15);
+            outline: none;
+        }
+
+        /* Botones */
+        .btn {
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: none;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #3A8C6E;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #3498B5;
+            color: white;
+        }
+
+        /* Tabla */
+        .table-container {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #dee2e6;
+        }
+
+        thead {
+            background: linear-gradient(to right, #3A8C6E, #3498B5);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- ESTRUCTURA BÁSICA DE UN MENÚ -->
+    <div class="[entidad]-container">
+        <div class="[entidad]-main">
+            
+            <!-- BARRA DE HERRAMIENTAS -->
+            <div class="[entidad]-toolbar">
+                <!-- Búsqueda -->
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar [entidad]...">
+                </div>
+                
+                <!-- Botones de Acción -->
+                <button class="btn btn-secondary" id="printBtn">
+                    <i class="fas fa-print"></i> Imprimir Listado
+                </button>
+                
+                <a href="[url-agregar]" class="btn btn-primary" id="addBtn">
+                    <i class="fas fa-plus-circle"></i> Agregar [Entidad]
+                </a>
+            </div>
+            
+            <!-- TABLA -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <!-- COLUMNAS PERSONALIZADAS -->
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Categoría</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- FILAS DINÁMICAS -->
+                        <tr>
+                            <td>001</td>
+                            <td>Ejemplo</td>
+                            <td>Categoría</td>
+                            <td><span class="status status-active">Activo</span></td>
+                            <td class="actions">
+                                <button class="btn-action btn-edit"><i class="fas fa-edit"></i></button>
+                                <button class="btn-action btn-delete"><i class="fas fa-trash-alt"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ESTRUCTURA JAVASCRIPT BÁSICA
+        
+        // 1. Datos de ejemplo
+        const [entidad] = [
+            // Array de objetos con la estructura de datos
+        ];
+
+        // 2. Función para renderizar la tabla
+        function renderizar[Entidad]() {
+            // Lógica para llenar la tabla
+        }
+
+        // 3. Función de búsqueda
+        document.getElementById('searchInput').addEventListener('input', function() {
+            // Lógica de filtrado
+        });
+
+        // 4. Eventos de botones
+        document.getElementById('printBtn').addEventListener('click', function() {
+            alert('Función de imprimir');
+        });
+
+        // 5. Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            renderizar[Entidad]();
+        });
+    </script>
+</body>
+</html>
+
+{% comment %}
+INSTRUCCIONES DE USO:
+
+1. REEMPLAZAR [entidad] por el nombre en minúsculas (clientes, productos, etc.)
+2. REEMPLAZAR [Entidad] por el nombre en PascalCase (Clientes, Productos, etc.)
+3. REEMPLAZAR [url-agregar] por la URL correspondiente
+4. PERSONALIZAR las columnas de la tabla según las necesidades
+5. ADAPTAR la estructura de datos en el JavaScript
+6. MANTENER la estructura CSS y HTML base para consistencia visual
+
+EJEMPLO PARA CLIENTES:
+- [entidad] → clientes
+- [Entidad] → Clientes  
+- [url-agregar] → {% url 'clientes:registrar' %}
+- Columnas: Cédula, Nombre, Apellido, Teléfono, Dirección, Acciones
+{% endcomment %}

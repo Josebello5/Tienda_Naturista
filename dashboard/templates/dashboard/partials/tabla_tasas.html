@@ -1,0 +1,88 @@
+<div class="table-responsive" id="tablaTasasContainer">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Valor (Bs/$)</th>
+                <th>Fecha y Hora</th>
+                <th>Usuario</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tasa in tasas %}
+            <tr>
+                <td class="fw-bold" style="color: var(--primary-green);">
+                    {{ tasa.valor_formateado }} Bs/$
+                </td>
+                <td>{{ tasa.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <span class="user-badge">
+                        <i class="fas fa-user me-1"></i>
+                        {{ tasa.usuario.first_name|title }} {{ tasa.usuario.last_name|title }}
+                    </span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="text-center">
+                    <div class="empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px;">
+                        <i class="fas fa-exchange-alt fa-3x mb-3" style="color: var(--natural-gray);"></i>
+                        <h4 style="color: var(--dark-gray); margin-bottom: 10px; font-weight: 500;">No hay tasas registradas hoy</h4>
+                        <p style="color: var(--natural-gray); margin: 0;">Ingresa una tasa para comenzar</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<style>
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.table th {
+    padding: 18px 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    background: linear-gradient(to right, var(--primary-green), var(--primary-blue));
+    color: white;
+}
+
+.table td {
+    padding: 16px 15px;
+    color: var(--dark-gray);
+    vertical-align: middle;
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--border-gray);
+}
+
+.table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(58, 140, 110, 0.03);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-light);
+}
+
+.user-badge {
+    background: rgba(52, 152, 181, 0.15);
+    color: var(--primary-blue);
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid rgba(52, 152, 181, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+</style>

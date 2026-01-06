@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Estadísticas - Tienda Naturista{% endblock %}
+
+{% block content %}
+<div class="productos-container">
+    <!-- ===== TARJETA DE BIENVENIDA ===== -->
+    <div class="welcome-card">
+        <h2><i class="fas fa-chart-line me-2"></i>Panel de Estadísticas</h2>
+        <p>Visión general del rendimiento y estado del inventario</p>
+    </div>
+
+    <!-- ===== GRID DE PANELES ===== -->
+    <div class="stats-grid">
+
+        <!-- === PANEL 1: PRODUCTOS MÁS VENDIDOS === -->
+        <div class="stats-card">
+            <div class="card-header">
+                <div>
+                    <h3><i class="fas fa-box-open text-primary"></i> Top Productos</h3>
+                    <span class="filter-info" id="info-prod">
+                        Del {{ fecha_ini_prod|date:"d/m/Y" }} al {{ fecha_fin_prod|date:"d/m/Y" }}
+                    </span>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-icon-card btn-filter-date" title="Filtrar Fechas" data-context="prod"
+                        data-ini="{{ fecha_ini_prod|date:'Y-m-d' }}" data-fin="{{ fecha_fin_prod|date:'Y-m-d' }}"
+                        data-type="past">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                    <!-- Agregamos target="_blank" para asegurar apertura y depuracion -->
+                    <a href="{% url 'estadisticas:reporte_productos' %}?fecha_ini={{ fecha_ini_prod|date:'Y-m-d' }}&fecha_fin={{ fecha_fin_prod|date:'Y-m-d' }}"
+                        class="btn-icon-card" title="Descargar PDF" target="_blank">
+                        <i class="fas fa-print"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <ul class="ranking-list" id="list-productos">
+                    {% if top_productos %}
+                    {% for item in top_productos %}
+                    <li class="ranking-item">
+                        <span class="rank-badge">{{ forloop.counter }}</span>
+                        <div class="item-info">
+                            <span class="item-name">{{ item.ID_lote__id_producto__nombre_pro }}</span>
+                            <span class="item-meta">ID: {{ item.ID_lote__id_producto__ID_producto }}</span>
+                        </div>
+                        <div class="item-value">
+                            {{ item.total_cantidad|floatformat:0 }} un.
+                        </div>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state text-center p-4">
+                        <i class="fas fa-box-open fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No hay ventas registradas en este período.</p>
+                    </div>
+                    {% endif %}
+                </ul>
+                <div id="no-prod" class="empty-row text-center p-4" style="display: none;">
+                    <i class="fas fa-box-open fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">No hay ventas registradas en este período.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- === PANEL 2: CLIENTES FRECUENTES === -->
+        <div class="stats-card">
+            <div class="card-header">
+                <div>
+                    <h3><i class="fas fa-users text-primary"></i> Top Clientes</h3>
+                    <span class="filter-info" id="info-cli">
+                        Del {{ fecha_ini_cli|date:"d/m/Y" }} al {{ fecha_fin_cli|date:"d/m/Y" }}
+                    </span>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-icon-card btn-filter-date" title="Filtrar Fechas" data-context="cli"
+                        data-ini="{{ fecha_ini_cli|date:'Y-m-d' }}" data-fin="{{ fecha_fin_cli|date:'Y-m-d' }}"
+                        data-type="past">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                    <a href="{% url 'estadisticas:reporte_clientes' %}?fecha_ini={{ fecha_ini_cli|date:'Y-m-d' }}&fecha_fin={{ fecha_fin_cli|date:'Y-m-d' }}"
+                        class="btn-icon-card" title="Descargar PDF" target="_blank">
+                        <i class="fas fa-print"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <ul class="ranking-list" id="list-clientes">
+                    {% if top_clientes %}
+                    {% for item in top_clientes %}
+                    <li class="ranking-item">
+                        <span class="rank-badge">{{ forloop.counter }}</span>
+                        <div class="item-info">
+                            <span class="item-name">{{ item.Cedula__nombre }} {{ item.Cedula__apellido }}</span>
+                            <span class="item-meta">{{ item.Cedula__cedula }}</span>
+                        </div>
+                        <div class="text-end">
+                            <div class="item-value" style="font-size: 0.9rem;">{{ item.total_compras }} compras</div>
+                            <span class="item-meta">Bs {{ item.total_gastado|floatformat:2 }}</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state text-center p-4">
+                        <i class="fas fa-users fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No hay clientes registrados en este período.</p>
+                    </div>
+                    {% endif %}
+                </ul>
+                <div id="no-cli" class="empty-row text-center p-4" style="display: none;">
+                    <i class="fas fa-users fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">No hay clientes registrados en este período.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- === PANEL 3: PRODUCTOS POR VENCER === -->
+        <div class="stats-card">
+            <div class="card-header">
+                <div>
+                    <h3><i class="fas fa-exclamation-triangle text-warning"></i> Por Vencer</h3>
+                    <span class="filter-info" id="info-venc">
+                        Del {{ fecha_ini_venc|date:"d/m/Y" }} al {{ fecha_fin_venc|date:"d/m/Y" }}
+                    </span>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-icon-card btn-filter-date" title="Filtrar Fechas" data-context="venc"
+                        data-ini="{{ fecha_ini_venc|date:'Y-m-d' }}" data-fin="{{ fecha_fin_venc|date:'Y-m-d' }}"
+                        data-type="future">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                    <a href="{% url 'estadisticas:reporte_vencimiento' %}?fecha_ini={{ fecha_ini_venc|date:'Y-m-d' }}&fecha_fin={{ fecha_fin_venc|date:'Y-m-d' }}"
+                        class="btn-icon-card" title="Descargar PDF" target="_blank">
+                        <i class="fas fa-print"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <ul class="ranking-list" id="list-vencimiento">
+                    {% if lotes_por_vencer %}
+                    {% for lote in lotes_por_vencer %}
+                    <li class="ranking-item">
+                        <div class="item-info">
+                            <span class="item-name">{{ lote.id_producto.nombre_pro }}</span>
+                            <span class="item-meta">Lote: {{ lote.codigo_lote }} | Disp: {{ lote.cantidad_disponible }}</span>
+                        </div>
+                        <div class="text-end">
+                            <div class="item-value text-danger" style="color: var(--error-red);">{{ lote.fecha_vencimiento|date:"d/m/Y" }}</div>
+                            <span class="item-meta">{{ lote.tiempo_restante }}</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state text-center p-4">
+                        <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                        <p class="text-muted">Todo en orden.<br>No hay productos por vencer en este rango.</p>
+                    </div>
+                    {% endif %}
+                </ul>
+                <div id="no-venc" class="empty-row text-center p-4" style="display: none;">
+                    <i class="fas fa-check-circle text-success fa-3x mb-2"></i>
+                    <p class="text-muted">Todo en orden.<br>No hay productos por vencer en este rango.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== MODAL FILTRO FECHAS (Estilo Lotes) ===== -->
+<div id="modalFiltroFechas" class="modal-filtro">
+    <div class="modal-contenido">
+        <div class="modal-header">
+            <h3 id="modalTitulo">Filtrar por Fechas</h3>
+            <button class="btn-cerrar" id="btnCerrarModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="fecha-inputs">
+                <div class="fecha-group">
+                    <label for="fechaDesde">Desde:</label>
+                    <input type="date" id="fechaDesde">
+                </div>
+                <div class="fecha-group">
+                    <label for="fechaHasta">Hasta:</label>
+                    <input type="date" id="fechaHasta">
+                </div>
+            </div>
+
+            <!-- Mensaje de error para validación -->
+            <div id="errorFechas" class="error-message" style="display: none; margin-bottom: 15px;">
+                <i class="fas fa-exclamation-circle"></i> <span>La fecha final debe ser mayor que la inicial</span>
+            </div>
+
+            <div class="opciones-rapidas">
+                <h4>Opciones rápidas:</h4>
+                <div class="botones-opciones" id="opcionesPasado">
+                    <button type="button" class="btn-opcion" data-dias="7">Últimos 7 días</button>
+                    <button type="button" class="btn-opcion" data-dias="30">Últimos 30 días</button>
+                    <button type="button" class="btn-opcion" data-dias="90">Últimos 3 meses</button>
+                    <button type="button" class="btn-opcion" data-dias="365">Último año</button>
+                </div>
+                <div class="botones-opciones" id="opcionesFuturo" style="display: none;">
+                    <button type="button" class="btn-opcion" data-dias="7">Próximos 7 días</button>
+                    <button type="button" class="btn-opcion" data-dias="30">Próximos 30 días</button>
+                    <button type="button" class="btn-opcion" data-dias="60">Próximos 2 meses</button>
+                    <button type="button" class="btn-opcion" data-dias="90">Próximos 3 meses</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="btnCancelar">Cancelar</button>
+            <button class="btn btn-primary" id="btnAplicar">Aplicar Filtro</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'estadisticas/css/estadisticas.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'estadisticas/js/estadisticas.js' %}"></script>
+{% endblock %}

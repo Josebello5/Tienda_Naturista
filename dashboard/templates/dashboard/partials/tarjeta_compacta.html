@@ -1,0 +1,42 @@
+{% if ultima_tasa %}
+<div class="compact-summary-card">
+  <div class="compact-header">
+    <i class="fas fa-chart-line"></i>
+    <div class="compact-info">
+      <h4 style="color: white;">Última Tasa Registrada</h4>
+      <div class="rate-value">{{ ultima_tasa.valor_formateado }} Bs/$</div>
+    </div>
+  </div>
+  <div class="compact-details">
+    <span class="user-info">
+      <i class="fas fa-user"></i>
+      {{ ultima_tasa.usuario.first_name|title }} {{ ultima_tasa.usuario.last_name|title }}
+    </span>
+    <span class="date-info">
+      <i class="fas fa-clock"></i>
+      {{ ultima_tasa.fecha_creacion|date:"d/m/Y H:i" }}
+    </span>
+  </div>
+  <div class="compact-actions">
+    <button class="btn-refresh" onclick="actualizarTabla(event)" title="Actualizar tabla">
+      <i class="fas fa-sync-alt"></i>
+    </button>
+  </div>
+</div>
+{% else %}
+<div class="compact-summary-card" style="background: linear-gradient(135deg, var(--natural-gray), var(--dark-gray));">
+  <div class="compact-header">
+    <i class="fas fa-exchange-alt"></i>
+    <div class="compact-info">
+      <h4 style="color: white;">Sin Tasas Registradas</h4>
+      <div class="rate-value">0,00 Bs/$</div>
+    </div>
+  </div>
+  <div class="compact-details">
+    <span class="user-info">
+      <i class="fas fa-info-circle"></i>
+      No hay tasas en el sistema
+    </span>
+  </div>
+</div>
+{% endif %}

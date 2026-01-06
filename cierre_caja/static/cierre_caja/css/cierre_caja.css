@@ -1,0 +1,397 @@
+/* Estilos para Cierre de Caja */
+:root {
+  --primary-color: #27ae60;
+  --secondary-color: #2ecc71;
+  --accent-color: #e67e22;
+  --danger-color: #e74c3c;
+  --text-dark: #2c3e50;
+  --text-light: #7f8c8d;
+  --bg-light: #f8f9fa;
+  --white: #ffffff;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --radius: 12px;
+}
+
+/* Tarjeta de Bienvenida */
+.welcome-card {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: var(--radius);
+  margin-bottom: 2rem;
+  box-shadow: var(--shadow);
+}
+
+.welcome-card h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.welcome-card p {
+  margin: 0.5rem 0 0;
+  opacity: 0.9;
+}
+
+/* Selector de Fechas */
+.date-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  padding: 1rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.date-selector h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-dark);
+}
+
+.date-nav-btn {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.date-nav-btn:hover {
+  background: var(--bg-light);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.date-input-container {
+  display: flex;
+  align-items: center;
+}
+
+.date-input-container input {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: inherit;
+}
+
+/* Formulario de Cierre */
+.cierre-form-card {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.card-header {
+  background: var(--bg-light);
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-header h3 {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-badge.abierto {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.cerrado {
+  background: #d4edda;
+  color: #155724;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Tabla de Cierre */
+.table-responsive {
+  overflow-x: auto;
+}
+
+.cierre-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cierre-table th {
+  padding: 1rem;
+  text-align: left;
+  background: var(--bg-light);
+  color: var(--text-dark);
+  font-weight: 600;
+  border-bottom: 2px solid #eee;
+}
+
+.cierre-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+}
+
+.method-icon {
+  margin-right: 0.5rem;
+  color: var(--text-light);
+  width: 20px;
+  text-align: center;
+}
+
+.amount-display {
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+.amount-input-group {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  overflow: hidden;
+  background: white;
+  transition: border-color 0.3s;
+  max-width: 180px;
+}
+
+.amount-input-group:focus-within {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+}
+
+.currency-symbol {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-light);
+  color: var(--text-light);
+  font-weight: 600;
+  border-right: 1px solid #ddd;
+}
+
+.amount-input {
+  border: none;
+  padding: 0.5rem;
+  width: 100%;
+  font-family: 'Roboto Mono', monospace;
+  outline: none;
+  text-align: right;
+}
+
+.difference-display {
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.diff-positive {
+  color: var(--primary-color);
+  background: #d4edda;
+}
+
+.diff-negative {
+  color: var(--danger-color);
+  background: #f8d7da;
+}
+
+.diff-neutral {
+  color: var(--text-light);
+}
+
+/* Filas de totales */
+.total-row {
+  background: #f8f9fa;
+  font-weight: bold;
+}
+
+.total-row td {
+  border-top: 2px solid #ddd;
+}
+
+/* Sección de Notas */
+.notes-section {
+  margin-top: 2rem;
+}
+
+.notes-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+.notes-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.notes-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* Botones de Acción */
+.form-actions {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.btn-save {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background 0.3s;
+}
+
+.btn-save:hover {
+  background: #219150;
+}
+
+.btn-print {
+  background: var(--text-dark);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.btn-print:hover {
+  background: #1a252f;
+  color: white;
+}
+
+/* Recibo / Impresión */
+.receipt-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: 2rem;
+  box-shadow: var(--shadow);
+  border-radius: var(--radius);
+}
+
+.receipt-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px dashed #ddd;
+}
+
+.receipt-title {
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+}
+
+.receipt-meta {
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.receipt-section {
+  margin-bottom: 2rem;
+}
+
+.receipt-section h3 {
+  font-size: 1rem;
+  background: var(--bg-light);
+  padding: 0.5rem 1rem;
+  margin: 0 0 1rem;
+  border-radius: 4px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.summary-card {
+  background: var(--bg-light);
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.summary-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+
+.summary-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.receipt-footer {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 2px dashed #ddd;
+  font-size: 0.85rem;
+  color: var(--text-light);
+}
+
+@media (max-width: 768px) {
+  .welcome-card {
+    padding: 1rem;
+  }
+  
+  .cierre-table th, 
+  .cierre-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .amount-input-group {
+    max-width: 100%;
+  }
+}
