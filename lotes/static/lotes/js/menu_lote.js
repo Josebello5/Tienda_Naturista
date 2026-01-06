@@ -1,5 +1,5 @@
 // menu_lote.js - Funcionalidad completa para lotes con sistema de modales
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const tableBody = document.getElementById('tableBody');
     const searchInput = document.getElementById('searchInput');
     const productoSearchInput = document.getElementById('productoSearchInput');
@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const proveedorSuggestions = document.getElementById('proveedorSuggestions');
     const estadoSelect = document.getElementById('estadoSelect');
     const printBtn = document.getElementById('printBtn');
-    
+
     // Elementos del modal de fechas
     const modalFiltroFechas = document.getElementById('modalFiltroFechas');
     const btnFiltroRecibimiento = document.getElementById('btnFiltroRecibimiento');
@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const fechaDesde = document.getElementById('fechaDesde');
     const fechaHasta = document.getElementById('fechaHasta');
     const botonesOpciones = document.querySelector('.botones-opciones');
-    
+
     // Elementos del modal de editar costo
     const modalEditarCosto = document.getElementById('modalEditarCosto');
     const btnCerrarModalCosto = document.getElementById('btnCerrarModalCosto');
@@ -28,37 +28,46 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnGuardarCosto = document.getElementById('btnGuardarCosto');
     const nuevoCostoUnitarioInput = document.getElementById('nuevoCostoUnitario');
     const loteIdCostoInput = document.getElementById('loteIdCosto');
-    
+
+    // Elementos del modal de ver detalles
+    const modalVerDetalles = document.getElementById('modalVerDetalles');
+    const btnCerrarModalDetalles = document.getElementById('btnCerrarModalDetalles');
+    const btnCerrarDetallesInfo = document.getElementById('btnCerrarDetallesInfo');
+    const detalleCodigo = document.getElementById('detalleCodigo');
+    const detalleProveedor = document.getElementById('detalleProveedor');
+    const detalleCostoTotal = document.getElementById('detalleCostoTotal');
+    const detalleProducto = document.getElementById('detalleProducto');
+
     let searchTimeout;
     let productoSeleccionado = '';
     let productoSeleccionadoNombre = '';
     let proveedorSeleccionado = '';
     let proveedorSeleccionadoNombre = '';
     let tipoFiltroActual = ''; // 'recibimiento' o 'vencimiento'
-    
+
     // Filtros actuales
     let filtroRecibimiento = { desde: null, hasta: null };
     let filtroVencimiento = { desde: null, hasta: null };
 
     // ===== SISTEMA DE MODALES =====
-    
+
     function mostrarModalExito(titulo, mensaje) {
         const modal = document.getElementById('successModal');
         const tituloElement = document.getElementById('successModalTitle');
         const mensajeElement = document.getElementById('successModalMessage');
-        
+
         if (!modal || !tituloElement || !mensajeElement) {
             console.error('Elementos del modal no encontrados');
             alert(`${titulo}: ${mensaje}`);
             return;
         }
-        
+
         tituloElement.textContent = titulo;
         mensajeElement.textContent = mensaje;
         modal.classList.add('active');
-        
+
         crearHojasFlotantes(modal.querySelector('.modal-success'));
-        
+
         setTimeout(() => {
             if (modal.classList.contains('active')) {
                 cerrarModalExito();
@@ -70,17 +79,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('errorModal');
         const tituloElement = document.getElementById('errorModalTitle');
         const mensajeElement = document.getElementById('errorModalMessage');
-        
+
         if (!modal || !tituloElement || !mensajeElement) {
             console.error('Elementos del modal de error no encontrados');
             alert(`ERROR: ${titulo} - ${mensaje}`);
             return;
         }
-        
+
         tituloElement.textContent = titulo;
         mensajeElement.textContent = mensaje;
         modal.classList.add('active');
-        
+
         setTimeout(() => {
             if (modal.classList.contains('active')) {
                 cerrarModalError();
@@ -111,12 +120,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function crearHojasFlotantes(modalElement) {
         if (!modalElement) return;
-        
+
         const colors = ['#4caf50', '#81c784', '#a5d6a7', '#66bb6a', '#8bc34a'];
-        
+
         const existingLeaves = modalElement.querySelectorAll('.leaf');
         existingLeaves.forEach(leaf => leaf.remove());
-        
+
         for (let i = 0; i < 12; i++) {
             const leaf = document.createElement('div');
             leaf.className = 'leaf';
@@ -127,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
             leaf.style.height = Math.random() * 20 + 10 + 'px';
             leaf.style.animation = `float ${Math.random() * 2 + 2}s ease-in-out forwards`;
             leaf.style.animationDelay = Math.random() * 1 + 's';
-            
+
             modalElement.appendChild(leaf);
         }
     }
@@ -138,45 +147,45 @@ document.addEventListener('DOMContentLoaded', function() {
             const mensajeElement = document.getElementById('confirmModalMessage');
             const botonConfirmar = document.getElementById('confirmAction');
             const tituloElement = modal.querySelector('h2');
-            
+
             if (!modal || !mensajeElement || !botonConfirmar) {
                 console.error('Elementos del modal de confirmación no encontrados');
                 resolve(confirm(mensaje));
                 return;
             }
-            
+
             tituloElement.textContent = titulo;
             mensajeElement.textContent = mensaje;
             botonConfirmar.textContent = 'Aceptar';
-            
+
             modal.classList.add('active');
-            
+
             const btnCancelar = document.getElementById('cancelConfirm');
-            
+
             const limpiarEventos = () => {
                 btnCancelar.removeEventListener('click', onCancel);
                 botonConfirmar.removeEventListener('click', onConfirm);
                 modal.removeEventListener('click', onOutsideClick);
             };
-            
+
             const onCancel = () => {
                 cerrarModalConfirmacion();
                 limpiarEventos();
                 resolve(false);
             };
-            
+
             const onConfirm = () => {
                 cerrarModalConfirmacion();
                 limpiarEventos();
                 resolve(true);
             };
-            
+
             const onOutsideClick = (e) => {
                 if (e.target === modal) {
                     onCancel();
                 }
             };
-            
+
             btnCancelar.addEventListener('click', onCancel);
             botonConfirmar.addEventListener('click', onConfirm);
             modal.addEventListener('click', onOutsideClick);
@@ -187,28 +196,28 @@ document.addEventListener('DOMContentLoaded', function() {
     function inicializarModales() {
         const closeSuccessModal = document.getElementById('closeSuccessModal');
         const closeErrorModal = document.getElementById('closeErrorModal');
-        
+
         if (closeSuccessModal) {
             closeSuccessModal.addEventListener('click', cerrarModalExito);
         }
-        
+
         if (closeErrorModal) {
             closeErrorModal.addEventListener('click', cerrarModalError);
         }
-        
+
         const successModal = document.getElementById('successModal');
         const errorModal = document.getElementById('errorModal');
-        
+
         if (successModal) {
-            successModal.addEventListener('click', function(e) {
+            successModal.addEventListener('click', function (e) {
                 if (e.target === this) {
                     cerrarModalExito();
                 }
             });
         }
-        
+
         if (errorModal) {
-            errorModal.addEventListener('click', function(e) {
+            errorModal.addEventListener('click', function (e) {
                 if (e.target === this) {
                     cerrarModalError();
                 }
@@ -221,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ===== FUNCIONES AUXILIARES =====
-    
+
     function getCSRFToken() {
         const name = 'csrftoken';
         let cookieValue = null;
@@ -248,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const dia = String(hoy.getDate()).padStart(2, '0');
         return `${año}-${mes}-${dia}`;
     }
-    
+
     /**
      * Convierte una fecha de DD/MM/YYYY a objeto Date sin problemas de zona horaria
      */
@@ -267,11 +276,11 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function configurarLimitesFechas() {
         const hoy = getFechaActual();
-        
+
         // Limpiar límites anteriores
         fechaDesde.removeAttribute('max');
         fechaHasta.removeAttribute('max');
-        
+
         if (tipoFiltroActual === 'recibimiento') {
             // Para recibimiento, no se permiten fechas futuras
             fechaDesde.setAttribute('max', hoy);
@@ -291,22 +300,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const desde = fechaDesde.value;
         const hasta = fechaHasta.value;
         const hoy = getFechaActual();
-        
+
         // Limpiar mensajes de error anteriores
         limpiarMensajesError();
-        
+
         // Validación básica: fecha hasta no puede ser menor que fecha desde
         if (desde && hasta) {
             const fechaDesdeObj = new Date(desde);
             const fechaHastaObj = new Date(hasta);
-            
+
             if (fechaHastaObj < fechaDesdeObj) {
                 mostrarErrorFechaHasta('La fecha "Hasta" no puede ser menor que la fecha "Desde"');
                 btnAplicar.disabled = true;
                 return false;
             }
         }
-        
+
         // Validaciones específicas por tipo de filtro
         if (tipoFiltroActual === 'recibimiento') {
             // Para recibimiento: no se permiten fechas futuras
@@ -333,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return false;
             }
         }
-        
+
         btnAplicar.disabled = false;
         return true;
     }
@@ -346,7 +355,7 @@ document.addEventListener('DOMContentLoaded', function() {
         errorDiv.className = 'error-message';
         errorDiv.id = 'errorFechaDesde';
         errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${mensaje}`;
-        
+
         const fechaGroup = fechaDesde.closest('.fecha-group');
         fechaGroup.appendChild(errorDiv);
         fechaDesde.classList.add('input-error');
@@ -360,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
         errorDiv.className = 'error-message';
         errorDiv.id = 'errorFechaHasta';
         errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${mensaje}`;
-        
+
         const fechaGroup = fechaHasta.closest('.fecha-group');
         fechaGroup.appendChild(errorDiv);
         fechaHasta.classList.add('input-error');
@@ -372,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function limpiarMensajesError() {
         const errores = document.querySelectorAll('.error-message');
         errores.forEach(error => error.remove());
-        
+
         fechaDesde.classList.remove('input-error');
         fechaHasta.classList.remove('input-error');
     }
@@ -414,7 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const estado = estadoSelect.value;
             const esVencido = estado === 'vencido';
             const hoy = getFechaActual();
-            
+
             if (esVencido && tipoFiltroActual === 'vencimiento') {
                 botonesOpciones.innerHTML = `
                     <button type="button" class="btn-opcion" data-dias="1">Hoy</button>
@@ -443,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             document.querySelectorAll('.btn-opcion').forEach(btn => {
-                btn.addEventListener('click', function(e) {
+                btn.addEventListener('click', function (e) {
                     e.preventDefault();
                     if (this.classList.contains('btn-limpiar')) {
                         fechaDesde.value = '';
@@ -464,12 +473,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const hoy = new Date();
             const fechaInicio = new Date();
             const fechaFin = new Date();
-            
+
             const estado = estadoSelect.value;
             const esVencido = estado === 'vencido';
             const esVencimiento = tipoFiltroActual === 'vencimiento';
             const esRecibimiento = tipoFiltroActual === 'recibimiento';
-            
+
             if (dias === 1) {
                 const fechaHoy = getFechaActual();
                 fechaDesde.value = fechaHoy;
@@ -496,7 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Event listeners para abrir modales de fecha
-        btnFiltroRecibimiento.addEventListener('click', function() {
+        btnFiltroRecibimiento.addEventListener('click', function () {
             tipoFiltroActual = 'recibimiento';
             modalTitulo.textContent = 'Filtrar por Fecha de Recibimiento';
             fechaDesde.value = filtroRecibimiento.desde || '';
@@ -508,7 +517,7 @@ document.addEventListener('DOMContentLoaded', function() {
             modalFiltroFechas.style.display = 'flex';
         });
 
-        btnFiltroVencimiento.addEventListener('click', function() {
+        btnFiltroVencimiento.addEventListener('click', function () {
             tipoFiltroActual = 'vencimiento';
             modalTitulo.textContent = 'Filtrar por Fecha de Vencimiento';
             fechaDesde.value = filtroVencimiento.desde || '';
@@ -528,13 +537,13 @@ document.addEventListener('DOMContentLoaded', function() {
         btnCerrarModal.addEventListener('click', cerrarModal);
         btnCancelar.addEventListener('click', cerrarModal);
 
-        modalFiltroFechas.addEventListener('click', function(e) {
+        modalFiltroFechas.addEventListener('click', function (e) {
             if (e.target === modalFiltroFechas) {
                 cerrarModal();
             }
         });
 
-        btnAplicar.addEventListener('click', function() {
+        btnAplicar.addEventListener('click', function () {
             if (!validarFechas()) {
                 return;
             }
@@ -558,7 +567,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fechaHasta.addEventListener('input', validarFechas);
 
         // También validar cuando cambia el estado (puede afectar a vencimiento)
-        estadoSelect.addEventListener('change', function() {
+        estadoSelect.addEventListener('change', function () {
             if (modalFiltroFechas.style.display === 'flex' && tipoFiltroActual === 'vencimiento') {
                 configurarLimitesFechas();
                 validarFechas();
@@ -588,17 +597,17 @@ document.addEventListener('DOMContentLoaded', function() {
         btnCerrarModalCosto.addEventListener('click', cerrarModalEditarCosto);
         btnCancelarCosto.addEventListener('click', cerrarModalEditarCosto);
 
-        modalEditarCosto.addEventListener('click', function(e) {
+        modalEditarCosto.addEventListener('click', function (e) {
             if (e.target === modalEditarCosto) {
                 cerrarModalEditarCosto();
             }
         });
 
-        btnGuardarCosto.addEventListener('click', function() {
+        btnGuardarCosto.addEventListener('click', function () {
             const loteId = loteIdCostoInput.value;
             // Usar parseFloat para manejar correctamente los decimales
             const nuevoCosto = parseFloat(nuevoCostoUnitarioInput.value);
-            
+
             if (isNaN(nuevoCosto) || nuevoCosto <= 0) {
                 mostrarModalError('Error', 'Por favor, ingrese un costo unitario válido (mayor a 0).');
                 return;
@@ -614,33 +623,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     costo_unitario: nuevoCosto
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const celdaCosto = document.querySelector(`.editable-costo[data-lote-id="${loteId}"]`);
-                    const celdaCostoTotal = document.querySelector(`.costo-total[data-lote-id="${loteId}"]`);
-                    
-                    if (celdaCosto) {
-                        celdaCosto.textContent = `$${parseFloat(data.costo_unitario).toFixed(2)}`;
-                        celdaCosto.setAttribute('data-costo-actual', data.costo_unitario);
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const celdaCosto = document.querySelector(`.editable-costo[data-lote-id="${loteId}"]`);
+                        const celdaCostoTotal = document.querySelector(`.costo-total[data-lote-id="${loteId}"]`);
+
+                        if (celdaCosto) {
+                            celdaCosto.textContent = `$${parseFloat(data.costo_unitario).toFixed(2)}`;
+                            celdaCosto.setAttribute('data-costo-actual', data.costo_unitario);
+                        }
+                        if (celdaCostoTotal) {
+                            celdaCostoTotal.textContent = `$${parseFloat(data.costo_total).toFixed(2)}`;
+                        }
+
+                        cerrarModalEditarCosto();
+                        mostrarModalExito('¡Éxito!', data.message || 'Costo unitario actualizado correctamente');
+                    } else {
+                        mostrarModalError('Error', data.error);
                     }
-                    if (celdaCostoTotal) {
-                        celdaCostoTotal.textContent = `$${parseFloat(data.costo_total).toFixed(2)}`;
-                    }
-                    
-                    cerrarModalEditarCosto();
-                    mostrarModalExito('¡Éxito!', data.message || 'Costo unitario actualizado correctamente');
-                } else {
-                    mostrarModalError('Error', data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                mostrarModalError('Error', 'Error al actualizar el costo unitario');
-            });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarModalError('Error', 'Error al actualizar el costo unitario');
+                });
         });
 
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (e.target.closest('.btn-edit-costo')) {
                 const button = e.target.closest('.btn-edit-costo');
                 const loteId = button.getAttribute('data-lote-id');
@@ -655,7 +664,7 @@ document.addEventListener('DOMContentLoaded', function() {
         async function cambiarEstadoLote(loteId, estadoActual) {
             const nuevoEstado = estadoActual === 'activo' ? 'inactivo' : 'activo';
             const mensajeConfirmacion = `¿Estás seguro de que deseas ${nuevoEstado === 'inactivo' ? 'desactivar' : 'activar'} este lote?`;
-            
+
             const confirmado = await mostrarConfirmacion(mensajeConfirmacion);
             if (!confirmado) {
                 return;
@@ -668,45 +677,98 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-CSRFToken': getCSRFToken()
                 }
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const fila = document.querySelector(`tr[data-lote-id="${loteId}"]`);
-                    const celdaEstado = fila.querySelector('.status');
-                    const botonEstado = fila.querySelector('.btn-cambiar-estado');
-                    const iconoEstado = botonEstado.querySelector('i');
-                    
-                    // Actualizar atributo data-estado de la fila
-                    fila.setAttribute('data-estado', data.nuevo_estado);
-                    
-                    // Actualizar clases y texto del estado
-                    celdaEstado.className = 'status ' + (data.nuevo_estado === 'activo' ? 'status-active' : 'status-inactive');
-                    celdaEstado.textContent = data.nuevo_estado_display;
-                    
-                    // Actualizar icono del botón
-                    iconoEstado.className = data.nuevo_estado === 'activo' ? 'fas fa-toggle-on' : 'fas fa-toggle-off';
-                    botonEstado.setAttribute('data-estado-actual', data.nuevo_estado);
-                    
-                    // Re-aplicar filtros para actualizar la tabla según el estado actual
-                    filtrarLotes();
-                    
-                    mostrarModalExito('¡Éxito!', data.message || 'Estado del lote actualizado correctamente');
-                } else {
-                    mostrarModalError('Error', data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                mostrarModalError('Error', 'Error al cambiar el estado del lote');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const fila = document.querySelector(`tr[data-lote-id="${loteId}"]`);
+                        const celdaEstado = fila.querySelector('.status');
+                        const botonEstado = fila.querySelector('.btn-cambiar-estado');
+                        const iconoEstado = botonEstado.querySelector('i');
+
+                        // Actualizar atributo data-estado de la fila
+                        fila.setAttribute('data-estado', data.nuevo_estado);
+
+                        // Actualizar clases y texto del estado
+                        celdaEstado.className = 'status ' + (data.nuevo_estado === 'activo' ? 'status-active' : 'status-inactive');
+                        celdaEstado.textContent = data.nuevo_estado_display;
+
+                        // Actualizar icono del botón
+                        iconoEstado.className = data.nuevo_estado === 'activo' ? 'fas fa-toggle-on' : 'fas fa-toggle-off';
+                        botonEstado.setAttribute('data-estado-actual', data.nuevo_estado);
+
+                        // Re-aplicar filtros para actualizar la tabla según el estado actual
+                        filtrarLotes();
+
+                        mostrarModalExito('¡Éxito!', data.message || 'Estado del lote actualizado correctamente');
+                    } else {
+                        mostrarModalError('Error', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarModalError('Error', 'Error al cambiar el estado del lote');
+                });
         }
 
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (e.target.closest('.btn-cambiar-estado')) {
                 const button = e.target.closest('.btn-cambiar-estado');
                 const loteId = button.getAttribute('data-lote-id');
                 const estadoActual = button.getAttribute('data-estado-actual');
                 cambiarEstadoLote(loteId, estadoActual);
+            }
+        });
+    }
+
+    // ===== FUNCIONALIDAD PARA VER DETALLES =====
+    function inicializarVerDetalles() {
+        function abrirModalDetalles(codigo, proveedor, costoTotal, producto) {
+            detalleCodigo.textContent = codigo;
+            detalleProveedor.textContent = proveedor;
+            if (detalleProducto) {
+                detalleProducto.textContent = producto;
+            }
+
+            // Formatear el costo total
+            const costoFormateado = parseFloat(costoTotal).toLocaleString('es-VE', {
+                style: 'currency',
+                currency: 'USD'
+            }).replace('US', ''); // Ajuste simple si es necesario
+
+            detalleCostoTotal.textContent = `$${parseFloat(costoTotal).toFixed(2)}`;
+
+            modalVerDetalles.style.display = 'flex';
+        }
+
+        function cerrarModalDetalles() {
+            modalVerDetalles.style.display = 'none';
+        }
+
+        if (btnCerrarModalDetalles) {
+            btnCerrarModalDetalles.addEventListener('click', cerrarModalDetalles);
+        }
+
+        if (btnCerrarDetallesInfo) {
+            btnCerrarDetallesInfo.addEventListener('click', cerrarModalDetalles);
+        }
+
+        if (modalVerDetalles) {
+            modalVerDetalles.addEventListener('click', function (e) {
+                if (e.target === modalVerDetalles) {
+                    cerrarModalDetalles();
+                }
+            });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.btn-ver-detalles')) {
+                const button = e.target.closest('.btn-ver-detalles');
+                const codigo = button.getAttribute('data-codigo');
+                const proveedor = button.getAttribute('data-proveedor');
+                const costoTotal = button.getAttribute('data-costo-total');
+                const producto = button.getAttribute('data-producto');
+
+                abrirModalDetalles(codigo, proveedor, costoTotal, producto);
             }
         });
     }
@@ -743,13 +805,13 @@ document.addEventListener('DOMContentLoaded', function() {
             filtrarLotes();
         }, 300);
     }
-    
+
     if (searchInput) {
         searchInput.addEventListener('input', manejarFiltros);
     }
-    
+
     if (estadoSelect) {
-        estadoSelect.addEventListener('change', function() {
+        estadoSelect.addEventListener('change', function () {
             manejarFiltros();
             actualizarIndicadoresFiltro();
         });
@@ -757,24 +819,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== BÚSQUEDA DE PRODUCTOS CON SUGERENCIAS - CORREGIDA =====
     if (productoSearchInput && productoSuggestions) {
-        productoSearchInput.addEventListener('input', function(e) {
+        productoSearchInput.addEventListener('input', function (e) {
             mostrarSugerenciasProductos(e.target.value);
         });
 
-        productoSearchInput.addEventListener('focus', function() {
+        productoSearchInput.addEventListener('focus', function () {
             if (this.value && this.value !== productoSeleccionadoNombre) {
                 mostrarSugerenciasProductos(this.value);
             }
         });
 
-        document.addEventListener('click', function(e) {
-            if (productoSearchInput && !productoSearchInput.contains(e.target) && 
+        document.addEventListener('click', function (e) {
+            if (productoSearchInput && !productoSearchInput.contains(e.target) &&
                 productoSuggestions && !productoSuggestions.contains(e.target)) {
                 productoSuggestions.style.display = 'none';
             }
         });
 
-        productoSearchInput.addEventListener('keydown', function(e) {
+        productoSearchInput.addEventListener('keydown', function (e) {
             if (e.key === 'Backspace' && this.value === '') {
                 productoSeleccionado = '';
                 productoSeleccionadoNombre = '';
@@ -785,24 +847,24 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== BÚSQUEDA DE PROVEEDORES CON SUGERENCIAS =====
     if (proveedorSearchInput && proveedorSuggestions) {
-        proveedorSearchInput.addEventListener('input', function(e) {
+        proveedorSearchInput.addEventListener('input', function (e) {
             mostrarSugerenciasProveedores(e.target.value);
         });
 
-        proveedorSearchInput.addEventListener('focus', function() {
+        proveedorSearchInput.addEventListener('focus', function () {
             if (this.value && this.value !== proveedorSeleccionadoNombre) {
                 mostrarSugerenciasProveedores(this.value);
             }
         });
 
-        document.addEventListener('click', function(e) {
-            if (proveedorSearchInput && !proveedorSearchInput.contains(e.target) && 
+        document.addEventListener('click', function (e) {
+            if (proveedorSearchInput && !proveedorSearchInput.contains(e.target) &&
                 proveedorSuggestions && !proveedorSuggestions.contains(e.target)) {
                 proveedorSuggestions.style.display = 'none';
             }
         });
 
-        proveedorSearchInput.addEventListener('keydown', function(e) {
+        proveedorSearchInput.addEventListener('keydown', function (e) {
             if (e.key === 'Backspace' && this.value === '') {
                 proveedorSeleccionado = '';
                 proveedorSeleccionadoNombre = '';
@@ -858,11 +920,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 suggestion.setAttribute('data-producto-id', producto.id);
                 suggestion.setAttribute('data-producto-nombre', producto.nombre);
-                
-                suggestion.addEventListener('click', function() {
+
+                suggestion.addEventListener('click', function () {
                     const productoId = this.getAttribute('data-producto-id');
                     const productoNombre = this.getAttribute('data-producto-nombre');
-                    
+
                     productoSearchInput.value = productoNombre;
                     productoSeleccionado = productoId;
                     productoSeleccionadoNombre = productoNombre;
@@ -916,11 +978,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 suggestion.textContent = proveedor.nombre;
                 suggestion.setAttribute('data-proveedor-id', proveedor.id);
                 suggestion.setAttribute('data-proveedor-nombre', proveedor.nombre);
-                
-                suggestion.addEventListener('click', function() {
+
+                suggestion.addEventListener('click', function () {
                     const proveedorId = this.getAttribute('data-proveedor-id');
                     const proveedorNombre = this.getAttribute('data-proveedor-nombre');
-                    
+
                     proveedorSearchInput.value = proveedorNombre;
                     proveedorSeleccionado = proveedorId;
                     proveedorSeleccionadoNombre = proveedorNombre;
@@ -940,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
         const estado = estadoSelect ? estadoSelect.value : '';
         const proveedorId = proveedorSeleccionado ? proveedorSeleccionado : '';
-        
+
         const rows = tableBody.querySelectorAll('tr');
         let visibleRows = 0;
 
@@ -959,15 +1021,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const fechaRecibimientoText = row.cells[7].textContent.trim();
             const fechaVencimientoText = row.cells[8].textContent.trim();
             const estadoLote = row.getAttribute('data-estado');
-            
+
             const coincideCodigo = !query || codigoLote.includes(query);
             const coincideProducto = !productoSeleccionado || productoId === productoSeleccionado;
             const coincideProveedor = !proveedorId || proveedorIdFila === proveedorId;
             const coincideEstado = !estado || estadoLote === estado;
-            
+
             const coincideFechaRecibimiento = fechaEnRango(fechaRecibimientoText, filtroRecibimiento.desde, filtroRecibimiento.hasta);
             const coincideFechaVencimiento = fechaEnRango(fechaVencimientoText, filtroVencimiento.desde, filtroVencimiento.hasta);
-            
+
             if (coincideCodigo && coincideProducto && coincideProveedor && coincideFechaRecibimiento && coincideFechaVencimiento && coincideEstado) {
                 row.style.display = '';
                 visibleRows++;
@@ -977,14 +1039,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         const emptyRow = tableBody.querySelector('.empty-row:not(.no-resultados)');
-        
+
         // Mostrar mensaje apropiado según los resultados
         if (visibleRows === 0) {
             // Verificar si hay filtros activos
-            const hayFiltrosActivos = query || productoSeleccionado || proveedorId || estado || 
-                                filtroRecibimiento.desde || filtroRecibimiento.hasta || 
-                                filtroVencimiento.desde || filtroVencimiento.hasta;
-            
+            const hayFiltrosActivos = query || productoSeleccionado || proveedorId || estado ||
+                filtroRecibimiento.desde || filtroRecibimiento.hasta ||
+                filtroVencimiento.desde || filtroVencimiento.hasta;
+
             if (hayFiltrosActivos) {
                 // Mostrar mensaje de no resultados con filtros
                 mostrarMensajeNoResultados();
@@ -1039,22 +1101,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== GENERAR PDF CON FILTROS ACTUALES =====
     if (printBtn) {
-        printBtn.addEventListener('click', function() {
+        printBtn.addEventListener('click', function () {
             const query = searchInput ? searchInput.value.trim() : '';
             const estado = estadoSelect ? estadoSelect.value : '';
             const proveedor = proveedorSeleccionado ? proveedorSeleccionado : '';
-            
+
             const params = new URLSearchParams();
             if (query) params.append('q', query);
             if (productoSeleccionado) params.append('producto', productoSeleccionado);
             if (estado) params.append('estado', estado);
             if (proveedor) params.append('proveedor', proveedor);
-            
+
             if (filtroRecibimiento.desde) params.append('fecha_recibimiento_desde', filtroRecibimiento.desde);
             if (filtroRecibimiento.hasta) params.append('fecha_recibimiento_hasta', filtroRecibimiento.hasta);
             if (filtroVencimiento.desde) params.append('fecha_vencimiento_desde', filtroVencimiento.desde);
             if (filtroVencimiento.hasta) params.append('fecha_vencimiento_hasta', filtroVencimiento.hasta);
-            
+
             const pdfUrl = `/lotes/generar-pdf/?${params.toString()}`;
             window.open(pdfUrl, '_blank');
         });
@@ -1064,22 +1126,22 @@ document.addEventListener('DOMContentLoaded', function() {
     function limpiarFiltros() {
         filtroRecibimiento = { desde: null, hasta: null };
         filtroVencimiento = { desde: null, hasta: null };
-        
+
         if (searchInput) searchInput.value = '';
         if (estadoSelect) estadoSelect.value = '';
         if (productoSearchInput) productoSearchInput.value = '';
         if (proveedorSearchInput) proveedorSearchInput.value = '';
-        
+
         productoSeleccionado = '';
         productoSeleccionadoNombre = '';
         proveedorSeleccionado = '';
         proveedorSeleccionadoNombre = '';
-        
+
         actualizarIndicadoresFiltro();
         filtrarLotes();
     }
 
-    document.querySelector('.productos-toolbar').addEventListener('dblclick', function(e) {
+    document.querySelector('.productos-toolbar').addEventListener('dblclick', function (e) {
         if (e.ctrlKey) {
             limpiarFiltros();
         }
@@ -1094,9 +1156,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (registroExitoso === 'true' && codigoLote) {
             // Mostrar modal de éxito después de cargar la página
-            setTimeout(function() {
+            setTimeout(function () {
                 mostrarModalExito(
-                    '¡Lote Registrado!', 
+                    '¡Lote Registrado!',
                     `El lote "${codigoLote}" ha sido registrado exitosamente.`
                 );
             }, 500);
@@ -1104,9 +1166,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (edicionExitosa === 'true' && codigoLote) {
             // Mostrar modal de éxito después de cargar la página
-            setTimeout(function() {
+            setTimeout(function () {
                 mostrarModalExito(
-                    '¡Lote Actualizado!', 
+                    '¡Lote Actualizado!',
                     `El lote "${codigoLote}" ha sido actualizado exitosamente.`
                 );
             }, 500);
@@ -1118,13 +1180,14 @@ document.addEventListener('DOMContentLoaded', function() {
         inicializarModalFechas();
         inicializarModalCosto();
         inicializarCambioEstado();
+        inicializarVerDetalles();
         inicializarModales();
         actualizarIndicadoresFiltro();
         verificarParametrosURL();
-        
+
         if (searchInput) searchInput.focus();
         filtrarLotes();
-        
+
         console.log('Sistema de gestión de lotes inicializado correctamente');
     }
 

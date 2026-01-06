@@ -14,10 +14,10 @@
 {% if messages %}
 <div class="messages-container">
   {% for message in messages %}
-    <div class="alert alert-{{ message.tags }}">
-      <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
-      {{ message }}
-    </div>
+  <div class="alert alert-{{ message.tags }}">
+    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+    {{ message }}
+  </div>
   {% endfor %}
 </div>
 {% endif %}
@@ -25,7 +25,7 @@
 <!-- ===== CONTENEDOR PRINCIPAL DE LOTES ===== -->
 <div class="productos-container">
   <div class="productos-main">
-    
+
     <!-- ===== BARRA DE HERRAMIENTAS ===== -->
     <div class="productos-toolbar">
       <div class="filtros-container">
@@ -33,7 +33,7 @@
           <i class="fas fa-search"></i>
           <input type="text" id="searchInput" placeholder="Buscar por código de lote...">
         </div>
-        
+
         <div class="producto-search-container">
           <input type="text" id="productoSearchInput" class="producto-search-input" placeholder="Buscar producto...">
           <div id="productoSuggestions" class="producto-suggestions"></div>
@@ -43,7 +43,7 @@
           <input type="text" id="proveedorSearchInput" class="proveedor-search-input" placeholder="Buscar proveedor...">
           <div id="proveedorSuggestions" class="proveedor-suggestions"></div>
         </div>
-        
+
         <!-- Botones para abrir modales de fecha -->
         <button class="btn-filtro-fecha" id="btnFiltroRecibimiento">
           <i class="fas fa-calendar-day"></i>
@@ -54,7 +54,7 @@
           <i class="fas fa-calendar-times"></i>
           Fecha Vencimiento
         </button>
-        
+
         <div class="filtro-select">
           <select id="estadoSelect">
             <option value="">Todos los estados</option>
@@ -65,7 +65,7 @@
           </select>
         </div>
       </div>
-      
+
       <div class="toolbar-actions">
         <a href="{% url 'lotes:registrar_lote' %}" class="btn btn-primary" id="addBtn">
           <i class="fas fa-plus-circle"></i> Registrar Lote
@@ -84,13 +84,10 @@
       <table id="dataTable">
         <thead>
           <tr>
-            <th>ID Lote</th>
-            <th>Código Lote</th>
+
             <th>Producto</th>
-            <th>Proveedor</th>
-            <th>Costo Unitario</th>
-            <th>Costo Total</th>
             <th>Unidades del Lote</th>
+            <th>Costo Unitario</th>
             <th>Fecha Recibimiento</th>
             <th>Fecha Vencimiento</th>
             <th>Estado</th>
@@ -99,19 +96,15 @@
         </thead>
         <tbody id="tableBody">
           {% for lote in lotes %}
-          <tr data-producto-id="{{ lote.id_producto.ID_producto }}" 
-              data-lote-id="{{ lote.id_lote }}" 
-              data-estado="{{ lote.estado }}"
-              data-proveedor-id="{{ lote.proveedor.id_proveedor }}">
-            <td>{{ lote.id_lote }}</td>
-            <td>{{ lote.codigo_lote }}</td>
+          <tr data-producto-id="{{ lote.id_producto.ID_producto }}" data-lote-id="{{ lote.id_lote }}"
+            data-estado="{{ lote.estado }}" data-proveedor-id="{{ lote.proveedor.id_proveedor }}">
+
             <td>{{ lote.id_producto.nombre_pro }}</td>
-            <td>{{ lote.proveedor.nombre }}</td>
-            <td class="centered editable-costo" data-lote-id="{{ lote.id_lote }}" data-costo-actual="{{ lote.costo_unitario }}">
+            <td>{{ lote.cantidad }}</td>
+            <td class="centered editable-costo" data-lote-id="{{ lote.id_lote }}"
+              data-costo-actual="{{ lote.costo_unitario }}">
               ${{ lote.costo_unitario }}
             </td>
-            <td class="centered costo-total" data-lote-id="{{ lote.id_lote }}">${{ lote.costo_total }}</td>
-            <td>{{ lote.cantidad }}</td>
             <td>{{ lote.fecha_recibimiento|date:"d/m/Y" }}</td>
             <td>{{ lote.fecha_vencimiento|date:"d/m/Y" }}</td>
             <td>
@@ -124,36 +117,49 @@
               </span>
             </td>
             <td class="actions">
+              <!-- Botón Ver Detalles -->
+              <button class="btn-action btn-ver-detalles" title="Ver Detalles" data-codigo="{{ lote.codigo_lote }}"
+                data-proveedor="{{ lote.proveedor.nombre }}" data-costo-total="{{ lote.costo_total }}"
+                data-producto="{{ lote.id_producto.nombre_pro }}">
+                <i class="fas fa-eye"></i>
+              </button>
+
               <!-- Botón para editar costo unitario -->
               {% if lote.estado != 'vencido' and lote.estado != 'agotado' %}
               <button class="btn-action btn-edit-costo" title="Editar Costo Unitario" data-lote-id="{{ lote.id_lote }}">
                 <i class="fas fa-dollar-sign"></i>
               </button>
               {% else %}
-              <button class="btn-action btn-estado-fijo" title="No se puede editar costo de lote {{ lote.get_estado_display|lower }}" disabled style="opacity: 0.5;">
+              <button class="btn-action btn-estado-fijo"
+                title="No se puede editar costo de lote {{ lote.get_estado_display|lower }}" disabled
+                style="opacity: 0.5;">
                 <i class="fas fa-ban"></i>
               </button>
               {% endif %}
-              
+
               <!-- Botón para editar lote -->
               {% if lote.estado != 'vencido' and lote.estado != 'agotado' %}
-              <a href="{% url 'lotes:editar_lote' lote.id_lote %}" class="btn-action btn-editar-lote" title="Editar Lote">
+              <a href="{% url 'lotes:editar_lote' lote.id_lote %}" class="btn-action btn-editar-lote"
+                title="Editar Lote">
                 <i class="fas fa-edit"></i>
               </a>
               {% else %}
-              <button class="btn-action btn-estado-fijo" title="No se puede editar lote {{ lote.get_estado_display|lower }}" disabled style="opacity: 0.5;">
+              <button class="btn-action btn-estado-fijo"
+                title="No se puede editar lote {{ lote.get_estado_display|lower }}" disabled style="opacity: 0.5;">
                 <i class="fas fa-ban"></i>
               </button>
               {% endif %}
-              
+
               <!-- Botón para cambiar estado (solo para activo/inactivo) -->
               {% if lote.estado in 'activo,inactivo' %}
-              <button class="btn-action btn-cambiar-estado" title="Cambiar Estado" data-lote-id="{{ lote.id_lote }}" data-estado-actual="{{ lote.estado }}">
+              <button class="btn-action btn-cambiar-estado" title="Cambiar Estado" data-lote-id="{{ lote.id_lote }}"
+                data-estado-actual="{{ lote.estado }}">
                 <i class="fas fa-toggle-{% if lote.estado == 'activo' %}on{% else %}off{% endif %}"></i>
               </button>
               {% else %}
               <!-- Para lotes vencidos o agotados, mostrar ícono deshabilitado -->
-              <button class="btn-action btn-estado-fijo" title="Estado calculado automáticamente" disabled style="opacity: 0.5;">
+              <button class="btn-action btn-estado-fijo" title="Estado calculado automáticamente" disabled
+                style="opacity: 0.5;">
                 <i class="fas fa-lock"></i>
               </button>
               {% endif %}
@@ -176,35 +182,40 @@
     {% if lotes.paginator.num_pages > 1 %}
     <div class="pagination-container">
       <div class="pagination-info">
-        Mostrando página {{ lotes.number }} de {{ lotes.paginator.num_pages }} 
+        Mostrando página {{ lotes.number }} de {{ lotes.paginator.num_pages }}
         (Total: {{ lotes.paginator.count }} registros)
       </div>
       <div class="pagination-controls">
         {% if lotes.has_previous %}
-          <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">
-            <i class="fas fa-angle-double-left"></i> Primera
-          </a>
-          <a href="?page={{ lotes.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">
-            <i class="fas fa-angle-left"></i> Anterior
-          </a>
+        <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+          class="pagination-btn">
+          <i class="fas fa-angle-double-left"></i> Primera
+        </a>
+        <a href="?page={{ lotes.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+          class="pagination-btn">
+          <i class="fas fa-angle-left"></i> Anterior
+        </a>
         {% endif %}
 
         {% for num in lotes.paginator.page_range %}
-          {% if lotes.number == num %}
-            <span class="pagination-current">{{ num }}</span>
-          {% elif num > lotes.number|add:'-3' and num < lotes.number|add:'3' %}
-            <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">{{ num }}</a>
+        {% if lotes.number == num %}
+        <span class="pagination-current">{{ num }}</span>
+        {% elif num > lotes.number|add:'-3' and num < lotes.number|add:'3' %} <a
+          href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+          class="pagination-btn">{{ num }}</a>
           {% endif %}
-        {% endfor %}
+          {% endfor %}
 
-        {% if lotes.has_next %}
-          <a href="?page={{ lotes.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">
+          {% if lotes.has_next %}
+          <a href="?page={{ lotes.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+            class="pagination-btn">
             Siguiente <i class="fas fa-angle-right"></i>
           </a>
-          <a href="?page={{ lotes.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">
+          <a href="?page={{ lotes.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+            class="pagination-btn">
             Última <i class="fas fa-angle-double-right"></i>
           </a>
-        {% endif %}
+          {% endif %}
       </div>
     </div>
     {% endif %}
@@ -231,6 +242,35 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" id="btnCancelarCosto">Cancelar</button>
       <button class="btn btn-primary" id="btnGuardarCosto">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL VER DETALLES ===== -->
+<div id="modalVerDetalles" class="modal-filtro">
+  <div class="modal-contenido">
+    <div class="modal-header">
+      <h3>Detalles del Lote</h3>
+      <button class="btn-cerrar" id="btnCerrarModalDetalles">&times;</button>
+    </div>
+    <div class="modal-body">
+      <h2 id="detalleProducto" class="titulo-producto-detalle"></h2>
+
+      <div class="detalle-group">
+        <label>Código de Lote:</label>
+        <p id="detalleCodigo" class="detalle-valor"></p>
+      </div>
+      <div class="detalle-group">
+        <label>Proveedor:</label>
+        <p id="detalleProveedor" class="detalle-valor"></p>
+      </div>
+      <div class="detalle-group">
+        <label>Costo Total:</label>
+        <p id="detalleCostoTotal" class="detalle-valor precio-destacado"></p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="btnCerrarDetallesInfo">Cerrar</button>
     </div>
   </div>
 </div>
@@ -326,8 +366,8 @@
           <label for="nombreProveedor" class="form-label">Nombre del Proveedor</label>
           <div class="input-icon">
             <i class="fas fa-truck"></i>
-            <input type="text" id="nombreProveedor" class="form-control" 
-                   maxlength="100" placeholder="Letras, números y puntos" autocomplete="off" required>
+            <input type="text" id="nombreProveedor" class="form-control" maxlength="100"
+              placeholder="Letras, números y puntos" autocomplete="off" required>
           </div>
           <small class="form-text text-muted">Máximo 100 caracteres. Letras, números y puntos.</small>
           <span class="error-msg" id="errorNombreProveedor" style="display: none;"></span>
@@ -336,8 +376,8 @@
           <label for="contactoProveedor" class="form-label">Información de Contacto (Opcional)</label>
           <div class="input-icon">
             <i class="fas fa-address-book"></i>
-            <input type="text" id="contactoProveedor" class="form-control" 
-                   maxlength="200" placeholder="Información de contacto" autocomplete="off">
+            <input type="text" id="contactoProveedor" class="form-control" maxlength="200"
+              placeholder="Información de contacto" autocomplete="off">
           </div>
           <small class="form-text text-muted">Máximo 200 caracteres.</small>
         </div>
@@ -352,39 +392,39 @@
 
 <!-- ===== MODALES PARA MENSAJES ===== -->
 <div id="successModal" class="modal-overlay">
-    <div class="modal-success">
-        <div class="modal-success-icon">
-            <i class="fas fa-check-circle"></i>
-        </div>
-        <h2 id="successModalTitle">¡Éxito!</h2>
-        <p id="successModalMessage">La acción se ha realizado correctamente.</p>
-        <button id="closeSuccessModal" class="btn-aceptar">Continuar</button>
+  <div class="modal-success">
+    <div class="modal-success-icon">
+      <i class="fas fa-check-circle"></i>
     </div>
+    <h2 id="successModalTitle">¡Éxito!</h2>
+    <p id="successModalMessage">La acción se ha realizado correctamente.</p>
+    <button id="closeSuccessModal" class="btn-aceptar">Continuar</button>
+  </div>
 </div>
 
 <div id="errorModal" class="modal-overlay">
-    <div class="modal-error">
-        <div class="modal-error-icon">
-            <i class="fas fa-exclamation-circle"></i>
-        </div>
-        <h2 id="errorModalTitle">¡Error!</h2>
-        <p id="errorModalMessage">Ha ocurrido un error inesperado.</p>
-        <button id="closeErrorModal" class="btn-aceptar-error">Continuar</button>
+  <div class="modal-error">
+    <div class="modal-error-icon">
+      <i class="fas fa-exclamation-circle"></i>
     </div>
+    <h2 id="errorModalTitle">¡Error!</h2>
+    <p id="errorModalMessage">Ha ocurrido un error inesperado.</p>
+    <button id="closeErrorModal" class="btn-aceptar-error">Continuar</button>
+  </div>
 </div>
 
 <div id="confirmModal" class="modal-overlay">
-    <div class="modal-confirm">
-        <div class="modal-confirm-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-        </div>
-        <h2>Confirmar Acción</h2>
-        <p id="confirmModalMessage">¿Está seguro de que desea realizar esta acción?</p>
-        <div class="modal-confirm-actions">
-            <button id="cancelConfirm" class="btn-cancel">Cancelar</button>
-            <button id="confirmAction" class="btn-confirm">Aceptar</button>
-        </div>
+  <div class="modal-confirm">
+    <div class="modal-confirm-icon">
+      <i class="fas fa-exclamation-triangle"></i>
     </div>
+    <h2>Confirmar Acción</h2>
+    <p id="confirmModalMessage">¿Está seguro de que desea realizar esta acción?</p>
+    <div class="modal-confirm-actions">
+      <button id="cancelConfirm" class="btn-cancel">Cancelar</button>
+      <button id="confirmAction" class="btn-confirm">Aceptar</button>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
@@ -397,23 +437,23 @@
 <script>
   // Pasar datos de productos al JavaScript - CORREGIDO
   window.productosData = [
-      {% for producto in productos %}
-      {
-          id: "{{ producto.ID_producto }}",
-          nombre: "{{ producto.nombre_pro|escapejs }}",
-          serial: "{{ producto.serial|escapejs }}"  // AGREGAR ESTA LÍNEA
-      }{% if not forloop.last %},{% endif %}
-      {% endfor %}
+    {% for producto in productos %}
+  {
+    id: "{{ producto.ID_producto }}",
+      nombre: "{{ producto.nombre_pro|escapejs }}",
+        serial: "{{ producto.serial|escapejs }}"  // AGREGAR ESTA LÍNEA
+  } {% if not forloop.last %}, {% endif %}
+  {% endfor %}
   ];
-  
+
   // Pasar datos de proveedores para sugerencias
   window.proveedoresData = [
-      {% for proveedor in proveedores %}
-      {
-          id: "{{ proveedor.id_proveedor }}",
-          nombre: "{{ proveedor.nombre|escapejs }}"
-      }{% if not forloop.last %},{% endif %}
-      {% endfor %}
+    {% for proveedor in proveedores %}
+  {
+    id: "{{ proveedor.id_proveedor }}",
+      nombre: "{{ proveedor.nombre|escapejs }}"
+  } {% if not forloop.last %}, {% endif %}
+  {% endfor %}
   ];
 
   // Pasar URLs de Django al JavaScript
@@ -434,27 +474,27 @@
   const codigoLote = urlParams.get('codigo_lote');
 
   if (registroExitoso === 'true' && codigoLote) {
-      // Mostrar modal de éxito después de cargar la página
-      document.addEventListener('DOMContentLoaded', function() {
-          setTimeout(function() {
-              mostrarModalExito(
-                  '¡Lote Registrado!', 
-                  `El lote "${codigoLote}" ha sido registrado exitosamente.`
-              );
-          }, 500);
-      });
+    // Mostrar modal de éxito después de cargar la página
+    document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(function () {
+        mostrarModalExito(
+          '¡Lote Registrado!',
+          `El lote "${codigoLote}" ha sido registrado exitosamente.`
+        );
+      }, 500);
+    });
   }
 
   if (edicionExitosa === 'true' && codigoLote) {
-      // Mostrar modal de éxito después de cargar la página
-      document.addEventListener('DOMContentLoaded', function() {
-          setTimeout(function() {
-              mostrarModalExito(
-                  '¡Lote Actualizado!', 
-                  `El lote "${codigoLote}" ha sido actualizado exitosamente.`
-              );
-          }, 500);
-      });
+    // Mostrar modal de éxito después de cargar la página
+    document.addEventListener('DOMContentLoaded', function () {
+      setTimeout(function () {
+        mostrarModalExito(
+          '¡Lote Actualizado!',
+          `El lote "${codigoLote}" ha sido actualizado exitosamente.`
+        );
+      }, 500);
+    });
   }
 </script>
 <script src="{% static 'lotes/js/menu_lote.js' %}"></script>
@@ -462,42 +502,42 @@
 
 <!-- Script de diagnóstico para verificar que todo funcione -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     console.log('🔍 DIAGNÓSTICO: Verificando elementos...');
-    
+
     // Verificar botón de proveedores
     const proveedoresBtn = document.getElementById('proveedoresBtn');
     console.log('✅ Botón proveedores encontrado:', !!proveedoresBtn);
-    
+
     // Verificar modales
     const modalProveedores = document.getElementById('modalProveedores');
     console.log('✅ Modal proveedores encontrado:', !!modalProveedores);
-    
+
     const modalEditarProveedor = document.getElementById('modalEditarProveedor');
     console.log('✅ Modal editar proveedor encontrado:', !!modalEditarProveedor);
-    
+
     // Verificar que las URLs estén definidas
     console.log('✅ URL proveedores JSON:', PROVEEDORES_JSON_URL);
-    
+
     // Forzar funcionalidad si es necesario
     if (proveedoresBtn && !proveedoresBtn.hasListener) {
-        proveedoresBtn.hasListener = true;
-        proveedoresBtn.addEventListener('click', function() {
-            console.log('🎯 Botón de proveedores clickeado');
-            if (modalProveedores) {
-                modalProveedores.style.display = 'flex';
-                setTimeout(() => {
-                    modalProveedores.style.opacity = '1';
-                }, 10);
-                
-                // Cargar proveedores manualmente si es necesario
-                if (typeof cargarProveedores === 'function') {
-                    cargarProveedores();
-                }
-            }
-        });
-        console.log('✅ Listener manual agregado al botón de proveedores');
+      proveedoresBtn.hasListener = true;
+      proveedoresBtn.addEventListener('click', function () {
+        console.log('🎯 Botón de proveedores clickeado');
+        if (modalProveedores) {
+          modalProveedores.style.display = 'flex';
+          setTimeout(() => {
+            modalProveedores.style.opacity = '1';
+          }, 10);
+
+          // Cargar proveedores manualmente si es necesario
+          if (typeof cargarProveedores === 'function') {
+            cargarProveedores();
+          }
+        }
+      });
+      console.log('✅ Listener manual agregado al botón de proveedores');
     }
-});
+  });
 </script>
 {% endblock %}
