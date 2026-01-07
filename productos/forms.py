@@ -38,7 +38,7 @@ class ProductoForm(forms.ModelForm):
                 'maxlength': '25'
             }),
             'nombre_pro': forms.TextInput(attrs={
-                'placeholder': 'Nombre del producto (solo letras y números)',
+                'placeholder': 'Nombre del producto (letras, números y espacios)',
                 'autocomplete': 'off',
                 'maxlength': '30'
             }),
@@ -83,6 +83,10 @@ class ProductoForm(forms.ModelForm):
             # Hacer el campo serial de solo lectura en edición
             self.fields['serial'].disabled = True
             self.fields['serial'].widget.attrs['readonly'] = True
+        else:
+            # Si es un formulario nuevo (registro), establecer valor por defecto de sujeto_iva
+            if 'sujeto_iva' not in self.initial:
+                self.fields['sujeto_iva'].initial = 'si'
 
     def clean_serial(self):
         serial = self.cleaned_data.get('serial', '').strip()
@@ -109,9 +113,9 @@ class ProductoForm(forms.ModelForm):
         if not nombre_pro:
             raise forms.ValidationError('El nombre del producto es obligatorio.')
         
-        # Validar formato del nombre (solo letras y números)
-        if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9]+$', nombre_pro):
-            raise forms.ValidationError('El nombre solo debe contener letras y números.')
+        # Validar formato del nombre (solo letras, números y espacios)
+        if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9\s]+$', nombre_pro):
+            raise forms.ValidationError('El nombre solo debe contener letras, números y espacios.')
         
         # Validar longitud máxima (30 caracteres)
         if len(nombre_pro) > 30:

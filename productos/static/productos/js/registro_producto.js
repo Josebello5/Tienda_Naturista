@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('productoForm');
     const submitButton = form.querySelector('button[type="submit"]');
-    
+
     // Elementos del formulario
     const serial = document.getElementById('serial'); // Nuevo campo serial
     const categoriaBusqueda = document.getElementById('categoria_busqueda');
@@ -13,11 +13,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const stockMinimo = document.getElementById('stock_minimo');
     const descripcion = document.getElementById('descripcion');
     const precioVenta = document.getElementById('precio_venta');
-    
+
     // Contenedores de sugerencias
     const sugerenciasCategoria = document.getElementById('sugerencias-categoria');
     const sugerenciasPatologia = document.getElementById('sugerencias-patologia');
-    
+
     // Elementos de mensajes de error
     const errorSerial = document.getElementById('error-serial'); // Nuevo error serial
     const errorCategoriaBusqueda = document.getElementById('error-categoria_busqueda');
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const errorPrecioVenta = document.getElementById('error-precio_venta');
 
     // ===== FUNCIONES DE MANEJO DE ESTADOS =====
-    
+
     function setInvalid(input, errorDiv, message) {
         input.classList.add('is-invalid');
         input.classList.remove('is-valid');
@@ -55,17 +55,17 @@ document.addEventListener('DOMContentLoaded', function () {
             stockMinimo,
             precioVenta
         ];
-        
+
         const esValido = camposObligatorios.every(campo => {
             if (!campo) return false;
             return campo.classList.contains('is-valid');
         });
-        
+
         if (patologiaBusqueda.value.trim() !== '' && patologiaBusqueda.classList.contains('is-invalid')) {
             submitButton.disabled = true;
             return;
         }
-        
+
         submitButton.disabled = !esValido;
     }
 
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!serial) return;
 
         // Restricción de tipeo - solo números
-        serial.addEventListener('keypress', function(e) {
+        serial.addEventListener('keypress', function (e) {
             const char = String.fromCharCode(e.keyCode || e.which);
             // Solo permitir números
             if (!/^[0-9]$/.test(char)) {
@@ -89,28 +89,28 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         // Validación en tiempo real
-        serial.addEventListener('input', function() {
+        serial.addEventListener('input', function () {
             // Solo permitir números
             this.value = this.value.replace(/[^0-9]/g, '');
-            
+
             // Limitar a 25 caracteres
             if (this.value.length > 25) {
                 this.value = this.value.substring(0, 25);
             }
-            
+
             validarSerial();
             toggleSubmitButton();
         });
 
         // Validación al perder foco
-        serial.addEventListener('blur', function() {
+        serial.addEventListener('blur', function () {
             validarSerial();
             toggleSubmitButton();
         });
     }
 
     // ===== SUGERENCIAS PARA CATEGORÍA Y PATOLOGÍA =====
-    
+
     if (categoriaBusqueda && sugerenciasCategoria) {
         categoriaBusqueda.addEventListener('input', function (e) {
             const query = categoriaBusqueda.value.trim().toUpperCase();
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     sugerencia.className = 'sugerencia-item';
                     sugerencia.textContent = categoria;
                     sugerencia.setAttribute('data-categoria-nombre', categoria);
-                    
+
                     sugerencia.addEventListener('click', function () {
                         categoriaBusqueda.value = categoria;
                         sugerenciasCategoria.style.display = 'none';
@@ -154,13 +154,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         document.addEventListener('click', function (e) {
-            if (categoriaBusqueda && !categoriaBusqueda.contains(e.target) && 
+            if (categoriaBusqueda && !categoriaBusqueda.contains(e.target) &&
                 sugerenciasCategoria && !sugerenciasCategoria.contains(e.target)) {
                 sugerenciasCategoria.style.display = 'none';
             }
         });
 
-        categoriaBusqueda.addEventListener('blur', function() {
+        categoriaBusqueda.addEventListener('blur', function () {
             setTimeout(() => {
                 validarCategoriaBusqueda();
                 toggleSubmitButton();
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     sugerencia.className = 'sugerencia-item';
                     sugerencia.textContent = patologia;
                     sugerencia.setAttribute('data-patologia-nombre', patologia);
-                    
+
                     sugerencia.addEventListener('click', function () {
                         patologiaBusqueda.value = patologia;
                         sugerenciasPatologia.style.display = 'none';
@@ -211,13 +211,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         document.addEventListener('click', function (e) {
-            if (patologiaBusqueda && !patologiaBusqueda.contains(e.target) && 
+            if (patologiaBusqueda && !patologiaBusqueda.contains(e.target) &&
                 sugerenciasPatologia && !sugerenciasPatologia.contains(e.target)) {
                 sugerenciasPatologia.style.display = 'none';
             }
         });
 
-        patologiaBusqueda.addEventListener('blur', function() {
+        patologiaBusqueda.addEventListener('blur', function () {
             setTimeout(() => {
                 validarPatologiaBusqueda();
                 toggleSubmitButton();
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ===== RESTRICCIONES DE TIPEO =====
 
-    categoriaBusqueda.addEventListener('keypress', function(e) {
+    categoriaBusqueda.addEventListener('keypress', function (e) {
         const char = String.fromCharCode(e.keyCode || e.which);
         if (!/^[A-Za-zÁÉÍÓÚáéíóúñÑ]$/.test(char)) {
             e.preventDefault();
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    patologiaBusqueda.addEventListener('keypress', function(e) {
+    patologiaBusqueda.addEventListener('keypress', function (e) {
         const char = String.fromCharCode(e.keyCode || e.which);
         if (!/^[A-Za-zÁÉÍÓÚáéíóúñÑ]$/.test(char)) {
             e.preventDefault();
@@ -251,9 +251,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    nombrePro.addEventListener('keypress', function(e) {
+    nombrePro.addEventListener('keypress', function (e) {
         const char = String.fromCharCode(e.keyCode || e.which);
-        if (!/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9]$/.test(char)) {
+        if (!/^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9\s]$/.test(char)) {
             e.preventDefault();
             return;
         }
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    stockMinimo.addEventListener('keypress', function(e) {
+    stockMinimo.addEventListener('keypress', function (e) {
         const char = String.fromCharCode(e.keyCode || e.which);
         if (!/^[0-9]$/.test(char)) {
             e.preventDefault();
@@ -276,10 +276,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    precioVenta.addEventListener('keypress', function(e) {
+    precioVenta.addEventListener('keypress', function (e) {
         const char = String.fromCharCode(e.keyCode || e.which);
         const currentValue = this.value;
-        
+
         if (!/^[0-9.]$/.test(char)) {
             e.preventDefault();
             return;
@@ -314,32 +314,32 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ===== VALIDACIONES DE ENTRADA EN TIEMPO REAL =====
-    
+
     // Nueva validación para serial
     inicializarValidacionSerial();
 
-    categoriaBusqueda.addEventListener('input', function() {
+    categoriaBusqueda.addEventListener('input', function () {
         this.value = this.value.toUpperCase().replace(/\s/g, '');
         validarCategoriaBusqueda();
         toggleSubmitButton();
     });
 
-    patologiaBusqueda.addEventListener('input', function() {
+    patologiaBusqueda.addEventListener('input', function () {
         this.value = this.value.toUpperCase().replace(/\s/g, '');
         validarPatologiaBusqueda();
         toggleSubmitButton();
     });
 
-    nombrePro.addEventListener('input', function() {
+    nombrePro.addEventListener('input', function () {
         this.value = this.value.toUpperCase();
         validarNombrePro();
         toggleSubmitButton();
     });
 
-    ubicacion.addEventListener('input', function() {
+    ubicacion.addEventListener('input', function () {
         // CORRECCIÓN: Convertir a mayúsculas automáticamente
         this.value = this.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '');
-        
+
         // Limitar a 15 caracteres
         if (this.value.length > 15) {
             this.value = this.value.substring(0, 15);
@@ -348,23 +348,23 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleSubmitButton();
     });
 
-    stockMinimo.addEventListener('input', function() {
+    stockMinimo.addEventListener('input', function () {
         validarStockMinimo();
         toggleSubmitButton();
     });
 
-    precioVenta.addEventListener('input', function() {
+    precioVenta.addEventListener('input', function () {
         validarPrecioVenta();
         toggleSubmitButton();
     });
 
-    sujetoIva.addEventListener('change', function() {
+    sujetoIva.addEventListener('change', function () {
         validarSujetoIva();
         toggleSubmitButton();
     });
 
     // ===== FUNCIONES DE VALIDACIÓN POR CAMPO =====
-    
+
     function validarSerial() {
         const val = serial.value.trim();
         if (val === '') {
@@ -445,8 +445,8 @@ document.addEventListener('DOMContentLoaded', function () {
             setInvalid(nombrePro, errorNombrePro, "El nombre del producto es obligatorio.");
             return false;
         }
-        if (!/^[A-Z0-9]+$/.test(val)) {
-            setInvalid(nombrePro, errorNombrePro, "El nombre solo debe contener letras y números.");
+        if (!/^[A-Z0-9\s]+$/.test(val)) {
+            setInvalid(nombrePro, errorNombrePro, "El nombre solo debe contener letras, números y espacios.");
             return false;
         }
         // Validar longitud máxima (30 caracteres)
@@ -497,39 +497,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function validarPrecioVenta() {
         const val = precioVenta.value.trim();
-        
+
         if (val === '') {
             setInvalid(precioVenta, errorPrecioVenta, "El precio de venta es obligatorio.");
             return false;
         }
-        
+
         if (!/^\d+(\.\d{0,2})?$/.test(val)) {
             setInvalid(precioVenta, errorPrecioVenta, "El precio de venta debe contener solo números y un punto decimal.");
             return false;
         }
-        
+
         const numericValue = parseFloat(val);
         if (isNaN(numericValue) || numericValue <= 0) {
             setInvalid(precioVenta, errorPrecioVenta, "El precio de venta debe ser un número positivo.");
             return false;
         }
-        
+
         const parts = val.split('.');
         if (parts[0].length > 4) {
             setInvalid(precioVenta, errorPrecioVenta, "El precio de venta no puede tener más de 4 dígitos enteros.");
             return false;
         }
-        
+
         if (parts.length > 1 && parts[1].length > 2) {
             setInvalid(precioVenta, errorPrecioVenta, "El precio de venta no puede tener más de 2 decimales.");
             return false;
         }
-        
+
         if (numericValue > 9999.99) {
             setInvalid(precioVenta, errorPrecioVenta, "El precio de venta no puede ser mayor a 9999.99.");
             return false;
         }
-        
+
         setValid(precioVenta, errorPrecioVenta);
         return true;
     }
@@ -540,7 +540,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ===== VALIDACIÓN FINAL AL ENVIAR EL FORMULARIO =====
-    
+
     form.addEventListener('submit', function (e) {
         const esValido =
             validarSerial() && // Agregar validación de serial
@@ -555,7 +555,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (!esValido) {
             e.preventDefault();
-            
+
             const campos = [serial, categoriaBusqueda, patologiaBusqueda, sujetoIva, nombrePro, ubicacion, stockMinimo, precioVenta];
             for (let campo of campos) {
                 if (campo.classList.contains('is-invalid')) {
@@ -567,8 +567,26 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ===== INICIALIZACIÓN =====
-    
-    submitButton.disabled = true;
-    
+
+    // Validar campos que ya tienen valor inicial (por defecto o recarga)
+    const camposParaValidarInicialmente = [
+        { campo: serial, validador: validarSerial },
+        { campo: categoriaBusqueda, validador: validarCategoriaBusqueda },
+        { campo: patologiaBusqueda, validador: validarPatologiaBusqueda },
+        { campo: sujetoIva, validador: validarSujetoIva },
+        { campo: nombrePro, validador: validarNombrePro },
+        { campo: ubicacion, validador: validarUbicacion },
+        { campo: stockMinimo, validador: validarStockMinimo },
+        { campo: precioVenta, validador: validarPrecioVenta }
+    ];
+
+    camposParaValidarInicialmente.forEach(item => {
+        if (item.campo && item.campo.value.trim() !== '') {
+            item.validador();
+        }
+    });
+
+    toggleSubmitButton();
+
     console.log('Sistema de validación de productos inicializado correctamente');
 });

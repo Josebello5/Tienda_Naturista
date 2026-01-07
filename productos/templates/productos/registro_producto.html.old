@@ -6,8 +6,8 @@
 
 <div class="form-container">
   <div class="form-header">
-    <h2>Editar Producto</h2>
-    <p>Modifique los campos necesarios del producto</p>
+    <h2>Registro de Producto</h2>
+    <p>Complete todos los campos requeridos para registrar un nuevo producto</p>
   </div>
 
   <div class="form-body">
@@ -26,22 +26,19 @@
     <form method="POST" id="productoForm" novalidate>
       {% csrf_token %}
       <div class="form-row">
-        <!-- Campo Serial (solo lectura en edición) -->
+        <!-- Campo Serial -->
         <div class="form-col">
           <label for="serial" class="form-label">Serial</label>
           <div class="input-icon">
             <i class="fas fa-barcode"></i>
             <input type="text" id="serial" name="serial"
               class="form-control{% if form.serial.errors %} is-invalid{% endif %}"
-              value="{{ form.serial.value|default_if_none:'' }}" placeholder="Serial del producto" autocomplete="off"
-              maxlength="25" readonly disabled style="background-color: #f8f9fa; cursor: not-allowed;">
+              value="{{ form.serial.value|default_if_none:'' }}" required
+              placeholder="Serial del producto (solo números)" autocomplete="off" maxlength="25">
           </div>
           <span class="error-msg" id="error-serial">
             {% for error in form.serial.errors %}{{ error }}{% endfor %}
           </span>
-          <small class="form-text text-muted" style="display: block; margin-top: 5px;">
-            <i class="fas fa-info-circle"></i> El serial no puede ser editado
-          </small>
         </div>
 
         <!-- Campo Categoría con sugerencias -->
@@ -85,11 +82,8 @@
               class="form-control{% if form.sujeto_iva.errors %} is-invalid{% endif %}" required>
               <option value="">Seleccione una opción</option>
               {% for choice_value, choice_label in form.fields.sujeto_iva.choices %}
-              {% if form.sujeto_iva.value == choice_value %}
-              <option value="{{ choice_value }}" selected>{{ choice_label }}</option>
-              {% else %}
-              <option value="{{ choice_value }}">{{ choice_label }}</option>
-              {% endif %}
+              <option value="{{ choice_value }}" {% if form.sujeto_iva.value==choice_value %}selected{% endif %}>{{
+                choice_label }}</option>
               {% endfor %}
             </select>
           </div>
@@ -186,8 +180,8 @@
         <a href="{% url 'productos:menu_productos' %}" class="btn btn-back">
           <i class="fas fa-arrow-left"></i> Volver al Menú
         </a>
-        <button type="submit" class="btn btn-submit">
-          <i class="fas fa-save"></i> Actualizar Producto
+        <button type="submit" class="btn btn-submit" disabled>
+          <i class="fas fa-save"></i> Registrar Producto
         </button>
       </div>
     </form>
@@ -202,9 +196,7 @@
 <script>
   window.categoriasData = {{ categorias | safe }};
   window.patologiasData = {{ patologias | safe }};
-  // Pasar el precio actual para inicialización
-  window.precioActual = {{ producto.precio_venta }};
 </script>
 
-<script src="{% static 'productos/js/editar_producto.js' %}"></script>
+<script src="{% static 'productos/js/registro_producto.js' %}"></script>
 {% endblock %}

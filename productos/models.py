@@ -94,7 +94,7 @@ class Producto(models.Model):
     nombre_pro = models.CharField(
         max_length=30,
         verbose_name='Nombre del Producto',
-        help_text='Solo letras y números (máximo 30 caracteres)'
+        help_text='Solo letras, números y espacios (máximo 30 caracteres)'
     )
     ubicacion = models.CharField(
         max_length=15, 
