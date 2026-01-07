@@ -350,49 +350,56 @@ th {
   white-space: nowrap;
 }
 
+/* Centrar headers de columnas numéricas y de estado */
+th:nth-child(2),
+/* Unidades del Lote */
+th:nth-child(3),
+/* Costo Unitario */
+th:nth-child(4),
+/* Fecha Recibimiento */
+th:nth-child(5),
+/* Fecha Vencimiento */
+th:nth-child(6),
+/* Estado */
+th:nth-child(7) {
+  /* Acciones */
+  text-align: center;
+}
+
 /* Anchos de columnas */
 th:nth-child(1) {
-  width: 70px;
+  /* Producto */
+  width: 200px;
 }
 
 th:nth-child(2) {
-  width: 130px;
-}
-
-th:nth-child(3) {
-  width: 160px;
-}
-
-th:nth-child(4) {
+  /* Unidades del Lote */
   width: 140px;
 }
 
+th:nth-child(3) {
+  /* Costo Unitario */
+  width: 140px;
+}
+
+th:nth-child(4) {
+  /* Fecha Recibimiento */
+  width: 150px;
+}
+
 th:nth-child(5) {
-  width: 100px;
+  /* Fecha Vencimiento */
+  width: 150px;
 }
 
 th:nth-child(6) {
-  width: 100px;
+  /* Estado */
+  width: 120px;
 }
 
 th:nth-child(7) {
-  width: 100px;
-}
-
-th:nth-child(8) {
-  width: 120px;
-}
-
-th:nth-child(9) {
-  width: 120px;
-}
-
-th:nth-child(10) {
-  width: 100px;
-}
-
-th:nth-child(11) {
-  width: 110px;
+  /* Acciones */
+  width: 180px;
 }
 
 tbody tr {
@@ -408,41 +415,51 @@ tbody tr:hover {
 
 td {
   padding: 14px 12px;
-  /* Más padding */
   color: var(--dark-gray);
   vertical-align: middle;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 0.95rem;
-  /* Letra un poco más grande */
 }
 
-td.centered {
+/* Producto - alineado a la izquierda */
+td:nth-child(1) {
+  text-align: left;
+  font-weight: 500;
+}
+
+/* Unidades del Lote - centrado */
+td:nth-child(2) {
+  text-align: center;
+  font-weight: 600;
+  color: var(--primary-green);
+}
+
+/* Costo Unitario - centrado */
+td:nth-child(3) {
   text-align: center;
   font-weight: 600;
   color: var(--primary-green);
   font-family: monospace;
 }
 
-td:nth-child(5),
+/* Fechas - centradas */
+td:nth-child(4),
+td:nth-child(5) {
+  text-align: center;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+/* Estado - centrado */
 td:nth-child(6) {
   text-align: center;
-  font-weight: 600;
-  color: var(--primary-green);
-  font-family: monospace;
 }
 
+/* Acciones - centrado */
 td:nth-child(7) {
   text-align: center;
-  font-weight: 600;
-}
-
-td:nth-child(8),
-td:nth-child(9) {
-  text-align: center;
-  font-family: monospace;
-  font-size: 0.8rem;
 }
 
 /* ===== ACCIONES ===== */
