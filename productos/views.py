@@ -227,8 +227,6 @@ def editar_producto(request, id):
     else:
         # CORRECCIÓN: Asegurarse de que el formulario se inicializa con todos los datos del producto
         form = ProductoForm(instance=producto)
-        # Forzar la carga del precio de venta en el formulario
-        form.fields['precio_venta'].initial = producto.precio_venta
 
     return render(request, 'productos/editar_producto.html', {
         'form': form,

@@ -280,13 +280,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const char = String.fromCharCode(e.keyCode || e.which);
         const currentValue = this.value;
 
-        if (!/^[0-9.]$/.test(char)) {
+        if (!/^[0-9,]$/.test(char)) {
             e.preventDefault();
             return;
         }
 
-        if (char === '.') {
-            if (currentValue.includes('.')) {
+        if (char === ',') {
+            if (currentValue.includes(',')) {
                 e.preventDefault();
                 return;
             }
@@ -297,8 +297,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (/^[0-9]$/.test(char)) {
-            if (currentValue.includes('.')) {
-                const decimalPart = currentValue.split('.')[1];
+            if (currentValue.includes(',')) {
+                const decimalPart = currentValue.split(',')[1];
                 if (decimalPart && decimalPart.length >= 2) {
                     e.preventDefault();
                     return;
@@ -503,18 +503,18 @@ document.addEventListener('DOMContentLoaded', function () {
             return false;
         }
 
-        if (!/^\d+(\.\d{0,2})?$/.test(val)) {
-            setInvalid(precioVenta, errorPrecioVenta, "El precio de venta debe contener solo números y un punto decimal.");
+        if (!/^\d+(,\d{0,2})?$/.test(val)) {
+            setInvalid(precioVenta, errorPrecioVenta, "El precio de venta debe contener solo números y una coma decimal.");
             return false;
         }
 
-        const numericValue = parseFloat(val);
+        const numericValue = parseFloat(val.replace(',', '.'));
         if (isNaN(numericValue) || numericValue <= 0) {
             setInvalid(precioVenta, errorPrecioVenta, "El precio de venta debe ser un número positivo.");
             return false;
         }
 
-        const parts = val.split('.');
+        const parts = val.split(',');
         if (parts[0].length > 4) {
             setInvalid(precioVenta, errorPrecioVenta, "El precio de venta no puede tener más de 4 dígitos enteros.");
             return false;
@@ -526,7 +526,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (numericValue > 9999.99) {
-            setInvalid(precioVenta, errorPrecioVenta, "El precio de venta no puede ser mayor a 9999.99.");
+            setInvalid(precioVenta, errorPrecioVenta, "El precio de venta no puede ser mayor a 9999,99.");
             return false;
         }
 

@@ -1,6 +1,7 @@
 from django import forms
 from .models import Producto, Categoria, Patologia
 import re
+from decimal import Decimal, InvalidOperation
 
 class ProductoForm(forms.ModelForm):
     # Campos para búsqueda con sugerencias
@@ -23,13 +24,25 @@ class ProductoForm(forms.ModelForm):
             'maxlength': '20'
         })
     )
+    
+    # Override precio_venta to CharField to allow comma separator
+    precio_venta = forms.CharField(
+        required=True,
+        label='Precio de Venta',
+        max_length=7,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Ej: 125,50',
+            'autocomplete': 'off',
+            'maxlength': '7'
+        })
+    )
 
     class Meta:
         model = Producto
         fields = [
             'serial',  # Nuevo campo serial
             'categoria_busqueda', 'patologia_busqueda', 'sujeto_iva',
-            'nombre_pro', 'ubicacion', 'stock_minimo', 'descripcion', 'precio_venta'
+            'nombre_pro', 'ubicacion', 'stock_minimo', 'descripcion'
         ]
         widgets = {
             'serial': forms.TextInput(attrs={
@@ -55,11 +68,6 @@ class ProductoForm(forms.ModelForm):
             'descripcion': forms.Textarea(attrs={
                 'placeholder': 'Descripción del producto (opcional)',
                 'rows': 3
-            }),
-            'precio_venta': forms.NumberInput(attrs={
-                'step': '0.01',
-                'min': '0.01',
-                'max': '9999.99'
             })
         }
 
@@ -76,9 +84,11 @@ class ProductoForm(forms.ModelForm):
             if self.instance.patologia:
                 self.fields['patologia_busqueda'].initial = self.instance.patologia.nombre
             
-            # CORRECCIÓN: Asegurar que el precio de venta se cargue
+            # CORRECCIÓN: Asegurar que el precio de venta se cargue con coma decimal
             if self.instance.precio_venta:
-                self.fields['precio_venta'].initial = self.instance.precio_venta
+                # Convert period to comma for display
+                precio_str = str(self.instance.precio_venta).replace('.', ',')
+                self.fields['precio_venta'].initial = precio_str
 
             # Hacer el campo serial de solo lectura en edición
             self.fields['serial'].disabled = True
@@ -198,19 +208,35 @@ class ProductoForm(forms.ModelForm):
         return stock_minimo
 
     def clean_precio_venta(self):
-        precio_venta = self.cleaned_data.get('precio_venta')
-        if precio_venta is None:
+        precio_venta_str = self.data.get('precio_venta', '').strip()
+        
+        if not precio_venta_str:
             raise forms.ValidationError("Este campo es obligatorio.")
+        
+        # Replace comma with period for Decimal conversion
+        precio_venta_str = precio_venta_str.replace(',', '.')
+        
+        try:
+            precio_venta = Decimal(precio_venta_str)
+        except (ValueError, InvalidOperation):
+            raise forms.ValidationError("Ingrese un precio válido.")
+        
         if precio_venta <= 0:
             raise forms.ValidationError("El precio de venta debe ser un número positivo.")
-        if precio_venta > 9999.99:
-            raise forms.ValidationError("El precio de venta no puede ser mayor a 9999.99.")
+        if precio_venta > Decimal('9999.99'):
+            raise forms.ValidationError("El precio de venta no puede ser mayor a 9999,99.")
+        
         return precio_venta
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        instance.categoria = self.cleaned_data['categoria_busqueda']
-        instance.patologia = self.cleaned_data['patologia_busqueda']
+        
+        # Asignar categoría y patología (ya son objetos gracias a los métodos clean_)
+        instance.categoria = self.cleaned_data.get('categoria_busqueda')
+        instance.patologia = self.cleaned_data.get('patologia_busqueda')
+
+        # Asignar precio de venta (ya es Decimal gracias a clean_precio_venta)
+        instance.precio_venta = self.cleaned_data.get('precio_venta')
         
         if commit:
             instance.save()

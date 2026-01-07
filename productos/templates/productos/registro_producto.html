@@ -146,10 +146,10 @@
                     <label for="precio_venta" class="form-label">Precio de Venta</label>
                     <div class="input-icon">
                         <i class="fas fa-money-bill-wave"></i>
-                        <input type="number" id="precio_venta" name="precio_venta"
+                        <input type="text" id="precio_venta" name="precio_venta"
                             class="form-control{% if form.precio_venta.errors %} is-invalid{% endif %}"
                             value="{{ form.precio_venta.value|default_if_none:'' }}" required
-                            placeholder="Precio de venta" step="0.01" min="0.01" max="9999.99">
+                            placeholder="Ej: 125,50" maxlength="7">
                     </div>
                     <span class="error-msg" id="error-precio_venta">
                         {% for error in form.precio_venta.errors %}{{ error }}{% endfor %}

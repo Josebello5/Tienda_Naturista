@@ -432,7 +432,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function inicializarModalPrecio() {
         function abrirModalEditarPrecio(productoId, precioActual) {
             productoIdPrecioInput.value = productoId;
-            nuevoPrecioVentaInput.value = parseFloat(precioActual).toFixed(2);
+            // Convert dot to comma for display
+            nuevoPrecioVentaInput.value = precioActual.toString().replace('.', ',');
             modalEditarPrecio.style.display = 'flex';
             setTimeout(() => {
                 modalEditarPrecio.style.opacity = '1';
@@ -461,7 +462,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         btnGuardarPrecio.addEventListener('click', function () {
             const productoId = productoIdPrecioInput.value;
-            const nuevoPrecio = parseFloat(nuevoPrecioVentaInput.value);
+            // Convert comma to dot before parsing for validation
+            const nuevoPrecio = parseFloat(nuevoPrecioVentaInput.value.replace(',', '.'));
 
             if (isNaN(nuevoPrecio) || nuevoPrecio <= 0) {
                 mostrarModalError('Error', 'Por favor, ingrese un precio válido (mayor a 0).');
@@ -488,7 +490,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (data.success) {
                         const celdaPrecio = document.querySelector(`.editable-precio[data-producto-id="${productoId}"]`);
                         if (celdaPrecio) {
-                            celdaPrecio.textContent = `$${parseFloat(data.precio_venta).toFixed(2)}`;
+                            celdaPrecio.textContent = `$${data.precio_venta.toString().replace('.', ',')}`;
                             celdaPrecio.setAttribute('data-precio-actual', data.precio_venta);
                         }
 

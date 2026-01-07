@@ -1,0 +1,23 @@
+DEBUG: Raw precio_venta from POST: '7.00'
+DEBUG: Processed string for Decimal: '7.00'
+DEBUG: Converted Decimal object: 7.00
+DEBUG SAVE ERROR (cat/pat): 'Categoria' object has no attribute 'upper'
+DEBUG: Assigning price to instance: 7.00 (Type: <class 'decimal.Decimal'>)
+DEBUG: Saved instance. Saved price from instance: 7.00
+DEBUG: Raw precio_venta from POST: '9.00'
+DEBUG: Processed string for Decimal: '9.00'
+DEBUG: Converted Decimal object: 9.00
+DEBUG SAVE ERROR (cat/pat): 'Categoria' object has no attribute 'upper'
+DEBUG: Assigning price to instance: 9.00 (Type: <class 'decimal.Decimal'>)
+DEBUG: Saved instance. Saved price from instance: 9.00
+DEBUG: Raw precio_venta from POST: '9,92'
+DEBUG: Processed string for Decimal: '9.92'
+DEBUG: Converted Decimal object: 9.92
+DEBUG SAVE ERROR (cat/pat): 'Categoria' object has no attribute 'upper'
+DEBUG: Assigning price to instance: 9.92 (Type: <class 'decimal.Decimal'>)
+DEBUG: Saved instance. Saved price from instance: 9.92
+DEBUG: Raw precio_venta from POST: '1,75'
+DEBUG: Processed string for Decimal: '1.75'
+DEBUG: Converted Decimal object: 1.75
+DEBUG SAVE ERROR (cat/pat): 'Categoria' object has no attribute 'upper'
+DEBUG: Assigning price to instance: 1.75 (Type: <class 'decimal.Decimal'>)

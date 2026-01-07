@@ -32,7 +32,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function inicializarPrecio() {
         if (precioVenta && !precioVenta.value) {
             if (window.precioActual) {
-                precioVenta.value = parseFloat(window.precioActual).toFixed(2);
+                // Convert to string and replace dot with comma for display
+                precioVenta.value = window.precioActual.toString().replace('.', ',');
             }
         }
     }
@@ -236,13 +237,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const char = String.fromCharCode(e.keyCode || e.which);
             const currentValue = this.value;
 
-            if (!/^[0-9.]$/.test(char)) {
+            if (!/^[0-9,]$/.test(char)) {
                 e.preventDefault();
                 return;
             }
 
-            if (char === '.') {
-                if (currentValue.includes('.')) {
+            if (char === ',') {
+                if (currentValue.includes(',')) {
                     e.preventDefault();
                     return;
                 }
@@ -253,8 +254,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             if (/^[0-9]$/.test(char)) {
-                if (currentValue.includes('.')) {
-                    const decimalPart = currentValue.split('.')[1];
+                if (currentValue.includes(',')) {
+                    const decimalPart = currentValue.split(',')[1];
                     if (decimalPart && decimalPart.length >= 2) {
                         e.preventDefault();
                         return;
@@ -461,19 +462,19 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // CORRECCIÓN: Mejorar validación de precio
-        const numericValue = parseFloat(val);
+        const numericValue = parseFloat(val.replace(',', '.'));
         if (isNaN(numericValue) || numericValue <= 0) {
             setInvalid(precioVenta, errorPrecioVenta, "El precio de venta debe ser un número positivo.");
             return false;
         }
 
         if (numericValue > 9999.99) {
-            setInvalid(precioVenta, errorPrecioVenta, "El precio de venta no puede ser mayor a 9999.99.");
+            setInvalid(precioVenta, errorPrecioVenta, "El precio de venta no puede ser mayor a 9999,99.");
             return false;
         }
 
         // Validar formato decimal
-        if (!/^\d+(\.\d{0,2})?$/.test(val)) {
+        if (!/^\d+(,\d{0,2})?$/.test(val)) {
             setInvalid(precioVenta, errorPrecioVenta, "Formato de precio inválido. Use máximo 2 decimales.");
             return false;
         }
@@ -525,11 +526,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         behavior: 'smooth',
                         block: 'center'
                     });
-                }
-            } else {
-                // CORRECCIÓN: Asegurar formato correcto del precio antes de enviar
-                if (precioVenta && precioVenta.value) {
-                    precioVenta.value = parseFloat(precioVenta.value).toFixed(2);
                 }
             }
         });
