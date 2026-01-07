@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const tableBody = document.getElementById('tableBody');
     const searchInput = document.getElementById('searchInput');
-    const serialInput = document.getElementById('serialInput');
+    const ubicacionInput = document.getElementById('ubicacionInput');
     const categoriaInput = document.getElementById('categoriaInput');
     const patologiaInput = document.getElementById('patologiaInput');
     const estadoSelect = document.getElementById('estadoSelect');
@@ -23,11 +23,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnCerrarDetallesInfo = document.getElementById('btnCerrarDetallesInfo');
     const detalleNombre = document.getElementById('detalleNombre');
     const detalleSerial = document.getElementById('detalleSerial');
-    const detalleUbicacion = document.getElementById('detalleUbicacion');
+    const detalleStockMinimo = document.getElementById('detalleStockMinimo');
 
     // Contenedores de sugerencias para filtros
     const sugerenciasCategoriaFiltro = document.getElementById('sugerencias-categoria');
     const sugerenciasPatologiaFiltro = document.getElementById('sugerencias-patologia');
+    const sugerenciasUbicacionFiltro = document.getElementById('sugerencias-ubicacion');
 
     let searchTimeout;
 
@@ -49,51 +50,18 @@ document.addEventListener('DOMContentLoaded', function () {
         return cookieValue;
     }
 
-    // ===== VALIDACIÓN PARA FILTRO SERIAL =====
-    function inicializarValidacionSerialFiltro() {
-        if (!serialInput) return;
+    // ===== VALIDACIÓN PARA FILTRO UBICACIÓN =====
+    function inicializarValidacionUbicacionFiltro() {
+        if (!ubicacionInput) return;
 
-        // Restricción de tipeo - solo números
-        serialInput.addEventListener('keypress', function (e) {
-            const char = String.fromCharCode(e.keyCode || e.which);
-            // Solo permitir números
-            if (!/^[0-9]$/.test(char)) {
-                e.preventDefault();
-                return;
-            }
-            // Máximo 25 caracteres
-            if (this.value.length >= 25) {
-                e.preventDefault();
-                return;
-            }
-        });
+        // Restricción de tipeo - letras, números y espacios
+        ubicacionInput.addEventListener('input', function () {
+            // Convertir a mayúsculas
+            this.value = this.value.toUpperCase();
 
-        // Validación en tiempo real
-        serialInput.addEventListener('input', function () {
-            // Solo permitir números
-            this.value = this.value.replace(/[^0-9]/g, '');
-
-            // Limitar a 25 caracteres
-            if (this.value.length > 25) {
-                this.value = this.value.substring(0, 25);
-            }
-
-            // Aplicar estilos de validación
-            if (this.value === '') {
-                this.classList.remove('is-invalid', 'is-valid');
-            } else if (/^[0-9]+$/.test(this.value)) {
-                this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
-            } else {
-                this.classList.remove('is-valid');
-                this.classList.add('is-invalid');
-            }
-        });
-
-        // Limpiar estilos al perder foco si está vacío
-        serialInput.addEventListener('blur', function () {
-            if (this.value === '') {
-                this.classList.remove('is-invalid', 'is-valid');
+            // Limitar a 50 caracteres
+            if (this.value.length > 50) {
+                this.value = this.value.substring(0, 50);
             }
         });
     }
@@ -349,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         sugerencia.addEventListener('click', function () {
                             categoriaInput.value = categoria.nombre;
                             sugerenciasCategoriaFiltro.style.display = 'none';
-                            buscarProductos();
+                            filtrarProductos();
                         });
 
                         sugerenciasCategoriaFiltro.appendChild(sugerencia);
@@ -395,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         sugerencia.addEventListener('click', function () {
                             patologiaInput.value = patologia.nombre;
                             sugerenciasPatologiaFiltro.style.display = 'none';
-                            buscarProductos();
+                            filtrarProductos();
                         });
 
                         sugerenciasPatologiaFiltro.appendChild(sugerencia);
@@ -409,13 +377,74 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // Event listeners para los inputs de categoría y patología en filtros
+    // ===== FUNCIONALIDAD DE SUGERENCIAS PARA UBICACIÓN =====
+
+    function cargarSugerenciasUbicacionFiltro(query) {
+        if (!query) {
+            sugerenciasUbicacionFiltro.innerHTML = '';
+            sugerenciasUbicacionFiltro.style.display = 'none';
+            return;
+        }
+
+        // Obtener ubicaciones únicas de los productos actuales en la tabla
+        const rows = tableBody.querySelectorAll('tr:not(.empty-row)');
+        const ubicacionesSet = new Set();
+
+        rows.forEach(row => {
+            // Buscar el botón ver-detalles y obtener la ubicación
+            const btnDetalles = row.querySelector('.btn-ver-detalles');
+            if (btnDetalles) {
+                const ubicacion = btnDetalles.getAttribute('data-ubicacion');
+                if (ubicacion && ubicacion !== '-' && ubicacion.trim() !== '') {
+                    ubicacionesSet.add(ubicacion.trim());
+                }
+            }
+        });
+
+        const ubicaciones = Array.from(ubicacionesSet).sort();
+        const sugerencias = ubicaciones.filter(ubicacion =>
+            ubicacion.toLowerCase().includes(query.toLowerCase())
+        );
+
+        sugerenciasUbicacionFiltro.innerHTML = '';
+        if (sugerencias.length === 0) {
+            const noResults = document.createElement('div');
+            noResults.className = 'sugerencia-item';
+            noResults.textContent = 'No se encontraron ubicaciones';
+            noResults.style.color = 'var(--natural-gray)';
+            noResults.style.fontStyle = 'italic';
+            sugerenciasUbicacionFiltro.appendChild(noResults);
+        } else {
+            sugerencias.forEach(ubicacion => {
+                const sugerencia = document.createElement('div');
+                sugerencia.className = 'sugerencia-item';
+                sugerencia.textContent = ubicacion;
+                sugerencia.setAttribute('data-ubicacion-nombre', ubicacion);
+
+                sugerencia.addEventListener('click', function () {
+                    ubicacionInput.value = ubicacion;
+                    sugerenciasUbicacionFiltro.style.display = 'none';
+                    filtrarProductos();
+                });
+
+                sugerenciasUbicacionFiltro.appendChild(sugerencia);
+            });
+        }
+
+        sugerenciasUbicacionFiltro.style.display = 'block';
+    }
+
+    // Event listeners para los inputs de categoría, patología y ubicación en filtros
     categoriaInput.addEventListener('input', function () {
         cargarSugerenciasCategoriasFiltro(this.value);
     });
 
     patologiaInput.addEventListener('input', function () {
         cargarSugerenciasPatologiasFiltro(this.value);
+    });
+
+    ubicacionInput.addEventListener('input', function () {
+        cargarSugerenciasUbicacionFiltro(this.value);
     });
 
     // Ocultar sugerencias al hacer clic fuera
@@ -425,6 +454,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (!patologiaInput.contains(e.target) && !sugerenciasPatologiaFiltro.contains(e.target)) {
             sugerenciasPatologiaFiltro.style.display = 'none';
+        }
+        if (!ubicacionInput.contains(e.target) && !sugerenciasUbicacionFiltro.contains(e.target)) {
+            sugerenciasUbicacionFiltro.style.display = 'none';
         }
     });
 
@@ -470,8 +502,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            if (nuevoPrecio > 9999.99) {
-                mostrarModalError('Error', 'El precio no puede ser mayor a 9999.99.');
+            if (nuevoPrecio > 99999999.99) {
+                mostrarModalError('Error', 'El precio no puede ser mayor a 99,999,999.99.');
                 return;
             }
 
@@ -597,12 +629,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function manejarFiltros() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
-            buscarProductos();
+            filtrarProductos(); // Usar filtrado local en lugar de buscarProductos()
         }, 300);
     }
 
     searchInput.addEventListener('input', manejarFiltros);
-    serialInput.addEventListener('input', manejarFiltros);
+    ubicacionInput.addEventListener('input', manejarFiltros);
     categoriaInput.addEventListener('input', manejarFiltros);
     patologiaInput.addEventListener('input', manejarFiltros);
     estadoSelect.addEventListener('change', manejarFiltros);
@@ -610,7 +642,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function buscarProductos() {
         const query = searchInput.value.trim();
-        const serial = serialInput.value.trim();
+        const ubicacion = ubicacionInput.value.trim();
         const categoria = categoriaInput.value.trim();
         const patologia = patologiaInput.value.trim();
         const estado = estadoSelect.value;
@@ -618,7 +650,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         tableBody.innerHTML = `
             <tr>
-                <td colspan="12" style="text-align: center; padding: 40px;">
+                <td colspan="9" style="text-align: center; padding: 40px;">
                     <i class="fas fa-spinner fa-spin"></i> Buscando productos...
                 </td>
             </tr>
@@ -626,7 +658,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const params = new URLSearchParams();
         if (query) params.append('q', query);
-        if (serial) params.append('serial', serial);
+        if (ubicacion) params.append('ubicacion', ubicacion);
         if (categoria) params.append('categoria', categoria);
         if (patologia) params.append('patologia', patologia);
         if (estado) params.append('estado', estado);
@@ -667,7 +699,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (productos.length === 0) {
             tableBody.innerHTML = `
                 <tr class="empty-row">
-                    <td colspan="12">
+                    <td colspan="9">
                         <div class="no-results">
                             <i class="fas fa-search"></i>
                             <h3>No se encontraron productos</h3>
@@ -682,8 +714,6 @@ document.addEventListener('DOMContentLoaded', function () {
         productos.forEach(producto => {
             const estadoClass = producto.estado_valor === 'activo' ? 'status-active' :
                 producto.estado_valor === 'inactivo' ? 'status-inactive' : 'status-agotado';
-            const stockMinClass = producto.stock_minimo === 0 ? 'status-inactive' :
-                producto.stock_minimo < 5 ? 'status-low' : 'status-active';
             const stockActClass = producto.stock_actual === 0 ? 'status-inactive' :
                 producto.stock_actual < 5 ? 'status-low' : 'status-active';
 
@@ -692,24 +722,27 @@ document.addEventListener('DOMContentLoaded', function () {
             tr.setAttribute('data-estado', producto.estado_valor);
 
             tr.innerHTML = `
-                <td>${producto.id}</td>
-                <td>${producto.serial}</td>
                 <td>${producto.nombre}</td>
                 <td>${producto.categoria}</td>
                 <td>${producto.patologia}</td>
-                <td>${producto.ubicacion}</td>
-                <!-- CORRECCIÓN: Usar directamente el string recibido del servidor -->
                 <td>${producto.sujeto_iva}</td>
                 <td class="editable-precio" data-producto-id="${producto.id}" data-precio-actual="${producto.precio.replace('$', '')}">
                     ${producto.precio}
                 </td>
-                <td><span class="status ${stockMinClass}">${producto.stock_minimo} unidades</span></td>
+                <td>${producto.ubicacion || '-'}</td>
                 <td><span class="status ${stockActClass}">${producto.stock_actual} unidades</span></td>
                 <td><span class="status ${estadoClass}">${producto.estado}</span></td>
                 <td class="actions">
                     <a href="/productos/editar/${producto.id}/" class="btn-action btn-editar" title="Editar Producto">
                         <i class="fas fa-edit"></i>
                     </a>
+                    <button class="btn-action btn-ver-detalles" title="Ver Detalles" 
+                        data-nombre="${producto.nombre}" 
+                        data-serial="${producto.serial || ''}" 
+                        data-ubicacion="${producto.ubicacion || '-'}"
+                        data-stock-minimo="${producto.stock_minimo}">
+                        <i class="fas fa-eye"></i>
+                    </button>
                     <button class="btn-action btn-edit-precio" title="Editar Precio" data-producto-id="${producto.id}">
                         <i class="fas fa-dollar-sign"></i>
                     </button>
@@ -725,7 +758,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function filtrarProductos() {
         const query = searchInput.value.trim().toLowerCase();
-        const serial = serialInput.value.trim().toLowerCase();
+        const ubicacion = ubicacionInput.value.trim().toLowerCase();
         const categoria = categoriaInput.value.trim().toLowerCase();
         const patologia = patologiaInput.value.trim().toLowerCase();
         const estado = estadoSelect.value;
@@ -740,15 +773,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            const serialFila = row.cells[1].textContent.toLowerCase();
-            const nombre = row.cells[2].textContent.toLowerCase();
-            const categoriaFila = row.cells[3].textContent.toLowerCase();
-            const patologiaFila = row.cells[4].textContent.toLowerCase();
+            const nombre = row.cells[0].textContent.toLowerCase();
+            const categoriaFila = row.cells[1].textContent.toLowerCase();
+            const patologiaFila = row.cells[2].textContent.toLowerCase();
             const estadoFila = row.getAttribute('data-estado');
-            const sujetoIvaFila = row.cells[6].textContent.trim();
+            const sujetoIvaFila = row.cells[3].textContent.trim();
 
-            const coincideSerial = !serial || serialFila.includes(serial);
-            const coincideNombre = !query || nombre.includes(query);
+            // ⚠️ IMPORTANTE: NO BORRAR ESTE CÓDIGO - Es necesario para los filtros
+            // Obtener serial y ubicación del botón ver-detalles
+            const btnDetalles = row.querySelector('.btn-ver-detalles');
+            const serialFila = btnDetalles ? btnDetalles.getAttribute('data-serial').toLowerCase() : '';
+            const ubicacionFila = btnDetalles ? btnDetalles.getAttribute('data-ubicacion').toLowerCase() : '';
+
+            // Buscar en nombre o serial (query unificada)
+            const coincideQuery = !query || nombre.includes(query) || serialFila.includes(query);
+
+            // ⚠️ IMPORTANTE: Esta línea filtra por ubicación - NO CAMBIAR
+            const coincideUbicacion = !ubicacion || (ubicacionFila && ubicacionFila !== '-' && ubicacionFila.includes(ubicacion));
+
             const coincideCategoria = !categoria || categoriaFila.includes(categoria);
             const coincidePatologia = !patologia || patologiaFila.includes(patologia);
             const coincideEstado = !estado || estadoFila === estado;
@@ -756,7 +798,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 (sujetoIva === 'si' && sujetoIvaFila === 'Sí') ||
                 (sujetoIva === 'no' && sujetoIvaFila === 'No');
 
-            if (coincideSerial && coincideNombre && coincideCategoria && coincidePatologia && coincideEstado && coincideSujetoIva) {
+            if (coincideQuery && coincideUbicacion && coincideCategoria && coincidePatologia && coincideEstado && coincideSujetoIva) {
                 row.style.display = '';
                 visibleRows++;
             } else {
@@ -764,15 +806,34 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        const emptyRow = tableBody.querySelector('.empty-row');
-        if (emptyRow) {
-            emptyRow.style.display = visibleRows === 0 ? '' : 'none';
+        let emptyRow = tableBody.querySelector('.empty-row');
+
+        if (visibleRows === 0) {
+            if (!emptyRow) {
+                emptyRow = document.createElement('tr');
+                emptyRow.className = 'empty-row';
+                emptyRow.innerHTML = `
+                    <td colspan="9">
+                        <div class="no-results">
+                            <i class="fas fa-search-minus"></i>
+                            <h3>No se encontraron productos</h3>
+                            <p>Intenta ajustar los filtros de búsqueda para encontrar lo que necesitas</p>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(emptyRow);
+            }
+            emptyRow.style.display = '';
+        } else {
+            if (emptyRow) {
+                emptyRow.style.display = 'none';
+            }
         }
     }
 
     printBtn.addEventListener('click', function () {
         const query = searchInput.value.trim();
-        const serial = serialInput.value.trim();
+        const ubicacion = ubicacionInput.value.trim();
         const categoria = categoriaInput.value.trim();
         const patologia = patologiaInput.value.trim();
         const estado = estadoSelect.value;
@@ -780,7 +841,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const params = new URLSearchParams();
         if (query) params.append('q', query);
-        if (serial) params.append('serial', serial);
+        if (ubicacion) params.append('ubicacion', ubicacion);
         if (categoria) params.append('categoria', categoria);
         if (patologia) params.append('patologia', patologia);
         if (estado) params.append('estado', estado);
@@ -792,10 +853,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ===== FUNCIONALIDAD PARA VER DETALLES =====
     function inicializarVerDetalles() {
-        function abrirModalDetalles(nombre, serial, ubicacion) {
+        function abrirModalDetalles(nombre, serial, stockMinimo) {
             detalleNombre.textContent = nombre;
             detalleSerial.textContent = serial || '-';
-            detalleUbicacion.textContent = ubicacion || '-';
+
+            // Usar singular o plural según la cantidad
+            if (stockMinimo) {
+                const cantidad = parseInt(stockMinimo);
+                const texto = cantidad === 1 ? 'unidad' : 'unidades';
+                detalleStockMinimo.textContent = `${cantidad} ${texto}`;
+            } else {
+                detalleStockMinimo.textContent = '-';
+            }
 
             modalVerDetalles.classList.add('active');
         }
@@ -810,9 +879,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (btnDetalles) {
                 const nombre = btnDetalles.getAttribute('data-nombre');
                 const serial = btnDetalles.getAttribute('data-serial');
-                const ubicacion = btnDetalles.getAttribute('data-ubicacion');
+                const stockMinimo = btnDetalles.getAttribute('data-stock-minimo');
 
-                abrirModalDetalles(nombre, serial, ubicacion);
+                abrirModalDetalles(nombre, serial, stockMinimo);
             }
         });
 
@@ -837,7 +906,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ===== INICIALIZACIÓN =====
     function inicializar() {
-        inicializarValidacionSerialFiltro();
+        inicializarValidacionUbicacionFiltro();
         inicializarModalPrecio();
         inicializarCambioEstado();
         inicializarVerDetalles();

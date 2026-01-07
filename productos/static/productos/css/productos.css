@@ -198,21 +198,21 @@
 
 /* ===== ESTILOS DE BOTONES ===== */
 .btn {
-  padding: 14px 28px;
+  padding: 10px 20px;
   border-radius: 50px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   border: none;
-  font-size: 1rem;
+  font-size: 0.95rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   text-decoration: none;
   text-align: center;
   justify-content: center;
-  min-width: 160px;
+  min-width: 130px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -331,96 +331,79 @@ td {
 }
 
 /* ===== AJUSTES DE ANCHO DE COLUMNAS CORREGIDOS ===== */
-/* Ajustar el ancho de las columnas para que quepan todas */
+/* Estructura real: 9 columnas */
+
 th:nth-child(1),
 td:nth-child(1) {
-  /* ID */
-  width: 80px;
-  text-align: center;
+  /* Nombre */
+  width: 200px;
+  min-width: 150px;
+  text-align: left;
 }
 
 th:nth-child(2),
 td:nth-child(2) {
-  /* Serial - Nueva columna */
-  width: 120px;
-  text-align: center;
+  /* Categoría */
+  width: 140px;
+  min-width: 120px;
+  text-align: left;
 }
 
 th:nth-child(3),
 td:nth-child(3) {
-  /* Nombre */
-  width: 180px;
-  min-width: 150px;
+  /* Patología */
+  width: 140px;
+  min-width: 120px;
+  text-align: center;
 }
 
-/* Ajustar el resto de las columnas para compensar */
 th:nth-child(4),
 td:nth-child(4) {
-  /* Categoría */
-  width: 120px;
-  min-width: 100px;
+  /* IVA */
+  width: 80px;
+  text-align: center;
 }
 
-th:nth-child(5),
-td:nth-child(5) {
-  /* Patología */
+th:nth-child(5) {
+  /* Precio */
   width: 120px;
-  min-width: 100px;
+  text-align: center;
+}
+
+td:nth-child(5) {
+  /* Precio */
+  width: 120px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--primary-green);
 }
 
 th:nth-child(6),
 td:nth-child(6) {
-  /* Ubicación */
-  width: 100px;
+  /* Stock Mínimo */
+  width: 130px;
+  text-align: center;
 }
 
 th:nth-child(7),
 td:nth-child(7) {
-  /* IVA */
-  width: 70px;
+  /* Stock Actual */
+  width: 130px;
   text-align: center;
 }
 
 th:nth-child(8),
 td:nth-child(8) {
-  /* Precio */
-  width: 100px;
-  text-align: right;
+  /* Estado */
+  width: 120px;
+  text-align: center;
 }
 
 th:nth-child(9),
 td:nth-child(9) {
-  /* Stock Mínimo */
-  width: 110px;
-  text-align: center;
-}
-
-th:nth-child(10),
-td:nth-child(10) {
-  /* Stock Actual */
-  width: 110px;
-  text-align: center;
-}
-
-th:nth-child(11),
-td:nth-child(11) {
-  /* Estado */
-  width: 100px;
-  text-align: center;
-}
-
-th:nth-child(12),
-td:nth-child(12) {
   /* Acciones */
-  width: 140px;
+  width: 160px;
   text-align: center;
-}
-
-/* Alinear precios a la derecha */
-td:nth-child(8) {
-  text-align: right;
-  font-weight: 600;
-  color: var(--primary-green);
 }
 
 /* ===== CONTENEDOR DE ACCIONES MEJORADO ===== */
@@ -1334,6 +1317,7 @@ tbody tr {
     background: #666 !important;
     color: white !important;
     -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 
@@ -1379,4 +1363,63 @@ tbody tr {
 td {
   padding: 14px 12px;
   font-size: 0.95rem;
+}
+
+/* ===== MENSAJE DE NO RESULTADOS ===== */
+.empty-row td {
+  padding: 0;
+  border: none;
+  background-color: transparent;
+}
+
+.no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 2rem;
+  text-align: center;
+  background-color: white;
+  min-height: 400px;
+}
+
+.no-results i {
+  font-size: 4rem;
+  color: var(--natural-green);
+  opacity: 0.8;
+  margin-bottom: 2rem;
+  background-color: var(--light-green-bg);
+  padding: 2rem;
+  border-radius: 50%;
+  box-shadow: 0 8px 30px rgba(58, 140, 110, 0.15);
+  animation: float 3s ease-in-out infinite;
+}
+
+.no-results h3 {
+  font-size: 1.5rem;
+  color: var(--dark-gray);
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.no-results p {
+  color: var(--natural-gray);
+  font-size: 1.1rem;
+  max-width: 450px;
+  line-height: 1.6;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
 }

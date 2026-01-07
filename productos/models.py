@@ -66,6 +66,33 @@ class Patologia(models.Model):
         verbose_name = 'Patología'
         verbose_name_plural = 'Patologías'
 
+
+class Ubicacion(models.Model):
+    nombre = models.CharField(max_length=50, unique=True)  # Máximo 50 caracteres
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.nombre
+
+    def clean(self):
+        # Validar que solo contenga letras, números, espacios y guiones
+        if self.nombre and not re.match(r'^[A-Za-z0-9\sÁÉÍÓÚáéíóúñÑ\-]+$', self.nombre):
+            raise ValidationError('La ubicación solo puede contener letras, números, espacios y guiones')
+        # Validar longitud máxima
+        if self.nombre and len(self.nombre) > 50:
+            raise ValidationError('La ubicación no puede tener más de 50 caracteres')
+        if self.nombre:
+            self.nombre = self.nombre.upper()
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = 'Ubicación'
+        verbose_name_plural = 'Ubicaciones'
+
+
 # ===== OPCIONES DE ESTADO =====
 ESTADOS = [
     ('activo', 'Activo'),
@@ -107,9 +134,9 @@ class Producto(models.Model):
     )
     descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción')
     precio_venta = models.DecimalField(
-        max_digits=6,
+        max_digits=10,
         decimal_places=2,
-        validators=[MinValueValidator(0.01), MaxValueValidator(9999.99)]
+        validators=[MinValueValidator(0.01), MaxValueValidator(99999999.99)]
     )
     estado = models.CharField(
         max_length=10, 

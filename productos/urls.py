@@ -35,4 +35,11 @@ urlpatterns = [
     path('patologias/editar/', views.editar_patologia, name='editar_patologia_sin_id'),
     path('patologias/eliminar/<int:id>/', views.eliminar_patologia, name='eliminar_patologia'),
     path('patologias/imprimir/', views.imprimir_patologias, name='imprimir_patologias'),
+    
+    # ===== URLs PARA UBICACIONES =====
+    path('ubicaciones/json/', views.lista_ubicaciones_json, name='lista_ubicaciones_json'),
+    path('ubicaciones/editar/<int:id>/', views.editar_ubicacion, name='editar_ubicacion'),
+    path('ubicaciones/editar/', views.editar_ubicacion, name='editar_ubicacion_sin_id'),
+    path('ubicaciones/eliminar/<int:id>/', views.eliminar_ubicacion, name='eliminar_ubicacion'),
+    path('ubicaciones/imprimir/', views.imprimir_ubicaciones, name='imprimir_ubicaciones'),
 ]

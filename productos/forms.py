@@ -29,11 +29,11 @@ class ProductoForm(forms.ModelForm):
     precio_venta = forms.CharField(
         required=True,
         label='Precio de Venta',
-        max_length=7,
+        max_length=12,
         widget=forms.TextInput(attrs={
             'placeholder': 'Ej: 125,50',
             'autocomplete': 'off',
-            'maxlength': '7'
+            'maxlength': '12'
         })
     )
 
@@ -223,8 +223,8 @@ class ProductoForm(forms.ModelForm):
         
         if precio_venta <= 0:
             raise forms.ValidationError("El precio de venta debe ser un número positivo.")
-        if precio_venta > Decimal('9999.99'):
-            raise forms.ValidationError("El precio de venta no puede ser mayor a 9999,99.")
+        if precio_venta > Decimal('99999999.99'):
+            raise forms.ValidationError("El precio de venta no puede ser mayor a 99,999,999.99.")
         
         return precio_venta
 
