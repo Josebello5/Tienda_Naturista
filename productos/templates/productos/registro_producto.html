@@ -174,13 +174,14 @@
             {% if form.non_field_errors %}
             <div class="error-msg-container">
                 <div class="error-msg" id="error-nonfield">
-                    <i class="fas fa-exclamation-circle"></i> {% for error in form.non_field_errors %}{{ error }}{%
-                    endfor %}
+                    <i class="fas fa-exclamation-circle"></i> 
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
                 </div>
             </div>
             {% endif %}
 
-            <!-- BOTONES ALINEADOS EN LA MISMA FILA -->
             <div class="form-buttons-row">
                 <a href="{% url 'productos:menu_productos' %}" class="btn btn-back">
                     <i class="fas fa-arrow-left"></i> Volver al Menú
@@ -197,10 +198,9 @@
     </div>
 </div>
 
-<!-- Pasar datos de categorías y patologías al JavaScript -->
 <script>
-    window.categoriasData = {{ categorias | safe }};
-    window.patologiasData = {{ patologias | safe }};
+    window.categoriasData = {{ categorias|safe }};
+    window.patologiasData = {{ patologias|safe }};
 </script>
 
 <script src="{% static 'productos/js/registro_producto.js' %}"></script>

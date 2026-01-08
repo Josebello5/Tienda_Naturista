@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import ProductoForm
 from .models import Producto, Categoria, Patologia, Ubicacion
@@ -995,6 +996,17 @@ def eliminar_ubicacion(request, id):
         return JsonResponse({'success': False, 'error': 'Ubicación no encontrada.'})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def lista_ubicaciones_json(request):
+    """Devuelve listado de ubicaciones en JSON"""
+    ubicaciones = Ubicacion.objects.all().order_by('nombre')
+    data = [{
+        'id': u.id,
+        'nombre': u.nombre,
+        'fecha_creacion': u.fecha_creacion.strftime('%d/%m/%Y')
+    } for u in ubicaciones]
+    return JsonResponse(data, safe=False)
 
 def imprimir_ubicaciones(request):
     """Generar PDF con listado de ubicaciones"""

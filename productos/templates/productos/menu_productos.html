@@ -171,7 +171,7 @@
               <!-- Botón para cambiar estado -->
               <button class="btn-action btn-cambiar-estado" title="Cambiar Estado"
                 data-producto-id="{{ producto.ID_producto }}" data-estado-actual="{{ producto.estado }}">
-                <i class="fas fa-toggle-{% if producto.estado == 'activo' %}on{% else %}off{% endif %}"></i>
+                <i class="fas {% if producto.estado == 'activo' %}fa-toggle-on{% else %}fa-toggle-off{% endif %}"></i>
               </button>
             </td>
           </tr>

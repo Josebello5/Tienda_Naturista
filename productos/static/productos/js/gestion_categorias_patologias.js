@@ -21,6 +21,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnCerrarModalEditarPatologia = document.getElementById('btnCerrarModalEditarPatologia');
     const btnCerrarModalEditarUbicacion = document.getElementById('btnCerrarModalEditarUbicacion');
 
+    // Botones de cierre en footer
+    const btnCerrarCategorias = document.getElementById('btnCerrarCategorias');
+    const btnCerrarPatologias = document.getElementById('btnCerrarPatologias');
+    const btnCerrarUbicaciones = document.getElementById('btnCerrarUbicaciones');
+
     // Botones de cancelar
     const btnCancelarCategoria = document.getElementById('btnCancelarCategoria');
     const btnCancelarPatologia = document.getElementById('btnCancelarPatologia');
@@ -629,6 +634,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 tbody.innerHTML = '';
 
+                // Manejar respuesta de error
+                if (data.error) {
+                    mostrarErrorGeneral(data.error);
+                    return;
+                }
+
+                // Verificar si es un array
+                if (!Array.isArray(data)) {
+                    console.error('Formato de respuesta inválido:', data);
+                    mostrarErrorGeneral('Error al procesar datos de ubicaciones');
+                    return;
+                }
+
                 if (data.length === 0) {
                     mostrarMensajeTablaVacia('tbodyUbicaciones', 'ubicaciones');
                     return;
@@ -933,6 +951,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Categorías
     categoriasBtn.addEventListener('click', abrirModalCategorias);
     btnCerrarModalCategorias.addEventListener('click', cerrarModalCategorias);
+    btnCerrarCategorias.addEventListener('click', cerrarModalCategorias);
     btnAgregarCategoria.addEventListener('click', () => abrirModalEditarCategoria());
     btnGuardarCategoria.addEventListener('click', guardarCategoria);
     btnCancelarCategoria.addEventListener('click', cerrarModalEditarCategoria);
@@ -942,6 +961,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Patologías
     patologiasBtn.addEventListener('click', abrirModalPatologias);
     btnCerrarModalPatologias.addEventListener('click', cerrarModalPatologias);
+    btnCerrarPatologias.addEventListener('click', cerrarModalPatologias);
     btnAgregarPatologia.addEventListener('click', () => abrirModalEditarPatologia());
     btnGuardarPatologia.addEventListener('click', guardarPatologia);
     btnCancelarPatologia.addEventListener('click', cerrarModalEditarPatologia);
@@ -951,6 +971,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Ubicaciones
     ubicacionesBtn.addEventListener('click', abrirModalUbicaciones);
     btnCerrarModalUbicaciones.addEventListener('click', cerrarModalUbicaciones);
+    btnCerrarUbicaciones.addEventListener('click', cerrarModalUbicaciones);
     btnAgregarUbicacion.addEventListener('click', () => abrirModalEditarUbicacion());
     btnGuardarUbicacion.addEventListener('click', guardarUbicacion);
     btnCancelarUbicacion.addEventListener('click', cerrarModalEditarUbicacion);
