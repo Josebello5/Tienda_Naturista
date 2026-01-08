@@ -25,6 +25,16 @@ class ProductoForm(forms.ModelForm):
         })
     )
     
+    ubicacion_busqueda = forms.CharField(
+        required=True,
+        label='Ubicación',
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Buscar o escribir ubicación...',
+            'autocomplete': 'off',
+            'maxlength': '50'
+        })
+    )
+    
     # Override precio_venta to CharField to allow comma separator
     precio_venta = forms.CharField(
         required=True,
@@ -41,9 +51,10 @@ class ProductoForm(forms.ModelForm):
         model = Producto
         fields = [
             'serial',  # Nuevo campo serial
-            'categoria_busqueda', 'patologia_busqueda', 'sujeto_iva',
-            'nombre_pro', 'ubicacion', 'stock_minimo', 'descripcion'
+            'sujeto_iva',
+            'nombre_pro', 'stock_minimo', 'descripcion'
         ]
+        exclude = ['categoria', 'patologia', 'ubicacion']  # Excluir campos manejados por *_busqueda
         widgets = {
             'serial': forms.TextInput(attrs={
                 'placeholder': 'Serial del producto (solo números)',
@@ -54,11 +65,6 @@ class ProductoForm(forms.ModelForm):
                 'placeholder': 'Nombre del producto (letras, números y espacios)',
                 'autocomplete': 'off',
                 'maxlength': '30'
-            }),
-            'ubicacion': forms.TextInput(attrs={
-                'placeholder': 'Ubicación (máx. 15 caracteres)',
-                'maxlength': '15',
-                'autocomplete': 'off'
             }),
             'stock_minimo': forms.NumberInput(attrs={
                 'min': '1',
@@ -83,6 +89,10 @@ class ProductoForm(forms.ModelForm):
             # Cargar patología
             if self.instance.patologia:
                 self.fields['patologia_busqueda'].initial = self.instance.patologia.nombre
+            
+            # Cargar ubicación
+            if self.instance.ubicacion:
+                self.fields['ubicacion_busqueda'].initial = self.instance.ubicacion
             
             # CORRECCIÓN: Asegurar que el precio de venta se cargue con coma decimal
             if self.instance.precio_venta:
@@ -155,12 +165,17 @@ class ProductoForm(forms.ModelForm):
             defaults={'nombre': categoria_nombre}
         )
         
+        # Asignar a la instancia ANTES de la validación del modelo
+        self.instance.categoria = categoria
+        
         return categoria
 
     def clean_patologia_busqueda(self):
         patologia_nombre = self.cleaned_data.get('patologia_busqueda', '').strip().upper()
         
         if not patologia_nombre:
+            # Asignar None a la instancia si no hay patología
+            self.instance.patologia = None
             return None
         
         if not re.match(r'^[A-Z]+$', patologia_nombre):
@@ -177,29 +192,32 @@ class ProductoForm(forms.ModelForm):
             defaults={'nombre': patologia_nombre}
         )
         
+        # Asignar a la instancia ANTES de la validación del modelo
+        self.instance.patologia = patologia
+        
         return patologia
 
-    def clean_ubicacion(self):
-        ubicacion_nombre = self.cleaned_data.get('ubicacion', '').strip()
+    def clean_ubicacion_busqueda(self):
+        ubicacion_nombre = self.cleaned_data.get('ubicacion_busqueda', '').strip().upper()
         
         if not ubicacion_nombre:
             raise forms.ValidationError("La ubicación es obligatoria.")
         
-        # Permitir letras (mayúsculas y minúsculas), números y espacios
-        if not re.match(r'^[A-Za-z0-9\s]+$', ubicacion_nombre):
-            raise forms.ValidationError('La ubicación solo puede contener letras, números y espacios.')
+        # Permitir letras mayúsculas, números, espacios y guiones
+        if not re.match(r'^[A-Z0-9\s\-]+$', ubicacion_nombre):
+            raise forms.ValidationError('La ubicación solo puede contener letras, números, espacios y guiones.')
         
-        if len(ubicacion_nombre) > 15:
-            raise forms.ValidationError('La ubicación no puede tener más de 15 caracteres.')
-        
-        # Convertir a mayúsculas
-        ubicacion_nombre = ubicacion_nombre.upper()
+        if len(ubicacion_nombre) > 50:
+            raise forms.ValidationError('La ubicación no puede tener más de 50 caracteres.')
         
         # Crear o obtener la ubicación (igual que categoría y patología)
         ubicacion, created = Ubicacion.objects.get_or_create(
             nombre=ubicacion_nombre,
             defaults={'nombre': ubicacion_nombre}
         )
+        
+        # Asignar el NOMBRE de la ubicación a la instancia ANTES de la validación del modelo
+        self.instance.ubicacion = ubicacion.nombre
         
         return ubicacion
 
@@ -237,16 +255,8 @@ class ProductoForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         
-        # Asignar categoría, patología y ubicación (ya son objetos gracias a los métodos clean_)
-        instance.categoria = self.cleaned_data.get('categoria_busqueda')
-        instance.patologia = self.cleaned_data.get('patologia_busqueda')
-        
-        # Asignar ubicación (ahora es un objeto Ubicacion)
-        ubicacion_obj = self.cleaned_data.get('ubicacion')
-        if ubicacion_obj:
-            instance.ubicacion = ubicacion_obj.nombre
-
-        # Asignar precio de venta (ya es Decimal gracias a clean_precio_venta)
+        # Los valores de categoria, patologia y ubicacion ya fueron asignados en los métodos clean_*
+        # Solo necesitamos asignar el precio de venta
         instance.precio_venta = self.cleaned_data.get('precio_venta')
         
         if commit:

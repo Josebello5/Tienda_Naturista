@@ -386,52 +386,43 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Obtener ubicaciones únicas de los productos actuales en la tabla
-        const rows = tableBody.querySelectorAll('tr:not(.empty-row)');
-        const ubicacionesSet = new Set();
+        fetch(UBICACIONES_JSON_URL)
+            .then(response => response.json())
+            .then(data => {
+                const sugerencias = data.filter(ubicacion =>
+                    ubicacion.nombre.toLowerCase().includes(query.toLowerCase())
+                );
 
-        rows.forEach(row => {
-            // Buscar el botón ver-detalles y obtener la ubicación
-            const btnDetalles = row.querySelector('.btn-ver-detalles');
-            if (btnDetalles) {
-                const ubicacion = btnDetalles.getAttribute('data-ubicacion');
-                if (ubicacion && ubicacion !== '-' && ubicacion.trim() !== '') {
-                    ubicacionesSet.add(ubicacion.trim());
+                sugerenciasUbicacionFiltro.innerHTML = '';
+                if (sugerencias.length === 0) {
+                    const noResults = document.createElement('div');
+                    noResults.className = 'sugerencia-item';
+                    noResults.textContent = 'No se encontraron ubicaciones';
+                    noResults.style.color = 'var(--natural-gray)';
+                    noResults.style.fontStyle = 'italic';
+                    sugerenciasUbicacionFiltro.appendChild(noResults);
+                } else {
+                    sugerencias.forEach(ubicacion => {
+                        const sugerencia = document.createElement('div');
+                        sugerencia.className = 'sugerencia-item';
+                        sugerencia.textContent = ubicacion.nombre;
+                        sugerencia.setAttribute('data-ubicacion-nombre', ubicacion.nombre);
+
+                        sugerencia.addEventListener('click', function () {
+                            ubicacionInput.value = ubicacion.nombre;
+                            sugerenciasUbicacionFiltro.style.display = 'none';
+                            filtrarProductos();
+                        });
+
+                        sugerenciasUbicacionFiltro.appendChild(sugerencia);
+                    });
                 }
-            }
-        });
 
-        const ubicaciones = Array.from(ubicacionesSet).sort();
-        const sugerencias = ubicaciones.filter(ubicacion =>
-            ubicacion.toLowerCase().includes(query.toLowerCase())
-        );
-
-        sugerenciasUbicacionFiltro.innerHTML = '';
-        if (sugerencias.length === 0) {
-            const noResults = document.createElement('div');
-            noResults.className = 'sugerencia-item';
-            noResults.textContent = 'No se encontraron ubicaciones';
-            noResults.style.color = 'var(--natural-gray)';
-            noResults.style.fontStyle = 'italic';
-            sugerenciasUbicacionFiltro.appendChild(noResults);
-        } else {
-            sugerencias.forEach(ubicacion => {
-                const sugerencia = document.createElement('div');
-                sugerencia.className = 'sugerencia-item';
-                sugerencia.textContent = ubicacion;
-                sugerencia.setAttribute('data-ubicacion-nombre', ubicacion);
-
-                sugerencia.addEventListener('click', function () {
-                    ubicacionInput.value = ubicacion;
-                    sugerenciasUbicacionFiltro.style.display = 'none';
-                    filtrarProductos();
-                });
-
-                sugerenciasUbicacionFiltro.appendChild(sugerencia);
+                sugerenciasUbicacionFiltro.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error al cargar ubicaciones:', error);
             });
-        }
-
-        sugerenciasUbicacionFiltro.style.display = 'block';
     }
 
     // Event listeners para los inputs de categoría, patología y ubicación en filtros

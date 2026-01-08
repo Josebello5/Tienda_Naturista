@@ -129,9 +129,10 @@ def registrar_producto(request):
     Vista para registrar nuevos productos
     Los productos se crean con estado 'activo' por defecto
     """
-    # Obtener categorías y patologías para las sugerencias
+    # Obtener categorías, patologías y ubicaciones para las sugerencias
     categorias = Categoria.objects.all().values_list('nombre', flat=True)
     patologias = Patologia.objects.all().values_list('nombre', flat=True)
+    ubicaciones = Ubicacion.objects.all().values_list('nombre', flat=True)
     
     if request.method == 'POST':
         form = ProductoForm(request.POST)
@@ -153,7 +154,8 @@ def registrar_producto(request):
     return render(request, 'productos/registro_producto.html', {
         'form': form,
         'categorias': list(categorias),
-        'patologias': list(patologias)
+        'patologias': list(patologias),
+        'ubicaciones': list(ubicaciones)
     })
 
 @csrf_exempt
@@ -218,9 +220,10 @@ def editar_producto(request, id):
     """
     producto = get_object_or_404(Producto, ID_producto=id)
     
-    # Obtener categorías y patologías para las sugerencias
+    # Obtener categorías, patologías y ubicaciones para las sugerencias
     categorias = Categoria.objects.all().values_list('nombre', flat=True)
     patologias = Patologia.objects.all().values_list('nombre', flat=True)
+    ubicaciones = Ubicacion.objects.all().values_list('nombre', flat=True)
     
     if request.method == 'POST':
         form = ProductoForm(request.POST, instance=producto)
@@ -244,7 +247,8 @@ def editar_producto(request, id):
         'form': form,
         'producto': producto,
         'categorias': list(categorias),
-        'patologias': list(patologias)
+        'patologias': list(patologias),
+        'ubicaciones': list(ubicaciones)
     })
 
 def generar_pdf_productos(request):

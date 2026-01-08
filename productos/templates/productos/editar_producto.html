@@ -113,18 +113,19 @@
           </span>
         </div>
 
-        <!-- Campo Ubicación -->
-        <div class="form-col">
-          <label for="ubicacion" class="form-label">Ubicación</label>
+        <!-- Campo Ubicación con sugerencias -->
+        <div class="form-col" style="position: relative;">
+          <label for="ubicacion_busqueda" class="form-label">Ubicación</label>
           <div class="input-icon">
             <i class="fas fa-map-marker-alt"></i>
-            <input type="text" id="ubicacion" name="ubicacion"
-              class="form-control{% if form.ubicacion.errors %} is-invalid{% endif %}"
-              value="{{ form.ubicacion.value|default_if_none:'' }}" required
-              placeholder="Ubicación (máx. 15 caracteres)" maxlength="15" autocomplete="off">
+            <input type="text" id="ubicacion_busqueda" name="ubicacion_busqueda"
+              class="form-control{% if form.ubicacion_busqueda.errors %} is-invalid{% endif %}"
+              value="{{ form.ubicacion_busqueda.value|default_if_none:'' }}" required
+              placeholder="Buscar o escribir ubicación..." autocomplete="off" maxlength="50">
           </div>
-          <span class="error-msg" id="error-ubicacion">
-            {% for error in form.ubicacion.errors %}{{ error }}{% endfor %}
+          <div id="sugerencias-ubicacion" class="sugerencias-container"></div>
+          <span class="error-msg" id="error-ubicacion_busqueda">
+            {% for error in form.ubicacion_busqueda.errors %}{{ error }}{% endfor %}
           </span>
         </div>
 
@@ -201,6 +202,7 @@
 <script>
   window.categoriasData = {{ categorias | safe }};
   window.patologiasData = {{ patologias | safe }};
+  window.ubicacionesData = {{ ubicaciones | safe }};
   // Pasar el precio actual para inicialización
   window.precioActual = {{ producto.precio_venta }};
 </script>

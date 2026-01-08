@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const patologiaBusqueda = document.getElementById('patologia_busqueda');
     const sujetoIva = document.getElementById('sujeto_iva');
     const nombrePro = document.getElementById('nombre_pro');
-    const ubicacion = document.getElementById('ubicacion');
+    const ubicacionBusqueda = document.getElementById('ubicacion_busqueda');
     const stockMinimo = document.getElementById('stock_minimo');
     const descripcion = document.getElementById('descripcion');
     const precioVenta = document.getElementById('precio_venta');
@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Contenedores de sugerencias
     const sugerenciasCategoria = document.getElementById('sugerencias-categoria');
     const sugerenciasPatologia = document.getElementById('sugerencias-patologia');
+    const sugerenciasUbicacion = document.getElementById('sugerencias-ubicacion');
 
     // Elementos de mensajes de error
     const errorSerial = document.getElementById('error-serial'); // Nuevo error serial
@@ -24,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const errorPatologiaBusqueda = document.getElementById('error-patologia_busqueda');
     const errorSujetoIva = document.getElementById('error-sujeto_iva');
     const errorNombrePro = document.getElementById('error-nombre_pro');
-    const errorUbicacion = document.getElementById('error-ubicacion');
+    const errorUbicacionBusqueda = document.getElementById('error-ubicacion_busqueda');
     const errorStockMinimo = document.getElementById('error-stock_minimo');
     const errorDescripcion = document.getElementById('error-descripcion');
     const errorPrecioVenta = document.getElementById('error-precio_venta');
@@ -51,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
             categoriaBusqueda,
             sujetoIva,
             nombrePro,
-            ubicacion,
+            ubicacionBusqueda,
             stockMinimo,
             precioVenta
         ];
@@ -225,6 +226,65 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ===== SUGERENCIAS PARA UBICACIÓN =====
+
+    if (ubicacionBusqueda && sugerenciasUbicacion) {
+        ubicacionBusqueda.addEventListener('input', function (e) {
+            const query = ubicacionBusqueda.value.trim().toUpperCase();
+            sugerenciasUbicacion.innerHTML = '';
+
+            if (!query) {
+                sugerenciasUbicacion.style.display = 'none';
+                return;
+            }
+
+            const sugerencias = window.ubicacionesData.filter(ubicacion =>
+                ubicacion.includes(query)
+            );
+
+            if (sugerencias.length === 0) {
+                const noResults = document.createElement('div');
+                noResults.className = 'sugerencia-item';
+                noResults.textContent = 'No se encontraron ubicaciones. Escriba para crear una nueva.';
+                noResults.style.color = 'var(--natural-gray)';
+                noResults.style.fontStyle = 'italic';
+                sugerenciasUbicacion.appendChild(noResults);
+            } else {
+                sugerencias.forEach(ubicacion => {
+                    const sugerencia = document.createElement('div');
+                    sugerencia.className = 'sugerencia-item';
+                    sugerencia.textContent = ubicacion;
+                    sugerencia.setAttribute('data-ubicacion-nombre', ubicacion);
+
+                    sugerencia.addEventListener('click', function () {
+                        ubicacionBusqueda.value = ubicacion;
+                        sugerenciasUbicacion.style.display = 'none';
+                        validarUbicacionBusqueda();
+                        toggleSubmitButton();
+                    });
+
+                    sugerenciasUbicacion.appendChild(sugerencia);
+                });
+            }
+
+            sugerenciasUbicacion.style.display = 'block';
+        });
+
+        document.addEventListener('click', function (e) {
+            if (ubicacionBusqueda && !ubicacionBusqueda.contains(e.target) &&
+                sugerenciasUbicacion && !sugerenciasUbicacion.contains(e.target)) {
+                sugerenciasUbicacion.style.display = 'none';
+            }
+        });
+
+        ubicacionBusqueda.addEventListener('blur', function () {
+            setTimeout(() => {
+                validarUbicacionBusqueda();
+                toggleSubmitButton();
+            }, 200);
+        });
+    }
+
     // ===== RESTRICCIONES DE TIPEO =====
 
     categoriaBusqueda.addEventListener('keypress', function (e) {
@@ -336,15 +396,9 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleSubmitButton();
     });
 
-    ubicacion.addEventListener('input', function () {
-        // CORRECCIÓN: Convertir a mayúsculas automáticamente
-        this.value = this.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '');
-
-        // Limitar a 15 caracteres
-        if (this.value.length > 15) {
-            this.value = this.value.substring(0, 15);
-        }
-        validarUbicacion();
+    ubicacionBusqueda.addEventListener('input', function () {
+        this.value = this.value.toUpperCase();
+        validarUbicacionBusqueda();
         toggleSubmitButton();
     });
 
@@ -458,22 +512,22 @@ document.addEventListener('DOMContentLoaded', function () {
         return true;
     }
 
-    function validarUbicacion() {
-        const val = ubicacion.value.trim();
+    function validarUbicacionBusqueda() {
+        const val = ubicacionBusqueda.value.trim();
         if (val === '') {
-            setInvalid(ubicacion, errorUbicacion, "La ubicación es obligatoria.");
+            setInvalid(ubicacionBusqueda, errorUbicacionBusqueda, "La ubicación es obligatoria.");
             return false;
         }
-        // CORRECCIÓN: Permitir letras mayúsculas, números y espacios
-        if (!/^[A-Z0-9\s]+$/.test(val)) {
-            setInvalid(ubicacion, errorUbicacion, "La ubicación solo puede contener letras, números y espacios.");
+        // Permitir letras mayúsculas, números, espacios y guiones
+        if (!/^[A-Z0-9\s\-]+$/.test(val)) {
+            setInvalid(ubicacionBusqueda, errorUbicacionBusqueda, "La ubicación solo puede contener letras, números, espacios y guiones.");
             return false;
         }
-        if (val.length > 15) {
-            setInvalid(ubicacion, errorUbicacion, "La ubicación no puede tener más de 15 caracteres.");
+        if (val.length > 50) {
+            setInvalid(ubicacionBusqueda, errorUbicacionBusqueda, "La ubicación no puede tener más de 50 caracteres.");
             return false;
         }
-        setValid(ubicacion, errorUbicacion);
+        setValid(ubicacionBusqueda, errorUbicacionBusqueda);
         return true;
     }
 
@@ -548,7 +602,7 @@ document.addEventListener('DOMContentLoaded', function () {
             validarPatologiaBusqueda() &&
             validarSujetoIva() &&
             validarNombrePro() &&
-            validarUbicacion() &&
+            validarUbicacionBusqueda() &&
             validarStockMinimo() &&
             validarPrecioVenta() &&
             validarDescripcion();
@@ -556,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!esValido) {
             e.preventDefault();
 
-            const campos = [serial, categoriaBusqueda, patologiaBusqueda, sujetoIva, nombrePro, ubicacion, stockMinimo, precioVenta];
+            const campos = [serial, categoriaBusqueda, patologiaBusqueda, sujetoIva, nombrePro, ubicacionBusqueda, stockMinimo, precioVenta];
             for (let campo of campos) {
                 if (campo.classList.contains('is-invalid')) {
                     campo.focus();
@@ -575,7 +629,7 @@ document.addEventListener('DOMContentLoaded', function () {
         { campo: patologiaBusqueda, validador: validarPatologiaBusqueda },
         { campo: sujetoIva, validador: validarSujetoIva },
         { campo: nombrePro, validador: validarNombrePro },
-        { campo: ubicacion, validador: validarUbicacion },
+        { campo: ubicacionBusqueda, validador: validarUbicacionBusqueda },
         { campo: stockMinimo, validador: validarStockMinimo },
         { campo: precioVenta, validador: validarPrecioVenta }
     ];
