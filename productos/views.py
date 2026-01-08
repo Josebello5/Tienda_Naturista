@@ -19,6 +19,17 @@ import re
 import logging
 from django.urls import reverse
 
+# Helper function to generate proper Content-Disposition header
+def get_pdf_content_disposition(filename):
+    """
+    Genera un header Content-Disposition compatible con RFC 5987
+    para asegurar que los nombres de archivo se muestren correctamente
+    """
+    from urllib.parse import quote
+    # Usar tanto filename como filename* para máxima compatibilidad
+    return f'inline; filename="{filename}"; filename*=UTF-8\'\'{quote(filename)}'
+
+
 
 
 # Configurar logger
@@ -286,7 +297,7 @@ def generar_pdf_productos(request):
         # Verificar si hay productos después de aplicar filtros
         if not productos.exists():
             response = HttpResponse(content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="sin_productos.pdf"'
+            response['Content-Disposition'] = get_pdf_content_disposition('sin_productos.pdf')
             
             p = canvas.Canvas(response, pagesize=letter)
             width, height = letter
@@ -375,7 +386,7 @@ def generar_pdf_productos(request):
             filename_parts.append(f"serial_{clean_serial}"[:20])
         
         filename = "_".join(filename_parts) + ".pdf"
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Disposition'] = get_pdf_content_disposition(filename)
         
         # Crear el objeto PDF
         p = canvas.Canvas(response, pagesize=letter)
@@ -424,22 +435,21 @@ def generar_pdf_productos(request):
         y_position = height - 2.2*inch
         line_height = 0.25*inch
         
-        # Encabezados de tabla - Ajustados para nueva columna serial
+        # Encabezados de tabla - Sin ID, centrados
         p.setFont("Helvetica-Bold", 7)
-        p.drawString(0.4*inch, y_position, "ID")
-        p.drawString(0.7*inch, y_position, "SERIAL")
-        p.drawString(1.5*inch, y_position, "NOMBRE")
-        p.drawString(2.8*inch, y_position, "CATEG.")
-        p.drawString(3.5*inch, y_position, "PATOL.")
-        p.drawString(4.2*inch, y_position, "UBIC.")
-        p.drawString(4.7*inch, y_position, "IVA")
-        p.drawString(5.1*inch, y_position, "PRECIO")
-        p.drawString(5.7*inch, y_position, "ST.MIN")
-        p.drawString(6.2*inch, y_position, "ST.ACT")
-        p.drawString(6.7*inch, y_position, "ESTADO")
+        p.drawCentredString(0.8*inch, y_position, "SERIAL")
+        p.drawCentredString(1.85*inch, y_position, "NOMBRE")
+        p.drawCentredString(3.0*inch, y_position, "CATEGORÍA")
+        p.drawCentredString(4.0*inch, y_position, "PATOLOGÍA")
+        p.drawCentredString(5.05*inch, y_position, "UBICACIÓN")
+        p.drawCentredString(5.8*inch, y_position, "IVA")
+        p.drawCentredString(6.3*inch, y_position, "PRECIO")
+        p.drawCentredString(6.85*inch, y_position, "ST.MIN")
+        p.drawCentredString(7.35*inch, y_position, "ST.ACT")
+        p.drawCentredString(7.85*inch, y_position, "ESTADO")
         
         y_position -= line_height
-        p.line(0.4*inch, y_position, 7.5*inch, y_position)
+        p.line(0.4*inch, y_position, 8.1*inch, y_position)
         y_position -= 0.1*inch
         
         # Datos de productos
@@ -451,22 +461,21 @@ def generar_pdf_productos(request):
                 y_position = height - 1*inch
                 p.setFont("Helvetica", 6)
                 
-                # Encabezados en nueva página
+                # Encabezados en nueva página - Sin ID, centrados
                 p.setFont("Helvetica-Bold", 7)
-                p.drawString(0.4*inch, y_position, "ID")
-                p.drawString(0.7*inch, y_position, "SERIAL")
-                p.drawString(1.5*inch, y_position, "NOMBRE")
-                p.drawString(2.8*inch, y_position, "CATEG.")
-                p.drawString(3.5*inch, y_position, "PATOL.")
-                p.drawString(4.2*inch, y_position, "UBIC.")
-                p.drawString(4.7*inch, y_position, "IVA")
-                p.drawString(5.1*inch, y_position, "PRECIO")
-                p.drawString(5.7*inch, y_position, "ST.MIN")
-                p.drawString(6.2*inch, y_position, "ST.ACT")
-                p.drawString(6.7*inch, y_position, "ESTADO")
+                p.drawCentredString(0.8*inch, y_position, "SERIAL")
+                p.drawCentredString(1.85*inch, y_position, "NOMBRE")
+                p.drawCentredString(3.0*inch, y_position, "CATEGORÍA")
+                p.drawCentredString(4.0*inch, y_position, "PATOLOGÍA")
+                p.drawCentredString(5.05*inch, y_position, "UBICACIÓN")
+                p.drawCentredString(5.8*inch, y_position, "IVA")
+                p.drawCentredString(6.3*inch, y_position, "PRECIO")
+                p.drawCentredString(6.85*inch, y_position, "ST.MIN")
+                p.drawCentredString(7.35*inch, y_position, "ST.ACT")
+                p.drawCentredString(7.85*inch, y_position, "ESTADO")
                 
                 y_position -= line_height
-                p.line(0.4*inch, y_position, 7.5*inch, y_position)
+                p.line(0.4*inch, y_position, 8.1*inch, y_position)
                 y_position -= 0.1*inch
                 p.setFont("Helvetica", 6)
             
@@ -475,36 +484,32 @@ def generar_pdf_productos(request):
             if len(nombre) > 25:
                 nombre = nombre[:22] + "..."
             
-            # Serial
+            # Serial completo - sin truncar
             serial_display = producto.serial
-            if len(serial_display) > 15:
-                serial_display = serial_display[:12] + "..."
             
             categoria_display = producto.categoria.nombre if producto.categoria else ""
-            if len(categoria_display) > 8:
-                categoria_display = categoria_display[:5] + "..."
+            # Mostrar completo - sin truncar
             
             patologia_display = producto.patologia.nombre if producto.patologia else ""
-            if len(patologia_display) > 8:
-                patologia_display = patologia_display[:5] + "..."
+            # Mostrar completo - sin truncar
             
             ubicacion_display = producto.ubicacion or ""
-            if len(ubicacion_display) > 6:
-                ubicacion_display = ubicacion_display[:3] + "..."
+            if len(ubicacion_display) > 12:
+                ubicacion_display = ubicacion_display[:12] + "..."
             
             # Stock actual (puede ser None si no hay lotes activos)
             stock_actual = producto.stock_actual or 0
             
-            p.drawString(0.4*inch, y_position, str(producto.ID_producto))
-            p.drawString(0.7*inch, y_position, serial_display)
-            p.drawString(1.5*inch, y_position, nombre)
-            p.drawString(2.8*inch, y_position, categoria_display)
-            p.drawString(3.5*inch, y_position, patologia_display)
-            p.drawString(4.2*inch, y_position, ubicacion_display)
-            p.drawString(4.7*inch, y_position, "SI" if producto.sujeto_iva == 'si' else "NO")
-            p.drawString(5.1*inch, y_position, f"${producto.precio_venta}")
-            p.drawString(5.7*inch, y_position, str(producto.stock_minimo))
-            p.drawString(6.2*inch, y_position, str(stock_actual))
+            # Datos centrados - Sin ID
+            p.drawCentredString(0.8*inch, y_position, serial_display)
+            p.drawCentredString(1.85*inch, y_position, nombre)
+            p.drawCentredString(3.0*inch, y_position, categoria_display)
+            p.drawCentredString(4.0*inch, y_position, patologia_display)
+            p.drawCentredString(5.05*inch, y_position, ubicacion_display)
+            p.drawCentredString(5.8*inch, y_position, "SI" if producto.sujeto_iva == 'si' else "NO")
+            p.drawCentredString(6.3*inch, y_position, f"${producto.precio_venta}")
+            p.drawCentredString(6.85*inch, y_position, str(producto.stock_minimo))
+            p.drawCentredString(7.35*inch, y_position, str(stock_actual))
             
             # Estado con colores
             estado_display = producto.get_estado_display()
@@ -515,7 +520,7 @@ def generar_pdf_productos(request):
             else:  # agotado
                 p.setFillColorRGB(0.9, 0.5, 0)  # Naranja
             
-            p.drawString(6.7*inch, y_position, estado_display)
+            p.drawCentredString(7.85*inch, y_position, estado_display)
             p.setFillColorRGB(0, 0, 0)  # Volver a negro
             
             y_position -= line_height
@@ -545,7 +550,7 @@ def generar_pdf_productos(request):
         
         # Crear PDF de error
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="error.pdf"'
+        response['Content-Disposition'] = get_pdf_content_disposition('error.pdf')
         
         p = canvas.Canvas(response, pagesize=letter)
         width, height = letter
@@ -644,7 +649,7 @@ def imprimir_categorias(request):
         categorias = Categoria.objects.all().order_by('nombre')
         
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="listado_categorias.pdf"'
+        response['Content-Disposition'] = get_pdf_content_disposition('listado_categorias.pdf')
         
         p = canvas.Canvas(response, pagesize=letter)
         width, height = letter
@@ -723,7 +728,7 @@ def imprimir_categorias(request):
         logger.error(f"Error al generar PDF de categorías: {str(e)}")
         
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="error.pdf"'
+        response['Content-Disposition'] = get_pdf_content_disposition('error.pdf')
         
         p = canvas.Canvas(response, pagesize=letter)
         width, height = letter
@@ -823,7 +828,7 @@ def imprimir_patologias(request):
         patologias = Patologia.objects.all().order_by('nombre')
         
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="listado_patologias.pdf"'
+        response['Content-Disposition'] = get_pdf_content_disposition('listado_patologias.pdf')
         
         p = canvas.Canvas(response, pagesize=letter)
         width, height = letter
@@ -902,7 +907,7 @@ def imprimir_patologias(request):
         logger.error(f"Error al generar PDF de patologías: {str(e)}")
         
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="error.pdf"'
+        response['Content-Disposition'] = get_pdf_content_disposition('error.pdf')
         
         p = canvas.Canvas(response, pagesize=letter)
         width, height = letter
@@ -1014,7 +1019,7 @@ def imprimir_ubicaciones(request):
         ubicaciones = Ubicacion.objects.all().order_by('nombre')
         
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="listado_ubicaciones.pdf"'
+        response['Content-Disposition'] = get_pdf_content_disposition('listado_ubicaciones.pdf')
         
         p = canvas.Canvas(response, pagesize=letter)
         width, height = letter
@@ -1093,7 +1098,7 @@ def imprimir_ubicaciones(request):
         logger.error(f"Error al generar PDF de ubicaciones: {str(e)}")
         
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="error.pdf"'
+        response['Content-Disposition'] = get_pdf_content_disposition('error.pdf')
         
         p = canvas.Canvas(response, pagesize=letter)
         width, height = letter

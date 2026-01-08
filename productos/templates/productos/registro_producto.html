@@ -174,9 +174,9 @@
             {% if form.non_field_errors %}
             <div class="error-msg-container">
                 <div class="error-msg" id="error-nonfield">
-                    <i class="fas fa-exclamation-circle"></i> 
+                    <i class="fas fa-exclamation-circle"></i>
                     {% for error in form.non_field_errors %}
-                        {{ error }}
+                    {{ error }}
                     {% endfor %}
                 </div>
             </div>
@@ -199,8 +199,8 @@
 </div>
 
 <script>
-    window.categoriasData = {{ categorias|safe }};
-    window.patologiasData = {{ patologias|safe }};
+    window.categoriasData = {{ categorias | safe }};
+    window.patologiasData = {{ patologias | safe }};
 </script>
 
 <script src="{% static 'productos/js/registro_producto.js' %}"></script>

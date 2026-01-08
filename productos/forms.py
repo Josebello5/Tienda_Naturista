@@ -1,5 +1,5 @@
 from django import forms
-from .models import Producto, Categoria, Patologia
+from .models import Producto, Categoria, Patologia, Ubicacion
 import re
 from decimal import Decimal, InvalidOperation
 
@@ -180,20 +180,26 @@ class ProductoForm(forms.ModelForm):
         return patologia
 
     def clean_ubicacion(self):
-        ubicacion = self.cleaned_data.get('ubicacion', '').strip()
+        ubicacion_nombre = self.cleaned_data.get('ubicacion', '').strip()
         
-        if not ubicacion:
+        if not ubicacion_nombre:
             raise forms.ValidationError("La ubicación es obligatoria.")
         
         # Permitir letras (mayúsculas y minúsculas), números y espacios
-        if not re.match(r'^[A-Za-z0-9\s]+$', ubicacion):
+        if not re.match(r'^[A-Za-z0-9\s]+$', ubicacion_nombre):
             raise forms.ValidationError('La ubicación solo puede contener letras, números y espacios.')
         
-        if len(ubicacion) > 15:
+        if len(ubicacion_nombre) > 15:
             raise forms.ValidationError('La ubicación no puede tener más de 15 caracteres.')
         
         # Convertir a mayúsculas
-        ubicacion = ubicacion.upper()
+        ubicacion_nombre = ubicacion_nombre.upper()
+        
+        # Crear o obtener la ubicación (igual que categoría y patología)
+        ubicacion, created = Ubicacion.objects.get_or_create(
+            nombre=ubicacion_nombre,
+            defaults={'nombre': ubicacion_nombre}
+        )
         
         return ubicacion
 
@@ -231,9 +237,14 @@ class ProductoForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         
-        # Asignar categoría y patología (ya son objetos gracias a los métodos clean_)
+        # Asignar categoría, patología y ubicación (ya son objetos gracias a los métodos clean_)
         instance.categoria = self.cleaned_data.get('categoria_busqueda')
         instance.patologia = self.cleaned_data.get('patologia_busqueda')
+        
+        # Asignar ubicación (ahora es un objeto Ubicacion)
+        ubicacion_obj = self.cleaned_data.get('ubicacion')
+        if ubicacion_obj:
+            instance.ubicacion = ubicacion_obj.nombre
 
         # Asignar precio de venta (ya es Decimal gracias a clean_precio_venta)
         instance.precio_venta = self.cleaned_data.get('precio_venta')
