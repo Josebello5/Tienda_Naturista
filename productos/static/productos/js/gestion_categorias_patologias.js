@@ -218,7 +218,106 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ===== FUNCIÓN DE PAGINACIÓN =====
+    const paginacionEstado = {
+        categorias: { paginaActual: 1 },
+        patologias: { paginaActual: 1 },
+        ubicaciones: { paginaActual: 1 }
+    };
+
+    function paginarTabla(tbodyId, paginationId, tipo, itemsPorPagina = 6) {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+
+        const filas = Array.from(tbody.querySelectorAll('tr:not(.empty-message)'));
+        const totalFilas = filas.length;
+        const totalPaginas = Math.ceil(totalFilas / itemsPorPagina) || 1;
+        const paginaActual = paginacionEstado[tipo].paginaActual;
+
+        // Mostrar solo las filas de la página actual
+        const inicio = (paginaActual - 1) * itemsPorPagina;
+        const fin = inicio + itemsPorPagina;
+
+        filas.forEach((fila, index) => {
+            fila.style.display = (index >= inicio && index < fin) ? '' : 'none';
+        });
+
+        // Siempre renderizar controles de paginación
+        renderizarControlesPaginacion(paginationId, paginaActual, totalPaginas, totalFilas, inicio, fin, tipo);
+    }
+
+    function renderizarControlesPaginacion(containerId, paginaActual, totalPaginas, totalFilas, inicio, fin, tipo) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const mostrandoDesde = totalFilas > 0 ? inicio + 1 : 0;
+        const mostrandoHasta = Math.min(fin, totalFilas);
+
+        let html = `
+            <button class="pagination-btn" ${paginaActual === 1 ? 'disabled' : ''} 
+                    onclick="cambiarPagina('${tipo}', ${paginaActual - 1})">
+                Anterior
+            </button>
+        `;
+
+        // Mostrar números de página (máximo 5 botones visibles)
+        let startPage = Math.max(1, paginaActual - 2);
+        let endPage = Math.min(totalPaginas, startPage + 4);
+
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+
+        if (startPage > 1) {
+            html += `<button class="pagination-btn" onclick="cambiarPagina('${tipo}', 1)">1</button>`;
+            if (startPage > 2) {
+                html += `<span class="pagination-info">...</span>`;
+            }
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += `
+                <button class="pagination-btn ${i === paginaActual ? 'active' : ''}" 
+                        onclick="cambiarPagina('${tipo}', ${i})">
+                    ${i}
+                </button>
+            `;
+        }
+
+        if (endPage < totalPaginas) {
+            if (endPage < totalPaginas - 1) {
+                html += `<span class="pagination-info">...</span>`;
+            }
+            html += `<button class="pagination-btn" onclick="cambiarPagina('${tipo}', ${totalPaginas})">Última</button>`;
+        }
+
+        html += `
+            <button class="pagination-btn" ${paginaActual === totalPaginas ? 'disabled' : ''} 
+                    onclick="cambiarPagina('${tipo}', ${paginaActual + 1})">
+                Siguiente
+            </button>
+            <span class="pagination-info">
+                ${mostrandoDesde}-${mostrandoHasta} de ${totalFilas}
+            </span>
+        `;
+
+        container.innerHTML = html;
+    }
+
+    window.cambiarPagina = function (tipo, nuevaPagina) {
+        paginacionEstado[tipo].paginaActual = nuevaPagina;
+
+        if (tipo === 'categorias') {
+            paginarTabla('tbodyCategorias', 'paginationCategorias', 'categorias');
+        } else if (tipo === 'patologias') {
+            paginarTabla('tbodyPatologias', 'paginationPatologias', 'patologias');
+        } else if (tipo === 'ubicaciones') {
+            paginarTabla('tbodyUbicaciones', 'paginationUbicaciones', 'ubicaciones');
+        }
+    };
+
     // ===== FUNCIONALIDAD PARA CATEGORÍAS =====
+
 
     function abrirModalCategorias() {
         modalCategorias.style.display = 'flex';
@@ -289,10 +388,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                data.forEach(categoria => {
+                data.forEach((categoria, index) => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${categoria.id}</td>
+                        <td>${index + 1}</td>
                         <td>${categoria.nombre}</td>
                         <td>${categoria.fecha_creacion}</td>
                         <td class="actions">
@@ -306,6 +405,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     `;
                     tbody.appendChild(tr);
                 });
+
+                // Aplicar paginación
+                paginacionEstado.categorias.paginaActual = 1;
+                paginarTabla('tbodyCategorias', 'paginationCategorias', 'categorias');
 
                 if (searchCategorias.value) {
                     filtrarTablaCategorias();
@@ -349,6 +452,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 cargarCategorias();
             }
         }
+
+        // Resetear paginación al filtrar
+        paginacionEstado.categorias.paginaActual = 1;
+        paginarTabla('tbodyCategorias', 'paginationCategorias', 'categorias');
     }
 
     function guardarCategoria() {
@@ -464,10 +571,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                data.forEach(patologia => {
+                data.forEach((patologia, index) => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${patologia.id}</td>
+                        <td>${index + 1}</td>
                         <td>${patologia.nombre}</td>
                         <td>${patologia.fecha_creacion}</td>
                         <td class="actions">
@@ -481,6 +588,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     `;
                     tbody.appendChild(tr);
                 });
+
+                // Aplicar paginación
+                paginacionEstado.patologias.paginaActual = 1;
+                paginarTabla('tbodyPatologias', 'paginationPatologias', 'patologias');
 
                 if (searchPatologias.value) {
                     filtrarTablaPatologias();
@@ -524,6 +635,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 cargarPatologias();
             }
         }
+
+        // Resetear paginación al filtrar
+        paginacionEstado.patologias.paginaActual = 1;
+        paginarTabla('tbodyPatologias', 'paginationPatologias', 'patologias');
     }
 
     function guardarPatologia() {
@@ -652,10 +767,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                data.forEach(ubicacion => {
+                data.forEach((ubicacion, index) => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${ubicacion.id}</td>
+                        <td>${index + 1}</td>
                         <td>${ubicacion.nombre}</td>
                         <td>${ubicacion.fecha_creacion}</td>
                         <td class="actions">
@@ -669,6 +784,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     `;
                     tbody.appendChild(tr);
                 });
+
+                // Aplicar paginación
+                paginacionEstado.ubicaciones.paginaActual = 1;
+                paginarTabla('tbodyUbicaciones', 'paginationUbicaciones', 'ubicaciones');
 
                 if (searchUbicaciones.value) {
                     filtrarTablaUbicaciones();
@@ -712,6 +831,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 cargarUbicaciones();
             }
         }
+
+        // Resetear paginación al filtrar
+        paginacionEstado.ubicaciones.paginaActual = 1;
+        paginarTabla('tbodyUbicaciones', 'paginationUbicaciones', 'ubicaciones');
     }
 
     function guardarUbicacion() {

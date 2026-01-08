@@ -8,7 +8,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 from datetime import datetime
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Count, OuterRef, Subquery, IntegerField
+from django.db.models.functions import Coalesce
 from lotes.models import Lote
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
@@ -573,7 +574,7 @@ def generar_pdf_productos(request):
     
 def lista_categorias_json(request):
     """Devuelve lista de categorías en formato JSON"""
-    categorias = Categoria.objects.all().order_by('nombre')
+    categorias = Categoria.objects.all().order_by('id')
     categorias_data = []
     for categoria in categorias:
         categorias_data.append({
@@ -650,7 +651,7 @@ def eliminar_categoria(request, id):
 def imprimir_categorias(request):
     """Generar PDF con listado de categorías"""
     try:
-        categorias = Categoria.objects.all().order_by('nombre')
+        categorias = Categoria.objects.annotate(num_productos=Count('producto')).order_by('nombre')
         
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = get_pdf_content_disposition('listado_categorias.pdf')
@@ -681,13 +682,13 @@ def imprimir_categorias(request):
         
         # Encabezados de tabla
         p.setFont("Helvetica-Bold", 10)
-        p.drawString(1*inch, y_position, "ID")
-        p.drawString(1.5*inch, y_position, "NOMBRE")
-        p.drawString(4*inch, y_position, "FECHA CREACIÓN")
+        p.drawString(1*inch, y_position, "NOMBRE")
+        p.drawString(4*inch, y_position, "N° PRODUCTOS")
+        p.drawString(6*inch, y_position, "FECHA CREACIÓN")
         
         y_position -= line_height
-        p.line(1*inch, y_position, 7.5*inch, y_position)
-        y_position -= 0.1*inch
+        p.line(0.5*inch, y_position, 8*inch, y_position)
+        y_position -= 0.25*inch
         
         # Datos de categorías
         p.setFont("Helvetica", 9)
@@ -699,18 +700,18 @@ def imprimir_categorias(request):
                 
                 # Encabezados en nueva página
                 p.setFont("Helvetica-Bold", 10)
-                p.drawString(1*inch, y_position, "ID")
-                p.drawString(1.5*inch, y_position, "NOMBRE")
-                p.drawString(4*inch, y_position, "FECHA CREACIÓN")
+                p.drawString(1*inch, y_position, "NOMBRE")
+                p.drawString(4*inch, y_position, "N° PRODUCTOS")
+                p.drawString(6*inch, y_position, "FECHA CREACIÓN")
                 
                 y_position -= line_height
-                p.line(1*inch, y_position, 7.5*inch, y_position)
-                y_position -= 0.1*inch
+                p.line(0.5*inch, y_position, 8*inch, y_position)
+                y_position -= 0.25*inch
                 p.setFont("Helvetica", 9)
             
-            p.drawString(1*inch, y_position, str(categoria.id))
-            p.drawString(1.5*inch, y_position, categoria.nombre)
-            p.drawString(4*inch, y_position, categoria.fecha_creacion.strftime('%d/%m/%Y %H:%M'))
+            p.drawString(1*inch, y_position, categoria.nombre)
+            p.drawString(4*inch, y_position, str(categoria.num_productos))
+            p.drawString(6*inch, y_position, categoria.fecha_creacion.strftime('%d/%m/%Y %H:%M'))
             
             y_position -= line_height
         
@@ -752,7 +753,7 @@ def imprimir_categorias(request):
 
 def lista_patologias_json(request):
     """Devuelve lista de patologías en formato JSON"""
-    patologias = Patologia.objects.all().order_by('nombre')
+    patologias = Patologia.objects.all().order_by('id')
     patologias_data = []
     for patologia in patologias:
         patologias_data.append({
@@ -829,7 +830,7 @@ def eliminar_patologia(request, id):
 def imprimir_patologias(request):
     """Generar PDF con listado de patologías"""
     try:
-        patologias = Patologia.objects.all().order_by('nombre')
+        patologias = Patologia.objects.annotate(num_productos=Count('producto')).order_by('nombre')
         
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = get_pdf_content_disposition('listado_patologias.pdf')
@@ -860,13 +861,13 @@ def imprimir_patologias(request):
         
         # Encabezados de tabla
         p.setFont("Helvetica-Bold", 10)
-        p.drawString(1*inch, y_position, "ID")
-        p.drawString(1.5*inch, y_position, "NOMBRE")
-        p.drawString(4*inch, y_position, "FECHA CREACIÓN")
+        p.drawString(1*inch, y_position, "NOMBRE")
+        p.drawString(4*inch, y_position, "N° PRODUCTOS")
+        p.drawString(6*inch, y_position, "FECHA CREACIÓN")
         
         y_position -= line_height
-        p.line(1*inch, y_position, 7.5*inch, y_position)
-        y_position -= 0.1*inch
+        p.line(0.5*inch, y_position, 8*inch, y_position)
+        y_position -= 0.25*inch
         
         # Datos de patologías
         p.setFont("Helvetica", 9)
@@ -878,18 +879,18 @@ def imprimir_patologias(request):
                 
                 # Encabezados en nueva página
                 p.setFont("Helvetica-Bold", 10)
-                p.drawString(1*inch, y_position, "ID")
-                p.drawString(1.5*inch, y_position, "NOMBRE")
-                p.drawString(4*inch, y_position, "FECHA CREACIÓN")
+                p.drawString(1*inch, y_position, "NOMBRE")
+                p.drawString(4*inch, y_position, "N° PRODUCTOS")
+                p.drawString(6*inch, y_position, "FECHA CREACIÓN")
                 
                 y_position -= line_height
-                p.line(1*inch, y_position, 7.5*inch, y_position)
-                y_position -= 0.1*inch
+                p.line(0.5*inch, y_position, 8*inch, y_position)
+                y_position -= 0.25*inch
                 p.setFont("Helvetica", 9)
             
-            p.drawString(1*inch, y_position, str(patologia.id))
-            p.drawString(1.5*inch, y_position, patologia.nombre)
-            p.drawString(4*inch, y_position, patologia.fecha_creacion.strftime('%d/%m/%Y %H:%M'))
+            p.drawString(1*inch, y_position, patologia.nombre)
+            p.drawString(4*inch, y_position, str(patologia.num_productos))
+            p.drawString(6*inch, y_position, patologia.fecha_creacion.strftime('%d/%m/%Y %H:%M'))
             
             y_position -= line_height
         
@@ -1020,7 +1021,16 @@ def lista_ubicaciones_json(request):
 def imprimir_ubicaciones(request):
     """Generar PDF con listado de ubicaciones"""
     try:
-        ubicaciones = Ubicacion.objects.all().order_by('nombre')
+        # Subquery para contar productos por ubicación (ya que la relación es por nombre)
+        productos_por_ubicacion = Producto.objects.filter(
+            ubicacion=OuterRef('nombre')
+        ).values('ubicacion').annotate(
+            count=Count('ID_producto')
+        ).values('count')
+        
+        ubicaciones = Ubicacion.objects.annotate(
+            num_productos=Coalesce(Subquery(productos_por_ubicacion, output_field=IntegerField()), 0)
+        ).order_by('nombre')
         
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = get_pdf_content_disposition('listado_ubicaciones.pdf')
@@ -1051,13 +1061,13 @@ def imprimir_ubicaciones(request):
         
         # Encabezados de tabla
         p.setFont("Helvetica-Bold", 10)
-        p.drawString(1*inch, y_position, "ID")
-        p.drawString(1.5*inch, y_position, "NOMBRE")
-        p.drawString(4*inch, y_position, "FECHA CREACIÓN")
+        p.drawString(1*inch, y_position, "NOMBRE")
+        p.drawString(4*inch, y_position, "N° PRODUCTOS")
+        p.drawString(6*inch, y_position, "FECHA CREACIÓN")
         
         y_position -= line_height
-        p.line(1*inch, y_position, 7.5*inch, y_position)
-        y_position -= 0.1*inch
+        p.line(0.5*inch, y_position, 8*inch, y_position)
+        y_position -= 0.25*inch
         
         # Datos de ubicaciones
         p.setFont("Helvetica", 9)
@@ -1069,18 +1079,18 @@ def imprimir_ubicaciones(request):
                 
                 # Encabezados en nueva página
                 p.setFont("Helvetica-Bold", 10)
-                p.drawString(1*inch, y_position, "ID")
-                p.drawString(1.5*inch, y_position, "NOMBRE")
-                p.drawString(4*inch, y_position, "FECHA CREACIÓN")
+                p.drawString(1*inch, y_position, "NOMBRE")
+                p.drawString(4*inch, y_position, "N° PRODUCTOS")
+                p.drawString(6*inch, y_position, "FECHA CREACIÓN")
                 
                 y_position -= line_height
-                p.line(1*inch, y_position, 7.5*inch, y_position)
-                y_position -= 0.1*inch
+                p.line(0.5*inch, y_position, 8*inch, y_position)
+                y_position -= 0.25*inch
                 p.setFont("Helvetica", 9)
             
-            p.drawString(1*inch, y_position, str(ubicacion.id))
-            p.drawString(1.5*inch, y_position, ubicacion.nombre)
-            p.drawString(4*inch, y_position, ubicacion.fecha_creacion.strftime('%d/%m/%Y %H:%M'))
+            p.drawString(1*inch, y_position, ubicacion.nombre)
+            p.drawString(4*inch, y_position, str(ubicacion.num_productos))
+            p.drawString(6*inch, y_position, ubicacion.fecha_creacion.strftime('%d/%m/%Y %H:%M'))
             
             y_position -= line_height
         

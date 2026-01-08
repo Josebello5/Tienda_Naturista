@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def lista_ubicaciones_json(request):
     """Devuelve lista de ubicaciones en formato JSON"""
     from .models import Ubicacion
-    ubicaciones = Ubicacion.objects.all().order_by('nombre')
+    ubicaciones = Ubicacion.objects.all().order_by('id')
     ubicaciones_data = []
     for ubicacion in ubicaciones:
         ubicaciones_data.append({
@@ -98,7 +98,7 @@ def imprimir_ubicaciones(request):
     """Generar PDF con listado de ubicaciones"""
     from .models import Ubicacion
     try:
-        ubicaciones = Ubicacion.objects.all().order_by('nombre')
+        ubicaciones = Ubicacion.objects.all().order_by('id')
         
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename="listado_ubicaciones.pdf"'
@@ -129,7 +129,7 @@ def imprimir_ubicaciones(request):
         
         # Encabezados de tabla
         p.setFont("Helvetica-Bold", 10)
-        p.drawString(1*inch, y_position, "ID")
+        p.drawString(1*inch, y_position, "N°")
         p.drawString(1.5*inch, y_position, "NOMBRE")
         p.drawString(4*inch, y_position, "FECHA CREACIÓN")
         
@@ -147,7 +147,7 @@ def imprimir_ubicaciones(request):
                 
                 # Encabezados en nueva página
                 p.setFont("Helvetica-Bold", 10)
-                p.drawString(1*inch, y_position, "ID")
+                p.drawString(1*inch, y_position, "N°")
                 p.drawString(1.5*inch, y_position, "NOMBRE")
                 p.drawString(4*inch, y_position, "FECHA CREACIÓN")
                 

@@ -1446,3 +1446,55 @@ td {
     transform: translateY(0px);
   }
 }
+/* ===== PAGINACIÓN ===== */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 25px;
+  padding: 20px 10px;
+}
+
+.pagination-btn {
+  padding: 8px 14px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #333;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 38px;
+  text-align: center;
+}
+
+.pagination-btn:hover:not(:disabled):not(.active) {
+  background: #f5f5f5;
+  border-color: #ccc;
+}
+
+.pagination-btn.active {
+  background: #2d8a83;
+  color: white;
+  border-color: #2d8a83;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #fafafa;
+  color: #999;
+}
+
+.pagination-info {
+  padding: 8px 14px;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+
+
+
