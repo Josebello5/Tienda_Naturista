@@ -13,10 +13,13 @@ import json
 @login_required(login_url='usuarios:login')
 @never_cache
 def dashboard(request):
-    # Obtener la fecha de hoy
-    hoy = timezone.now().date()
+    # Obtener la fecha de hoy en zona horaria de Venezuela
+    import pytz
+    tz_venezuela = pytz.timezone('America/Caracas')
+    ahora_venezuela = timezone.now().astimezone(tz_venezuela)
+    hoy = ahora_venezuela.date()
     
-    # Filtrar tasas solo del día de hoy
+    # Filtrar tasas solo del día de hoy (en hora de Venezuela)
     tasas = TasaCambiaria.objects.filter(
         fecha_creacion__date=hoy
     ).order_by('-fecha_creacion')
@@ -76,8 +79,12 @@ def dashboard(request):
 
 @login_required
 def obtener_tasas_ajax(request):
-    # Filtrar tasas solo del día de hoy para la tabla
-    hoy = timezone.now().date()
+    # Filtrar tasas solo del día de hoy para la tabla (en hora de Venezuela)
+    import pytz
+    tz_venezuela = pytz.timezone('America/Caracas')
+    ahora_venezuela = timezone.now().astimezone(tz_venezuela)
+    hoy = ahora_venezuela.date()
+    
     tasas = TasaCambiaria.objects.filter(
         fecha_creacion__date=hoy
     ).order_by('-fecha_creacion')

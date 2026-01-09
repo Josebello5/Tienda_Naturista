@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
             refreshBtn.disabled = true;
         }
 
-        fetch("{% url 'dashboard:obtener_tasas' %}")
+        fetch(window.OBTENER_TASAS_URL || '/dashboard/obtener-tasas/')
             .then(response => response.json())
             .then(data => {
                 document.getElementById('tablaTasasContainer').innerHTML = data.html_tabla;

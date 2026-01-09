@@ -89,5 +89,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    // Pasar URL al JavaScript
+    window.OBTENER_TASAS_URL = "{% url 'dashboard:obtener_tasas' %}";
+</script>
 <script src="{% static 'dashboard/js/dashboard.js' %}"></script>
 {% endblock %}

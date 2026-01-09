@@ -288,12 +288,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         checkboxes.forEach(checkbox => {
             const ventaId = parseInt(checkbox.getAttribute('data-venta-id'));
-            const saldo = parseNumberVenezolano(checkbox.getAttribute('data-saldo'));
+            const saldoUsd = parseNumberVenezolano(checkbox.getAttribute('data-saldo-usd'));
 
-            if (ventaId && saldo > 0) {
+            if (ventaId && saldoUsd > 0) {
+                // Convertir USD a Bs usando tasa actual
+                const saldoBs = saldoUsd * tasaActual;
                 ventasSeleccionadas.push({
                     id: ventaId,
-                    saldo: saldo
+                    saldo: saldoBs,  // Guardar en Bs para compatibilidad
+                    saldoUsd: saldoUsd
                 });
             }
         });
@@ -741,18 +744,18 @@ document.addEventListener('DOMContentLoaded', function () {
         const filasVisibles = tableBody.querySelectorAll('tr:not([style*="display: none"]):not(.empty-row)');
 
         let totalVentasPendientes = 0;
-        let totalDeuda = 0;
+        let totalDeudaUsd = 0;
         let diasUltimaCompra = 0;
         let ventasAtrasadas = 0;
 
         filasVisibles.forEach(fila => {
             totalVentasPendientes++;
 
-            const saldo = parseNumberVenezolano(fila.getAttribute('data-saldo')) || 0;
+            const saldoUsd = parseNumberVenezolano(fila.getAttribute('data-saldo-usd')) || 0;
             const dias = parseInt(fila.getAttribute('data-dias')) || 0;
             const badgeClass = fila.getAttribute('data-badge-class');
 
-            totalDeuda += saldo;
+            totalDeudaUsd += saldoUsd;
 
             if (diasUltimaCompra === 0 || dias < diasUltimaCompra) {
                 diasUltimaCompra = dias;
@@ -763,8 +766,13 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
+        // Calcular equivalente en Bs
+        const totalDeudaBs = totalDeudaUsd * tasaActual;
+
+        // Actualizar paneles
         document.getElementById('totalVentasPendientes').textContent = totalVentasPendientes;
-        document.getElementById('totalDeudaCliente').textContent = 'Bs ' + formatNumberVenezolano(totalDeuda.toFixed(2));
+        document.getElementById('totalDeudaCliente').textContent = 'Bs ' + formatNumberVenezolano(totalDeudaBs.toFixed(2));
+        document.getElementById('totalDeudaClienteUsd').textContent = '$ ' + formatNumberVenezolano(totalDeudaUsd.toFixed(2));
         document.getElementById('diasUltimaCompra').textContent = diasUltimaCompra;
         document.getElementById('ventasAtrasadas').textContent = ventasAtrasadas;
     }

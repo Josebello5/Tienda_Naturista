@@ -149,6 +149,7 @@
       </div>
     </div>
 
+
     <!-- ===== TABLA DE VENTAS ===== -->
     <div class="table-container">
       <table id="dataTable">
@@ -157,7 +158,10 @@
             <th>ID Venta</th>
             <th>Cliente</th>
             <th>Fecha</th>
-            <th class="moneda-header">Total (<span id="totalMoneda">Bs</span>)</th>
+            <th>Total Bs</th>
+            <th>Total $</th>
+            <th>Total de la Venta</th>
+            <th>Saldo Pendiente</th>
             <th>Estado Pago</th>
             <th>Tipo Venta</th>
             <th>Método Pago</th>
@@ -182,11 +186,25 @@
               <br><small>{{ venta.Cedula.cedula }}</small>
             </td>
             <td>{{ venta.Fecha_Venta|date:"d/m/Y H:i" }}</td>
+            <td class="centered">
+              <strong>Bs {{ venta.get_total_pagado_bs|floatformat:2 }}</strong>
+            </td>
+            <td class="centered">
+              <strong>$ {{ venta.get_total_pagado_usd|floatformat:2 }}</strong>
+            </td>
             <td class="centered total">
-              <strong class="total-bs">Bs {{ venta.Total|floatformat:2 }}</strong>
-              <br><small class="total-usd">$ {{ venta.get_total_usd|floatformat:2 }}</small>
-              <!-- Mostrar total por método cuando se filtre -->
-              <br><small class="total-metodo" style="display: none; color: #3498db; font-weight: 500;"></small>
+              <strong>Bs {{ venta.get_equivalente_total_bs|floatformat:2 }}</strong>
+              <br><small style="color: #7f8c8d;">≈ $ {{ venta.get_total_usd|floatformat:2 }}</small>
+            </td>
+            <td class="centered">
+              {% if venta.Tipo_Venta == 'credito' %}
+                <span class="text-danger">$ {{ venta.Saldo_Pendiente_USD|floatformat:2 }}</span>
+                <br><small class="text-muted saldo-bs-equiv" data-saldo-usd="{{ venta.Saldo_Pendiente_USD }}">
+                  Bs <span class="calc-bs">{{ venta.Saldo_Pendiente|floatformat:2 }}</span>
+                </small>
+              {% else %}
+                <span class="text-success">—</span>
+              {% endif %}
             </td>
             <td>
               <span class="status status-{{ venta.Estado_Pago }}">
@@ -213,14 +231,6 @@
                   <i class="fas fa-eye"></i>
                 </a>
                 
-                <!-- Descargar comprobante (descarga automática) -->
-                <a href="{% url 'ventas:descargar_comprobante' venta.ID_Ventas %}" 
-                   class="btn-action btn-descargar" 
-                   title="Descargar Comprobante"
-                   download="venta_{{ venta.ID_Ventas }}.pdf">
-                  <i class="fas fa-download"></i>
-                </a>
-                
                 <!-- Devolución (solo si no está anulada) -->
                 {% if not venta.anulada %}
                 <button class="btn-action btn-devolucion" 
@@ -234,10 +244,11 @@
                 {% endif %}
               </div>
             </td>
+
           </tr>
           {% empty %}
           <tr class="empty-row">
-            <td colspan="8">
+            <td colspan="11">
               <i class="fas fa-shopping-cart"></i>
               <h3>No hay ventas registradas</h3>
               <p>Comienza registrando tu primera venta</p>
@@ -306,6 +317,8 @@
     const GENERAR_PDF_URL = "{% url 'ventas:generar_pdf_ventas' %}";
     // Pasar los clientes directamente al window object
     window.clientesData = {{ clientes_json|safe }};
+    // Pasar la tasa actual para cálculos dinámicos
+    window.TASA_ACTUAL = {{ tasa_actual.valor|default:0 }};
 </script>
 <script src="{% static 'ventas/js/menu_ventas.js' %}"></script>
 {% endblock %}

@@ -29,56 +29,53 @@ from reportlab.lib.units import mm, inch
 def menu_ventas(request):
     ventas = Venta.objects.select_related('Cedula').prefetch_related('pagos', 'detalles').all().order_by('-Fecha_Venta')
     
-    hoy = timezone.now().date()
+    # Obtener tasa actual usando zona horaria de Venezuela
+    import pytz
+    tz_venezuela = pytz.timezone('America/Caracas')
+    ahora_venezuela = timezone.now().astimezone(tz_venezuela)
+    hoy = ahora_venezuela.date()
+    
     tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy).order_by('-fecha_creacion')
     if tasas_hoy.exists():
         tasa_actual = tasas_hoy.first()
     else:
-        tasa_actual = TasaCambiaria.objects.last()
+        tasa_actual = TasaCambiaria.objects.order_by('-fecha_creacion').first()
     
     clientes = Cliente.objects.all().values('cedula', 'nombre', 'apellido')
     clientes_json = json.dumps(list(clientes), ensure_ascii=False)
     
     total_ventas = ventas.count()
     
-    # Calcular totales CORRECTAMENTE considerando productos exentos de IVA
-    total_bs = 0
-    subtotal_bs = 0
-    iva_bs = 0
+    # Calcular totales usando los valores guardados en USD
+    total_bs = Decimal('0')
+    total_usd = Decimal('0')
+    subtotal_bs = Decimal('0')
+    subtotal_usd = Decimal('0')
+    iva_bs = Decimal('0')
+    iva_usd = Decimal('0')
+    
+    # Totales de pagos separados por moneda
+    total_pagos_bs = Decimal('0')  # Pagos en bolívares (efectivo_bs, transferencia, pago_movil, etc.)
+    total_pagos_ref = Decimal('0')  # Pagos en dólares (efectivo_usd)
     
     for venta in ventas:
-        total_bs += float(venta.Total)
+        # Usar los valores guardados en la venta
+        total_bs += venta.Total
+        total_usd += venta.Total_USD
+        subtotal_bs += venta.Subtotal
+        subtotal_usd += venta.Subtotal_USD
+        iva_bs += venta.IVA
+        iva_usd += venta.IVA_USD
         
-        # Calcular subtotal e IVA para cada venta
-        detalles = venta.detalles.all()
-        subtotal_con_iva = 0
-        subtotal_sin_iva = 0
-        
-        for detalle in detalles:
-            producto = detalle.ID_lote.id_producto
-            subtotal_detalle = float(detalle.Precio_Unitario) * detalle.Cantidad
-            
-            if producto.sujeto_iva == 'si':
-                subtotal_con_iva += subtotal_detalle
-            else:
-                subtotal_sin_iva += subtotal_detalle
-        
-        subtotal_venta = subtotal_con_iva + subtotal_sin_iva
-        iva_venta = subtotal_con_iva * 0.16
-        
-        subtotal_bs += subtotal_venta
-        iva_bs += iva_venta
-    
-    if tasa_actual and tasa_actual.valor:
-        # Convertir tasa a float
-        tasa_valor = float(tasa_actual.valor) if tasa_actual.valor else 1
-        total_usd = total_bs / tasa_valor if tasa_valor > 0 else 0
-        subtotal_usd = subtotal_bs / tasa_valor if tasa_valor > 0 else 0
-        iva_usd = iva_bs / tasa_valor if tasa_valor > 0 else 0
-    else:
-        total_usd = 0
-        subtotal_usd = 0
-        iva_usd = 0
+        # Calcular totales de pagos por moneda
+        for pago in venta.pagos.all():
+            if pago.Monto > 0:  # Solo pagos positivos (no devoluciones)
+                if pago.Metodo_Pago == 'efectivo_usd':
+                    # Pagos en dólares
+                    total_pagos_ref += pago.Monto
+                else:
+                    # Pagos en bolívares
+                    total_pagos_bs += pago.Monto
     
     return render(request, 'ventas/menu_ventas.html', {
         'ventas': ventas,
@@ -91,15 +88,23 @@ def menu_ventas(request):
         'subtotal_usd': subtotal_usd,
         'iva_bs': iva_bs,
         'iva_usd': iva_usd,
+        'total_pagos_bs': total_pagos_bs,
+        'total_pagos_ref': total_pagos_ref,
     })
 
+
 def registrar_venta(request):
-    hoy = timezone.now().date()
+    # Obtener tasa actual usando zona horaria de Venezuela
+    import pytz
+    tz_venezuela = pytz.timezone('America/Caracas')
+    ahora_venezuela = timezone.now().astimezone(tz_venezuela)
+    hoy = ahora_venezuela.date()
+    
     tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy).order_by('-fecha_creacion')
     if tasas_hoy.exists():
         tasa_actual = tasas_hoy.first()
     else:
-        tasa_actual = TasaCambiaria.objects.last()
+        tasa_actual = TasaCambiaria.objects.order_by('-fecha_creacion').first()
     
     return render(request, 'ventas/registrar_venta.html', {
         'tasa_actual': tasa_actual
@@ -287,11 +292,11 @@ def procesar_venta(request):
             hoy = ahora.date()
             
             tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy).order_by('-fecha_creacion')
+            tasa_actual_obj = tasas_hoy.first() if tasas_hoy.exists() else None
             
-            if tasas_hoy.exists():
-                tasa_actual = tasas_hoy.first()
-            else:
-                tasa_actual = TasaCambiaria.objects.last()
+            # Si no hay tasa de hoy, usar la última registrada
+            if not tasa_actual_obj:
+                tasa_actual = TasaCambiaria.objects.order_by('-fecha_creacion').first()
             
             if not tasa_actual:
                 return JsonResponse({'success': False, 'error': 'No hay tasa cambiaria configurada'})
@@ -733,7 +738,7 @@ def generar_pdf_ventas(request):
         if tasas_hoy.exists():
             tasa_actual = tasas_hoy.first()
         else:
-            tasa_actual = TasaCambiaria.objects.last()
+            tasa_actual = TasaCambiaria.objects.order_by('-fecha_creacion').first()
 
         if not ventas.exists():
             response = HttpResponse(content_type='application/pdf')
@@ -895,15 +900,10 @@ def generar_pdf_ventas(request):
             fecha_venta = venta.Fecha_Venta.strftime("%d/%m/%y %H:%M")
 
             if moneda == 'usd':
-                tasa = venta.get_tasa_venta()
-                if tasa == 0:
-                    subtotal = 0
-                    iva = 0
-                    total = 0
-                else:
-                    subtotal = venta.Subtotal / tasa
-                    iva = venta.IVA / tasa
-                    total = venta.Total / tasa
+                # Usar los valores USD guardados en la venta
+                subtotal = float(venta.Subtotal_USD) if venta.Subtotal_USD else 0
+                iva = float(venta.IVA_USD) if venta.IVA_USD else 0
+                total = float(venta.Total_USD) if venta.Total_USD else 0
                 simbolo = "$"
             else:
                 subtotal = venta.Subtotal

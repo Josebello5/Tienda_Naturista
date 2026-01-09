@@ -79,29 +79,29 @@
         }
         
         .productos-table .cantidad {
-            width: 12%;
+            width: 10%;
             text-align: center;
             padding-right: 2px;
         }
         
         .productos-table .descripcion {
-            width: 45%;
+            width: 42%;
             word-wrap: break-word;
             padding-right: 3px;
         }
         
         .productos-table .precio {
-            width: 20%;
+            width: 24%;
             text-align: right;
-            padding-right: 5px; /* Espacio entre precio y total */
+            padding-right: 8px; /* Más espacio entre precio y total */
             font-family: 'Courier New', monospace;
             white-space: nowrap;
         }
         
         .productos-table .total {
-            width: 23%;
+            width: 24%;
             text-align: right;
-            padding-left: 2px;
+            padding-left: 0px;
             font-family: 'Courier New', monospace;
             white-space: nowrap;
         }
@@ -231,7 +231,7 @@
                 <td class="descripcion">
                     <span class="nombre-producto">{{ datos.nombre }}</span>
                 </td>
-                <td class="precio">Bs {{ datos.precio_unitario_formatted }}</td>
+                <td class="precio">Bs {{ datos.precio_sin_iva_formatted }}</td>
                 <td class="total">Bs {{ datos.subtotal_formatted }}</td>
             </tr>
             {% endfor %}
@@ -260,30 +260,94 @@
             <span>Saldo Pendiente:</span>
             <span>Bs {{ saldo_formatted }}</span>
         </div>
+        <div class="total-row" style="font-size: 9px; color: #666;">
+            <span>Equivalente en $:</span>
+            <span>$ {{ venta.Saldo_Pendiente_USD|floatformat:2 }}</span>
+        </div>
+        
+        {% if abonos_detallados %}
+        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #000;">
+            <div style="text-align: center; font-weight: bold; font-size: 10px; margin-bottom: 8px;">
+                HISTORIAL DE ABONOS
+            </div>
+            {% for abono in abonos_detallados %}
+            <div style="margin-bottom: 10px; font-size: 8px; padding: 5px; background: #f5f5f5;">
+                <div style="font-weight: bold; margin-bottom: 3px;">
+                    Abono #{{ abono.id }} - {{ abono.fecha }}
+                </div>
+                <div style="margin-left: 5px;">
+                    <div>Método: {{ abono.metodo }}</div>
+                    {% if abono.comprobante %}
+                    <div>Comprobante: {{ abono.comprobante }}</div>
+                    {% endif %}
+                    <div style="margin-top: 3px; padding-top: 3px; border-top: 1px dotted #ccc;">
+                        <strong>Monto pagado:</strong> Bs {{ abono.monto_bs_formatted }}
+                    </div>
+                    <div>Tasa del pago: {{ abono.tasa_abono_formatted }} Bs/$</div>
+                    <div>Equivalente: $ {{ abono.monto_usd_formatted }}</div>
+                    {% if abono.tasa_abono != abono.tasa_venta %}
+                    <div style="font-size: 7px; color: #666; margin-top: 2px;">
+                        ⚠️ Tasa venta: {{ abono.tasa_venta }} Bs/$ (diferencia por fluctuación)
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
         {% endif %}
     </div>
     
     {% if pagos_positivos %}
     <div class="pagos-section">
         <div class="info-row" style="font-weight: bold; margin-bottom: 4px;">
-            <span>PAGOS RECIBIDOS</span>
+            <span>DESGLOSE DE PAGO</span>
         </div>
-        {% for pago in pagos_positivos %}
-        <div class="pago-item">
-            <div class="info-row">
-                <span>{{ pago.get_Metodo_Pago_display }}:</span>
-                <span>{{ pago.Monto_formatted }}</span>
+        
+        {% if total_pagado_bs > 0 %}
+        <div class="info-row">
+            <span>• Total pagado en Bs:</span>
+            <span>{{ total_pagado_bs_formatted }} Bs</span>
+        </div>
+        {% endif %}
+        
+        {% if total_pagado_usd > 0 %}
+        <div class="info-row">
+            <span>• Total pagado en $:</span>
+            <span>{{ total_pagado_usd_formatted }}$</span>
+        </div>
+        {% endif %}
+        
+        <div class="info-row" style="font-weight: bold; margin-top: 4px; border-top: 1px dashed #000; padding-top: 4px;">
+            <span>• Equivalente total en Bs:</span>
+            <span>{{ equivalente_total_bs_formatted }} Bs</span>
+        </div>
+        
+        {% if total_pagado_bs > 0 and total_pagado_usd > 0 %}
+        <div class="iva-detalle" style="margin-top: 2px; text-align: right;">
+            ({{ total_pagado_bs_formatted }} + [{{ total_pagado_usd_formatted }}$ × {{ tasa_venta|floatformat:2 }}])
+        </div>
+        {% endif %}
+        
+        <div style="margin-top: 8px; border-top: 1px dashed #000; padding-top: 4px;">
+            <div class="info-row" style="font-weight: bold; margin-bottom: 4px;">
+                <span>DETALLE DE PAGOS</span>
             </div>
-            {% if pago.Metodo_Pago == 'efectivo_usd' %}
-            <div class="iva-detalle">Equivalente: {{ pago.Monto_Bs_formatted }}</div>
-            {% endif %}
-            {% if pago.Comprobante and pago.Comprobante != 'N/A' %}
-            <div class="iva-detalle">Comprobante: {{ pago.Comprobante }}</div>
-            {% endif %}
+            {% for pago in pagos_positivos %}
+            <div class="pago-item">
+                <div class="info-row">
+                    <span>{{ pago.get_Metodo_Pago_display }}:</span>
+                    <span>{{ pago.Monto_formatted }}</span>
+                </div>
+                {% if pago.Comprobante and pago.Comprobante != 'N/A' %}
+                <div class="iva-detalle">Comprobante: {{ pago.Comprobante }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
     {% endif %}
+
     
     {% if cambio_bs > 0 %}
     <div class="cambio-section">

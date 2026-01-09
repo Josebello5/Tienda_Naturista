@@ -27,11 +27,12 @@
       <i class="fas fa-money-bill-wave"></i>
     </div>
     <div class="info-total">
-      <h3 id="totalDeudaCliente">Bs {{ deuda_total|floatformat:2 }}</h3>
-      <p id="totalDeudaClienteUsd" style="display: none;">$ {{ deuda_usd|floatformat:2 }}</p>
+      <h3 id="totalDeudaCliente">Bs {{ deuda_total_bs|floatformat:2 }}</h3>
+      <p id="totalDeudaClienteUsd">$ {{ deuda_total_usd|floatformat:2 }}</p>
       <span>Deuda Total</span>
     </div>
   </div>
+
 
   <div class="tarjeta-total">
     <div class="icono-total">
@@ -146,6 +147,7 @@
             </th>
             <th>ID Venta</th>
             <th>Fecha Venta</th>
+            <th>Tasa</th>
             <th>Total Venta</th>
             <th>Abono Inicial</th>
             <th>Saldo Pendiente</th>
@@ -158,14 +160,19 @@
           {% for venta in ventas_pendientes %}
           <tr data-venta-id="{{ venta.ID_Ventas }}" data-fecha-venta="{{ venta.Fecha_Venta|date:'Y-m-d H:i' }}"
             data-estado-pago="{{ venta.Estado_Pago }}" data-dias="{{ venta.dias_transcurridos }}"
-            data-saldo="{{ venta.Saldo_Pendiente|floatformat:2 }}" data-total="{{ venta.Total|floatformat:2 }}"
+            data-saldo-usd="{{ venta.Saldo_Pendiente_USD|floatformat:2 }}" 
+            data-saldo-bs="{{ venta.Saldo_Pendiente|floatformat:2 }}" 
+            data-total="{{ venta.Total|floatformat:2 }}"
             data-abono-inicial="{{ venta.Abono_Inicial|floatformat:2 }}" data-badge-class="{{ venta.badge_class }}">
             <td class="text-center">
               <input type="checkbox" class="venta-checkbox" data-venta-id="{{ venta.ID_Ventas }}"
-                data-saldo="{{ venta.Saldo_Pendiente|floatformat:2 }}">
+                data-saldo-usd="{{ venta.Saldo_Pendiente_USD|floatformat:2 }}">
             </td>
             <td>#{{ venta.ID_Ventas }}</td>
             <td>{{ venta.Fecha_Venta|date:"d/m/Y" }}</td>
+            <td class="text-center">
+              <span class="badge badge-info">{{ venta.Tasa_Venta|floatformat:2 }} Bs/$</span>
+            </td>
             <td class="text-right">
               <strong>Bs {{ venta.Total|floatformat:2 }}</strong>
             </td>
@@ -173,7 +180,13 @@
               <span class="text-success">Bs {{ venta.Abono_Inicial|floatformat:2 }}</span>
             </td>
             <td class="text-right">
-              <span class="text-danger saldo-pendiente">Bs {{ venta.Saldo_Pendiente|floatformat:2 }}</span>
+              <span class="text-danger saldo-pendiente">
+                $ {{ venta.Saldo_Pendiente_USD|floatformat:2 }}
+              </span>
+              <br>
+              <small class="text-muted saldo-bs-equiv" data-saldo-usd="{{ venta.Saldo_Pendiente_USD|floatformat:2 }}">
+                Bs {% widthratio venta.Saldo_Pendiente_USD 1 tasa_actual.valor %}
+              </small>
             </td>
             <td class="text-center">
               <span class="badge-dias {{ venta.badge_class }}">
@@ -195,9 +208,10 @@
               </div>
             </td>
           </tr>
+
           {% empty %}
           <tr class="empty-row">
-            <td colspan="9">
+            <td colspan="10">
               <i class="fas fa-check-circle"></i>
               <h3>¡No hay ventas pendientes!</h3>
               <p>Este cliente está al día con sus pagos</p>

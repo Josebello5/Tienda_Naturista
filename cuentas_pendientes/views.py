@@ -40,9 +40,9 @@ def menu_cuentas_pendientes(request):
         ).select_related('Cedula').prefetch_related('pagos', 'detalles')
         
         if ventas_cliente.exists():
-            # Calcular totales
-            deuda_total = ventas_cliente.aggregate(
-                total=Sum('Saldo_Pendiente')
+            # Calcular totales en USD (valor real de la deuda)
+            deuda_total_usd = ventas_cliente.aggregate(
+                total=Sum('Saldo_Pendiente_USD')
             )['total'] or Decimal('0')
             
             # Calcular días transcurridos desde la venta más antigua
@@ -60,7 +60,7 @@ def menu_cuentas_pendientes(request):
             
             clientes_deuda_detallada.append({
                 'cliente': cliente,
-                'deuda_total': deuda_total,
+                'deuda_total_usd': deuda_total_usd,
                 'ventas_pendientes': ventas_cliente.count(),
                 'dias_transcurridos': dias_transcurridos,
                 'badge_class': badge_class,
@@ -68,20 +68,25 @@ def menu_cuentas_pendientes(request):
             })
     
     # Ordenar por deuda total (descendente)
-    clientes_deuda_detallada.sort(key=lambda x: x['deuda_total'], reverse=True)
+    clientes_deuda_detallada.sort(key=lambda x: x['deuda_total_usd'], reverse=True)
     
     # Estadísticas
     total_cuentas = sum(item['ventas_pendientes'] for item in clientes_deuda_detallada)
-    total_saldo_pendiente = sum(item['deuda_total'] for item in clientes_deuda_detallada)
+    total_saldo_pendiente_usd = sum(item['deuda_total_usd'] for item in clientes_deuda_detallada)
     
-    # Calcular total en USD según tasa actual
-    tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy.date()).order_by('-fecha_creacion')
-    tasa_actual = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.last()
+    # Obtener tasa actual para mostrar equivalente en Bs (usando zona horaria de Venezuela)
+    import pytz
+    tz_venezuela = pytz.timezone('America/Caracas')
+    ahora_venezuela = timezone.now().astimezone(tz_venezuela)
+    hoy_venezuela = ahora_venezuela.date()
+    
+    tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy_venezuela).order_by('-fecha_creacion')
+    tasa_actual = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.order_by('-fecha_creacion').first()
     
     if tasa_actual and tasa_actual.valor:
-        total_usd = total_saldo_pendiente / Decimal(str(tasa_actual.valor))
+        total_saldo_pendiente_bs = total_saldo_pendiente_usd * tasa_actual.valor
     else:
-        total_usd = Decimal('0')
+        total_saldo_pendiente_bs = Decimal('0')
     
     # Top 5 clientes con mayor deuda
     clientes_top_5 = clientes_deuda_detallada[:5]
@@ -96,8 +101,8 @@ def menu_cuentas_pendientes(request):
     context = {
         'clientes_deuda_detallada': clientes_deuda_detallada,
         'total_cuentas': total_cuentas,
-        'total_saldo_pendiente': total_saldo_pendiente,
-        'total_usd': total_usd,
+        'total_saldo_pendiente_usd': total_saldo_pendiente_usd,
+        'total_saldo_pendiente_bs': total_saldo_pendiente_bs,
         'clientes_top_5': clientes_top_5,
         'abonos_recientes': abonos_recientes,
         'tasa_actual': tasa_actual,
@@ -211,26 +216,26 @@ def gestionar_abono_cliente(request, cliente_cedula):
         if venta.dias_transcurridos < dias_ultima_compra or dias_ultima_compra == 0:
             dias_ultima_compra = venta.dias_transcurridos
     
-    # Calcular deuda total del cliente
-    deuda_total = ventas_pendientes.aggregate(
-        total=Sum('Saldo_Pendiente')
+    # Calcular deuda total del cliente en USD
+    deuda_total_usd = ventas_pendientes.aggregate(
+        total=Sum('Saldo_Pendiente_USD')
     )['total'] or Decimal('0')
     
     # Obtener tasa cambiaria actual
     tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy.date()).order_by('-fecha_creacion')
-    tasa_actual = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.last()
+    tasa_actual = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.order_by('-fecha_creacion').first()
     
-    # Calcular deuda en USD
+    # Calcular deuda en Bs (solo para referencia, usando tasa actual)
     if tasa_actual and tasa_actual.valor:
-        deuda_usd = deuda_total / Decimal(str(tasa_actual.valor))
+        deuda_total_bs = deuda_total_usd * tasa_actual.valor
     else:
-        deuda_usd = Decimal('0')
+        deuda_total_bs = Decimal('0')
     
     context = {
         'cliente': cliente,
         'ventas_pendientes': ventas_pendientes,
-        'deuda_total': deuda_total,
-        'deuda_usd': deuda_usd,
+        'deuda_total_usd': deuda_total_usd,
+        'deuda_total_bs': deuda_total_bs,
         'tasa_actual': tasa_actual,
         'hoy': hoy,
         'total_abono_inicial': total_abono_inicial,
@@ -251,7 +256,7 @@ def registrar_abono(request, venta_id=None):
     # Obtener tasa cambiaria actual
     hoy = timezone.now().date()
     tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy).order_by('-fecha_creacion')
-    tasa_actual = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.last()
+    tasa_actual = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.order_by('-fecha_creacion').first()
     
     # Historial de abonos si es venta específica
     historial_abonos = []
@@ -294,8 +299,8 @@ def procesar_abono(request):
             if venta.Tipo_Venta != 'credito':
                 return JsonResponse({'success': False, 'error': 'La venta no es a crédito'})
             
-            # Validar que tenga saldo pendiente
-            if venta.Saldo_Pendiente <= Decimal('0'):
+            # Validar que tenga saldo pendiente en USD
+            if venta.Saldo_Pendiente_USD <= Decimal('0.01'):
                 return JsonResponse({'success': False, 'error': 'La venta ya está pagada completamente'})
             
             # Formatear monto
@@ -323,28 +328,31 @@ def procesar_abono(request):
             if monto_abono <= Decimal('0'):
                 return JsonResponse({'success': False, 'error': 'El monto del abono debe ser mayor a cero'})
             
-            # Validar que el abono no exceda el saldo pendiente
-            saldo_pendiente = venta.Saldo_Pendiente
+            # Obtener tasa actual del día del abono
+            hoy = timezone.now().date()
+            tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy).order_by('-fecha_creacion')
+            tasa_actual = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.order_by('-fecha_creacion').first()
             
+            if not tasa_actual:
+                return JsonResponse({'success': False, 'error': 'No hay tasa cambiaria configurada'})
+            
+            # Calcular montos según método de pago
             if metodo_pago == 'efectivo_usd':
-                # Obtener tasa actual
-                hoy = timezone.now().date()
-                tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy).order_by('-fecha_creacion')
-                tasa_actual = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.last()
-                
-                if not tasa_actual:
-                    return JsonResponse({'success': False, 'error': 'No hay tasa cambiaria configurada'})
-                
+                # Pago en USD
+                monto_abono_usd = monto_abono
                 monto_abono_bs = monto_abono * tasa_actual.valor
                 tasa_cambio = tasa_actual.valor
             else:
+                # Pago en Bs - convertir a USD usando tasa actual
                 monto_abono_bs = monto_abono
+                monto_abono_usd = monto_abono / tasa_actual.valor
                 tasa_cambio = None
             
-            if monto_abono_bs > saldo_pendiente:
+            # Validar que el abono no exceda el saldo pendiente en USD
+            if monto_abono_usd > venta.Saldo_Pendiente_USD:
                 return JsonResponse({
                     'success': False, 
-                    'error': f'El abono (Bs {monto_abono_bs:.2f}) excede el saldo pendiente (Bs {saldo_pendiente:.2f})'
+                    'error': f'El abono (${monto_abono_usd:.2f}) excede el saldo pendiente (${venta.Saldo_Pendiente_USD:.2f})'
                 })
             
             # Registrar el abono
@@ -357,22 +365,23 @@ def procesar_abono(request):
                 Monto_Abono_Bs=monto_abono_bs,
                 Comprobante=comprobante,
                 Observaciones=observaciones,
-                Saldo_Anterior=saldo_pendiente,
-                Saldo_Despues=saldo_pendiente - monto_abono_bs,
+                Saldo_Anterior=venta.Saldo_Pendiente,
+                Saldo_Despues=venta.Saldo_Pendiente - monto_abono_bs,
                 Registrado_Por=request.user.username if request.user.is_authenticated else 'Sistema'
             )
             
             # Refrescar la venta para obtener el estado actualizado
             venta.refresh_from_db()
             
-            mensaje = f'Abono de Bs {monto_abono_bs:.2f} registrado exitosamente'
-            if venta.Saldo_Pendiente <= Decimal('0'):
+            mensaje = f'Abono de ${monto_abono_usd:.2f} (Bs {monto_abono_bs:.2f}) registrado exitosamente'
+            if venta.Saldo_Pendiente_USD <= Decimal('0.01'):
                 mensaje += '. ¡Venta pagada completamente!'
             
             return JsonResponse({
                 'success': True,
                 'abono_id': abono.ID_Abono,
-                'nuevo_saldo': str(venta.Saldo_Pendiente),
+                'nuevo_saldo_usd': str(venta.Saldo_Pendiente_USD),
+                'nuevo_saldo_bs': str(venta.Saldo_Pendiente),
                 'estado_venta': venta.get_Estado_Pago_display(),
                 'estado_venta_codigo': venta.Estado_Pago,
                 'mensaje': mensaje
@@ -402,7 +411,7 @@ def procesar_pago_multiple(request):
             # Obtener tasa cambiaria actual
             hoy = timezone.now().date()
             tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy).order_by('-fecha_creacion')
-            tasa_actual_obj = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.last()
+            tasa_actual_obj = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.order_by('-fecha_creacion').first()
             
             if not tasa_actual_obj:
                 return JsonResponse({'success': False, 'error': 'No hay tasa cambiaria configurada'})
@@ -434,11 +443,11 @@ def procesar_pago_multiple(request):
             cliente_id = cliente_ids[0]
             cliente = Cliente.objects.get(id=cliente_id)
             
-            # Calcular total a pagar
-            total_a_pagar = ventas.aggregate(total=Sum('Saldo_Pendiente'))['total'] or Decimal('0')
+            # Calcular total a pagar EN USD (no en Bs, para evitar problemas con fluctuación de tasa)
+            total_a_pagar_usd = ventas.aggregate(total=Sum('Saldo_Pendiente_USD'))['total'] or Decimal('0')
             
-            # Calcular total pagado desde los métodos de pago
-            total_pagado = Decimal('0')
+            # Calcular total pagado desde los métodos de pago EN USD
+            total_pagado_usd = Decimal('0')
             pagos_por_venta = {}
             
             # Inicializar diccionario para cada venta
@@ -449,57 +458,67 @@ def procesar_pago_multiple(request):
             for metodo_pago in metodos_pago:
                 monto = Decimal(str(metodo_pago['monto']))
                 
-                # Calcular monto en BS
+                # Calcular monto en USD
                 if metodo_pago['metodo'] == 'efectivo_usd':
-                    # Usar la tasa proporcionada o la actual
+                    # Ya está en USD
+                    monto_usd = monto
+                    # Usar la tasa proporcionada o la actual para calcular Bs
                     if metodo_pago.get('tasa_cambio'):
                         tasa_cambio = Decimal(str(metodo_pago['tasa_cambio']))
                     else:
                         tasa_cambio = tasa_actual_valor
                     monto_bs = monto * tasa_cambio
                 else:
+                    # Convertir Bs a USD usando tasa actual
+                    monto_usd = monto / tasa_actual_valor
                     monto_bs = monto
-                    tasa_cambio = None
+                    tasa_cambio = tasa_actual_valor
                 
-                total_pagado += monto_bs
+                total_pagado_usd += monto_usd
                 
                 # Distribuir este pago entre las ventas pendientes
-                monto_restante = monto_bs
+                monto_restante_usd = monto_usd
                 
-                # Ordenar ventas por saldo pendiente (de mayor a menor)
-                ventas_ordenadas = sorted(ventas, key=lambda v: v.Saldo_Pendiente, reverse=True)
+                # Ordenar ventas por saldo pendiente USD (de mayor a menor)
+                ventas_ordenadas = sorted(ventas, key=lambda v: v.Saldo_Pendiente_USD, reverse=True)
                 
                 for venta in ventas_ordenadas:
-                    if venta.Saldo_Pendiente > Decimal('0') and monto_restante > Decimal('0'):
-                        # Cuánto asignar a esta venta
-                        asignar = min(venta.Saldo_Pendiente, monto_restante)
+                    if venta.Saldo_Pendiente_USD > Decimal('0') and monto_restante_usd > Decimal('0'):
+                        # Cuánto asignar a esta venta (en USD)
+                        asignar_usd = min(venta.Saldo_Pendiente_USD, monto_restante_usd)
                         
-                        if asignar > Decimal('0'):
+                        if asignar_usd > Decimal('0'):
+                            # Calcular monto en Bs usando la tasa de la venta
+                            asignar_bs = asignar_usd * Decimal(str(venta.Tasa_Venta))
+                            
                             # Calcular monto original según método
                             if metodo_pago['metodo'] == 'efectivo_usd':
-                                monto_original = asignar / tasa_cambio
+                                monto_original = asignar_usd
                             else:
-                                monto_original = asignar
+                                monto_original = asignar_bs
                             
                             pagos_por_venta[str(venta.ID_Ventas)].append({
                                 'metodo': metodo_pago['metodo'],
                                 'monto': monto_original,
-                                'tasa_cambio': tasa_cambio if metodo_pago['metodo'] == 'efectivo_usd' else None,
+                                'tasa_cambio': tasa_cambio,
                                 'comprobante': metodo_pago.get('comprobante', ''),
-                                'monto_bs': asignar
+                                'monto_bs': asignar_bs,
+                                'monto_usd': asignar_usd
                             })
                             
-                            monto_restante -= asignar
+                            monto_restante_usd -= asignar_usd
                     
-                    if monto_restante <= Decimal('0'):
+                    if monto_restante_usd <= Decimal('0'):
                         break
             
-            # Validar que el pago cubra el total (con tolerancia de 0.05)
-            diferencia = abs(total_a_pagar - total_pagado)
-            if diferencia > Decimal('0.05'):
+            # Validar que el pago cubra el total EN USD (con tolerancia de 0.01 USD)
+            diferencia_usd = abs(total_a_pagar_usd - total_pagado_usd)
+            if diferencia_usd > Decimal('0.01'):
+                # Mostrar también en Bs para referencia
+                diferencia_bs = diferencia_usd * tasa_actual_valor
                 return JsonResponse({
                     'success': False, 
-                    'error': f'El pago (Bs {total_pagado:.2f}) no coincide con el total a pagar (Bs {total_a_pagar:.2f}). Diferencia: Bs {diferencia:.2f}'
+                    'error': f'El pago ($ {total_pagado_usd:.2f} ≈ Bs {total_pagado_usd * tasa_actual_valor:.2f}) no coincide con el total a pagar ($ {total_a_pagar_usd:.2f} ≈ Bs {total_a_pagar_usd * tasa_actual_valor:.2f}). Diferencia: $ {diferencia_usd:.2f} (≈ Bs {diferencia_bs:.2f})'
                 })
             
             # Registrar los abonos y actualizar las ventas
@@ -545,12 +564,16 @@ def procesar_pago_multiple(request):
                         ventas_actualizadas.append(venta.ID_Ventas)
             
             # Verificar que todas las ventas seleccionadas se hayan procesado
-            ventas_procesadas = len([v for v in ventas if v.Saldo_Pendiente <= Decimal('0')])
+            ventas_procesadas = len([v for v in ventas if v.Saldo_Pendiente_USD <= Decimal('0')])
+            
+            # Calcular total en Bs para el mensaje
+            total_a_pagar_bs = total_a_pagar_usd * tasa_actual_valor
+            total_pagado_bs = total_pagado_usd * tasa_actual_valor
             
             return JsonResponse({
                 'success': True,
-                'message': f'✅ Pago procesado exitosamente:<br>• Ventas: {len(ventas_ids)}<br>• Total: Bs {total_a_pagar:.2f}<br>• Abonos registrados: {len(abonos_registrados)}<br>• Ventas pagadas: {ventas_procesadas}',
-                'total_pagado': str(total_pagado),
+                'message': f'✅ Pago procesado exitosamente:<br>• Ventas: {len(ventas_ids)}<br>• Total: $ {total_a_pagar_usd:.2f} (≈ Bs {total_a_pagar_bs:.2f})<br>• Abonos registrados: {len(abonos_registrados)}<br>• Ventas pagadas: {ventas_procesadas}',
+                'total_pagado': str(total_pagado_usd),
                 'abonos_registrados': len(abonos_registrados),
                 'ventas_pagadas': ventas_procesadas,
                 'cliente_cedula': cliente.cedula,

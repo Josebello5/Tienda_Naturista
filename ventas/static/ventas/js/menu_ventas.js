@@ -1042,4 +1042,35 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     inicializar();
+    
+    // ===== ACTUALIZACIÓN DINÁMICA DE SALDO PENDIENTE EN BS =====
+    
+    /**
+     * Actualiza los saldos pendientes en Bs usando la tasa actual
+     */
+    function actualizarSaldosPendientesBs() {
+        const tasaActual = window.TASA_ACTUAL || 0;
+        
+        if (tasaActual === 0) {
+            console.warn('Tasa actual no disponible');
+            return;
+        }
+        
+        // Buscar todas las celdas de saldo pendiente
+        document.querySelectorAll('.saldo-bs-equiv').forEach(elem => {
+            const saldoUsd = parseFloat(elem.dataset.saldoUsd);
+            
+            if (!isNaN(saldoUsd) && saldoUsd > 0) {
+                const saldoBs = saldoUsd * tasaActual;
+                const spanCalc = elem.querySelector('.calc-bs');
+                
+                if (spanCalc) {
+                    spanCalc.textContent = formatearNumeroVenezolano(saldoBs);
+                }
+            }
+        });
+    }
+    
+    // Ejecutar al cargar la página
+    actualizarSaldosPendientesBs();
 });
