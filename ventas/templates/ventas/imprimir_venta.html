@@ -1,3 +1,5 @@
+{% load static %}
+{% load currency_tags %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -446,8 +448,8 @@
                         {{ detalle.ID_lote.id_producto.nombre_pro|truncatechars:30 }}
                     </td>
                     <td class="product-quantity">{{ detalle.Cantidad }}</td>
-                    <td class="product-price">Bs {{ detalle.Precio_Unitario|floatformat:2 }}</td>
-                    <td class="product-total">Bs {{ detalle.Subtotal_Detalle|floatformat:2 }}</td>
+                    <td class="product-price">Bs {{ detalle.Precio_Unitario|formato_venezolano }}</td>
+                    <td class="product-total">Bs {{ detalle.Subtotal_Detalle|formato_venezolano }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -457,15 +459,15 @@
         <div class="totals-section">
             <div class="total-row">
                 <span class="total-label">Subtotal:</span>
-                <span class="total-value">Bs {{ venta.Subtotal|floatformat:2 }}</span>
+                <span class="total-value">Bs {{ venta.Subtotal|formato_venezolano }}</span>
             </div>
             <div class="total-row">
                 <span class="total-label">IVA (16%):</span>
-                <span class="total-value">Bs {{ venta.IVA|floatformat:2 }}</span>
+                <span class="total-value">Bs {{ venta.IVA|formato_venezolano }}</span>
             </div>
             <div class="total-row grand-total">
                 <span class="total-label">TOTAL:</span>
-                <span class="total-value">Bs {{ venta.Total|floatformat:2 }}</span>
+                <span class="total-value">Bs {{ venta.Total|formato_venezolano }}</span>
             </div>
         </div>
 
@@ -475,10 +477,10 @@
             <h3>INFORMACIÓN DE CRÉDITO</h3>
             <div class="credit-details">
                 <div>
-                    <span class="info-label">Abono:</span> Bs {{ venta.Abono_Inicial|floatformat:2 }}
+                    <span class="info-label">Abono:</span> Bs {{ venta.Abono_Inicial|formato_venezolano }}
                 </div>
                 <div>
-                    <span class="info-label">Saldo:</span> Bs {{ venta.Saldo_Pendiente|floatformat:2 }}
+                    <span class="info-label">Saldo:</span> Bs {{ venta.Saldo_Pendiente|formato_venezolano }}
                 </div>
             </div>
         </div>
@@ -494,10 +496,10 @@
                     <span class="payment-method">{{ pago.get_Metodo_Pago_display }}:</span>
                     <span>
                         {% if pago.Metodo_Pago == 'efectivo_usd' %}
-                            ${{ pago.Monto|floatformat:2 }}
-                            (Bs {{ pago.Monto_Bs|floatformat:2 }})
+                            ${{ pago.Monto|formato_venezolano }}
+                            (Bs {{ pago.Monto_Bs|formato_venezolano }})
                         {% else %}
-                            Bs {{ pago.Monto|floatformat:2 }}
+                            Bs {{ pago.Monto|formato_venezolano }}
                         {% endif %}
                         {% if pago.Comprobante and pago.Comprobante != 'N/A' %}
                             - Ref: {{ pago.Comprobante|truncatechars:10 }}
@@ -507,7 +509,7 @@
                 {% endif %}
             {% endfor %}
             <div class="payment-total">
-                Total Pagado: Bs {{ venta.Abono_Inicial|floatformat:2 }}
+                Total Pagado: Bs {{ venta.Abono_Inicial|formato_venezolano }}
             </div>
         </div>
         {% endif %}
@@ -522,7 +524,7 @@
             {% endfor %}
             {% if cambio_total < 0 %}
             <div class="change-section">
-                <strong>CAMBIO ENTREGADO:</strong> Bs {{ cambio_total|abs|floatformat:2 }}
+                <strong>CAMBIO ENTREGADO:</strong> Bs {{ cambio_total|abs|formato_venezolano }}
             </div>
             {% endif %}
         {% endwith %}

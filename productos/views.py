@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.utils.formats import number_format
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import ProductoForm
@@ -98,7 +99,7 @@ def menu_productos(request):
                 'patologia': producto.patologia.nombre if producto.patologia else '',
                 'ubicacion': producto.ubicacion or '',
                 'sujeto_iva': 'Sí' if producto.sujeto_iva == 'si' else 'No',
-                'precio': f"${producto.precio_venta}",
+                'precio': f"${number_format(producto.precio_venta, decimal_pos=2, force_grouping=True)}",
                 'stock_minimo': producto.stock_minimo,
                 'stock_actual': producto.stock_actual or 0,
                 'estado': producto.get_estado_display(),
@@ -178,7 +179,7 @@ def actualizar_precio_producto(request, id_producto):
         
         return JsonResponse({
             'success': True, 
-            'precio_venta': str(producto.precio_venta)
+            'precio_venta': number_format(producto.precio_venta, decimal_pos=2, force_grouping=True)
         })
         
     except Producto.DoesNotExist:

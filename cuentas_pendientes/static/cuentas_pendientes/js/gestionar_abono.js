@@ -556,101 +556,147 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>
         `;
 
-        // CORRECCIÓN: Usar la URL correcta
         fetch(getAppUrl(`/api-historial-abonos-cliente/${clienteCedula}/`))
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    mostrarHistorialAbonos(data.abonos);
-                    mostrarMensaje(`✅ Historial cargado: ${data.abonos.length} abonos`, 'success');
+                    // Manejar tanto el formato agrupado como el plano por si acaso
+                    if (data.abonos_agrupados) {
+                        mostrarHistorialAbonos(data.abonos_agrupados);
+                    } else if (data.abonos) {
+                        // Si viene plano, agruparlo aquí o mostrar aviso
+                        console.warn('API devolvió abonos no agrupados');
+                        mostrarHistorialAbonosPlano(data.abonos);
+                    } else {
+                        mostrarHistorialAbonos([]);
+                    }
                 } else {
                     mostrarHistorialAbonos([]);
-                    mostrarMensaje(`⚠️ ${data.error || 'Error al cargar el historial'}`, 'warning');
+                    console.error('API Error:', data.error);
                 }
             })
             .catch(error => {
                 console.error('Error cargando historial:', error);
                 mostrarHistorialAbonos([]);
-                mostrarMensaje('❌ Error al cargar el historial. Intente nuevamente.', 'error');
             });
     }
 
-    function mostrarHistorialAbonos(abonos) {
+    function mostrarHistorialAbonos(grupos) {
         listaHistorialAbonos.innerHTML = '';
 
-        if (abonos.length === 0) {
+        if (!grupos || grupos.length === 0) {
             listaHistorialAbonos.innerHTML = `
                 <div class="text-center py-4 text-muted">
                     <i class="fas fa-history fa-2x mb-2"></i>
                     <p>No hay historial de abonos</p>
-                    <small>Este cliente no tiene abonos registrados</small>
                 </div>
             `;
             return;
         }
 
+        grupos.forEach(grupo => {
+            const container = document.createElement('div');
+            container.className = 'historial-grupo';
+            container.setAttribute('data-venta-id', grupo.venta_id);
+            
+            container.innerHTML = `
+                <div class="historial-header" onclick="this.nextElementSibling.classList.toggle('active'); this.querySelector('.btn-toggle-icon').classList.toggle('open')">
+                    <div class="historial-header-info">
+                        <strong>Venta #${grupo.venta_id}</strong>
+                        <br><small><i class="fas fa-calendar-alt"></i> Último: ${grupo.fecha_reciente}</small>
+                    </div>
+                    <div class="historial-header-monto">
+                        <span class="historial-sub-monto">Bs ${formatNumberVenezolano(grupo.total_bs.toFixed(2))}</span>
+                        <br><small>(${grupo.abonos.length} pago${grupo.abonos.length > 1 ? 's' : ''})</small>
+                    </div>
+                    <div class="btn-toggle-icon">
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+                <div class="historial-detalles">
+                    ${grupo.abonos.map(abono => `
+                        <div class="historial-sub-item ${abono.anulado ? 'text-muted' : ''}" data-busqueda="${abono.metodo_pago_display.toLowerCase()} ${abono.comprobante}">
+                            <div class="historial-sub-info">
+                                <strong>${abono.fecha_abono.split(' ')[1]}</strong> - ${abono.metodo_pago_display}
+                                ${abono.comprobante ? `<br><small>#${abono.comprobante}</small>` : ''}
+                                ${abono.anulado ? '<br><span class="badge badge-danger">Anulado</span>' : ''}
+                            </div>
+                            <div class="historial-sub-monto">
+                                Bs ${formatNumberVenezolano(abono.monto_abono_bs.toFixed(2))}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            listaHistorialAbonos.appendChild(container);
+        });
+    }
+
+    // Por si la API devuelve el formato viejo temporalmente (Cache)
+    function mostrarHistorialAbonosPlano(abonos) {
+        listaHistorialAbonos.innerHTML = `
+            <div class="alert alert-warning mb-3">
+                <i class="fas fa-exclamation-triangle"></i> Formato de historial antiguo. Por favor recargue la página (Ctrl+F5).
+            </div>
+        `;
         abonos.forEach(abono => {
             const item = document.createElement('div');
             item.className = 'historial-item';
-
-            const metodoDisplay = abono.metodo_pago_display ||
-                (abono.metodo_pago === 'efectivo_bs' ? 'Efectivo Bs' :
-                    abono.metodo_pago === 'efectivo_usd' ? 'Efectivo $' :
-                        abono.metodo_pago === 'transferencia' ? 'Transferencia' :
-                            abono.metodo_pago === 'pago_movil' ? 'Pago Móvil' :
-                                abono.metodo_pago === 'tarjeta' ? 'Tarjeta' : abono.metodo_pago);
-
             item.innerHTML = `
                 <div class="historial-info">
-                    <strong>Venta #${abono.venta_id}</strong>
-                    <br>
-                    <small>${abono.fecha_abono} - ${metodoDisplay}</small>
-                    ${abono.comprobante ? `<br><small><i class="fas fa-receipt"></i> ${abono.comprobante}</small>` : ''}
-                    ${abono.observaciones ? `<br><small><i class="fas fa-sticky-note"></i> ${abono.observaciones.substring(0, 50)}${abono.observaciones.length > 50 ? '...' : ''}</small>` : ''}
+                    <strong>Venta #${abono.venta_id}</strong><br>
+                    <small>${abono.fecha_abono}</small>
                 </div>
-                <div>
-                    <span class="historial-monto">Bs ${formatNumberVenezolano(abono.monto_abono_bs.toFixed(2))}</span>
-                    <br>
-                    <span class="badge ${abono.anulado ? 'badge-danger' : 'badge-success'}">
-                        ${abono.anulado ? 'Anulado' : 'Registrado'}
-                    </span>
-                </div>
+                <div class="historial-monto">Bs ${formatNumberVenezolano(abono.monto_abono_bs.toFixed(2))}</div>
             `;
             listaHistorialAbonos.appendChild(item);
         });
     }
 
     function filtrarHistorial() {
-        const filtro = filterHistorial.value.toLowerCase();
+        const filtro = filterHistorial.value.toLowerCase().trim();
         const fecha = fechaHistorial.value;
 
-        const items = listaHistorialAbonos.querySelectorAll('.historial-item');
+        const grupos = listaHistorialAbonos.querySelectorAll('.historial-grupo');
         let visibleCount = 0;
 
-        items.forEach(item => {
-            const texto = item.textContent.toLowerCase();
-            const fechaItem = item.querySelector('small')?.textContent?.split(' ')[0] || '';
+        grupos.forEach(grupo => {
+            const ventaId = grupo.getAttribute('data-venta-id').toLowerCase();
+            const headerInfo = grupo.querySelector('.historial-header-info').textContent.toLowerCase();
+            const subItems = grupo.querySelectorAll('.historial-sub-item');
+            
+            let coincideGrupo = ventaId.includes(filtro) || headerInfo.includes(filtro);
+            let algunSubitemCoincide = false;
 
-            const coincideTexto = !filtro || texto.includes(filtro);
-            const coincideFecha = !fecha || fechaItem.includes(fecha.replace(/-/g, '/'));
+            subItems.forEach(item => {
+                const searchData = item.getAttribute('data-busqueda') || '';
+                if (searchData.includes(filtro)) {
+                    algunSubitemCoincide = true;
+                }
+            });
 
-            item.style.display = coincideTexto && coincideFecha ? '' : 'none';
-            if (coincideTexto && coincideFecha) visibleCount++;
+            if (coincideGrupo || algunSubitemCoincide) {
+                grupo.style.display = '';
+                visibleCount++;
+                // Si la coincidencia es en un subitem, desplegar el grupo
+                if (algunSubitemCoincide && filtro.length > 0) {
+                    grupo.querySelector('.historial-detalles').classList.add('active');
+                    grupo.querySelector('.btn-toggle-icon').classList.add('open');
+                }
+            } else {
+                grupo.style.display = 'none';
+            }
         });
 
-        // Mostrar mensaje si no hay resultados
-        if (visibleCount === 0 && items.length > 0) {
-            listaHistorialAbonos.innerHTML += `
-                <div class="text-center py-3 text-muted">
-                    <i class="fas fa-search"></i>
-                    <p>No se encontraron resultados</p>
-                </div>
-            `;
+        // Limpiar mensaje previo si existe
+        const msgPrevio = listaHistorialAbonos.querySelector('.no-results-msg');
+        if (msgPrevio) msgPrevio.remove();
+
+        if (visibleCount === 0 && grupos.length > 0) {
+            const div = document.createElement('div');
+            div.className = 'text-center py-3 text-muted no-results-msg';
+            div.innerHTML = `<i class="fas fa-search"></i><p>No se encontraron resultados</p>`;
+            listaHistorialAbonos.appendChild(div);
         }
     }
 
@@ -918,6 +964,26 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ===== PROCESAR PAGO =====
 
+    // Event Listeners para el modal de confirmación
+    const modalConfirmacionPago = document.getElementById('modalConfirmacionPago');
+    const btnConfirmarProcesarPago = document.getElementById('btnConfirmarProcesarPago');
+    const btnCancelarConfirmacion = document.getElementById('btnCancelarConfirmacion');
+    const btnCerrarModalConfirmacion = document.getElementById('btnCerrarModalConfirmacion');
+    const confirmTotalBs = document.getElementById('confirmTotalBs');
+    const confirmTotalUsd = document.getElementById('confirmTotalUsd');
+
+    function cerrarModalConfirmacion() {
+        modalConfirmacionPago.style.display = 'none';
+        btnProcesarPago.disabled = false;
+        btnProcesarPago.innerHTML = '<i class="fas fa-check"></i> Procesar Pago';
+    }
+
+    btnCancelarConfirmacion.addEventListener('click', cerrarModalConfirmacion);
+    btnCerrarModalConfirmacion.addEventListener('click', cerrarModalConfirmacion);
+    modalConfirmacionPago.addEventListener('click', (e) => {
+        if (e.target === modalConfirmacionPago) cerrarModalConfirmacion();
+    });
+
     function procesarPago() {
         if (ventasSeleccionadas.length === 0) {
             mostrarMensaje('❌ No hay ventas seleccionadas', 'error');
@@ -929,19 +995,22 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Validar que el pago cubra el total (con tolerancia de 0.01 Bs)
         if (restantePagar > 0.01) {
             mostrarMensaje(`❌ El pago no cubre el total a pagar. Faltan Bs ${formatNumberVenezolano(restantePagar.toFixed(2))}`, 'error');
             return;
         }
 
-        // Confirmar antes de procesar
-        const confirmMessage = `¿Está seguro de procesar el pago de ${ventasSeleccionadas.length} venta(s) por un total de Bs ${formatNumberVenezolano(totalAPagar.toFixed(2))}?`;
+        // Mostrar modal de confirmación en lugar de confirm()
+        confirmTotalBs.textContent = `Bs ${formatNumberVenezolano(totalAPagar.toFixed(2))}`;
+        confirmTotalUsd.textContent = `($ ${formatNumberVenezolano(totalAPagarUsd.toFixed(2))})`;
+        modalConfirmacionPago.style.display = 'flex';
+    }
 
-        if (!confirm(confirmMessage)) {
-            return;
-        }
-
+    // El evento real de procesar pago ahora está en el botón del modal
+    btnConfirmarProcesarPago.addEventListener('click', function() {
+        btnConfirmarProcesarPago.disabled = true;
+        btnConfirmarProcesarPago.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        
         btnProcesarPago.disabled = true;
         btnProcesarPago.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
 
@@ -955,7 +1024,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }))
         };
 
-        // CORRECCIÓN: Usar la URL correcta con getAppUrl
         fetch(getAppUrl('/procesar-pago-multiple/'), {
             method: 'POST',
             headers: {
@@ -964,38 +1032,25 @@ document.addEventListener('DOMContentLoaded', function () {
             },
             body: JSON.stringify(data)
         })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Error HTTP: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    mostrarMensaje(data.message, 'success');
-
-                    // Limpiar todo
-                    ventasSeleccionadas = [];
-                    metodosPago = [];
-                    resumenPagoContainer.style.display = 'none';
-
-                    // Recargar la página después de 3 segundos
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 3000);
-                } else {
-                    mostrarMensaje(`❌ ${data.error}`, 'error');
-                    btnProcesarPago.disabled = false;
-                    btnProcesarPago.innerHTML = '<i class="fas fa-check"></i> Procesar Pago';
-                }
-            })
-            .catch(error => {
-                console.error('Error procesando pago:', error);
-                mostrarMensaje('❌ Error al procesar el pago. Verifique su conexión.', 'error');
-                btnProcesarPago.disabled = false;
-                btnProcesarPago.innerHTML = '<i class="fas fa-check"></i> Procesar Pago';
-            });
-    }
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarMensaje('✅ Pago procesado exitosamente', 'success');
+                setTimeout(() => window.location.reload(), 2000);
+            } else {
+                mostrarMensaje(`❌ ${data.error}`, 'error');
+                cerrarModalConfirmacion();
+                btnConfirmarProcesarPago.disabled = false;
+                btnConfirmarProcesarPago.innerHTML = '<i class="fas fa-check"></i> Sí, Procesar';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarMensaje('❌ Error al procesar el pago', 'error');
+            cerrarModalConfirmacion();
+            btnConfirmarProcesarPago.disabled = false;
+        });
+    });
 
     function getCookie(name) {
         let cookieValue = null;
@@ -1127,6 +1182,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ===== INICIALIZACIÓN =====
 
+    function actualizarSaldosPendientesBs() {
+        if (tasaActual === 0) {
+            console.warn('Tasa actual no disponible');
+            return;
+        }
+        
+        // Buscar todas las celdas de saldo pendiente
+        document.querySelectorAll('.saldo-bs-equiv').forEach(elem => {
+            const saldoUsd = parseFloat(elem.dataset.saldoUsd);
+            
+            if (!isNaN(saldoUsd) && saldoUsd > 0) {
+                // Reemplazar punto decimal para cálculo
+                // El formato viene asegurado como float estándar (punto decimal) desde backend
+                const saldoUsdClean = parseFloat(saldoUsd);
+                
+                const saldoBs = saldoUsdClean * tasaActual;
+                const spanCalc = elem.querySelector('.calc-bs-dynamic');
+                
+                if (spanCalc) {
+                    spanCalc.textContent = formatNumberVenezolano(saldoBs.toFixed(2));
+                }
+            }
+        });
+    }
+
     function inicializar() {
         console.log('✅ Sistema de gestión de abonos por cliente inicializado');
         console.log('Cliente:', clienteCedula);
@@ -1142,6 +1222,7 @@ document.addEventListener('DOMContentLoaded', function () {
         inicializarSeleccionVentas();
         actualizarIndicadoresFiltro();
         actualizarResumenTotales();
+        actualizarSaldosPendientesBs(); // Calcular saldos individuales
 
         if (searchInput) searchInput.focus();
         filtrarVentas();

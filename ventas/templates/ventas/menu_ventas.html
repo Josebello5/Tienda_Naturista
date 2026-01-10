@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
+{% load currency_tags %}
 
 {% block title %}Ventas - Tienda Naturista{% endblock %}
 
@@ -27,8 +29,8 @@
       <i class="fas fa-calculator"></i>
     </div>
     <div class="info-total">
-      <h3 id="subtotalGeneralBs">Bs {{ total_bs|floatformat:2 }}</h3>
-      <p id="subtotalGeneralUsd" style="display: none;">$ {{ total_usd|floatformat:2 }}</p>
+      <h3 id="subtotalGeneralBs">Bs {{ total_bs|formato_venezolano }}</h3>
+      <p id="subtotalGeneralUsd" style="display: none;">$ {{ total_usd|formato_venezolano }}</p>
       <span>Subtotal General</span>
     </div>
   </div>
@@ -49,8 +51,8 @@
       <i class="fas fa-chart-line"></i>
     </div>
     <div class="info-total">
-      <h3 id="totalGeneralBs">Bs {{ total_bs|floatformat:2 }}</h3>
-      <p id="totalGeneralUsd" style="display: none;">$ {{ total_usd|floatformat:2 }}</p>
+      <h3 id="totalGeneralBs">Bs {{ total_bs|formato_venezolano }}</h3>
+      <p id="totalGeneralUsd" style="display: none;">$ {{ total_usd|formato_venezolano }}</p>
       <span>Total General</span>
     </div>
   </div>
@@ -176,9 +178,9 @@
               data-metodo-pago="{{ venta.get_metodo_pago_codigo }}"
               data-anulada="{{ venta.anulada|yesno:'si,no' }}"
               data-fecha-venta="{{ venta.Fecha_Venta|date:'Y-m-d H:i' }}"
-              data-tasa="{{ venta.get_tasa_venta|floatformat:2 }}"
-              data-total-bs="{{ venta.Total|floatformat:2 }}"
-              data-total-usd="{{ venta.get_total_usd|floatformat:2 }}"
+              data-tasa="{{ venta.get_tasa_venta|formato_venezolano }}"
+              data-total-bs="{{ venta.Total|formato_venezolano }}"
+              data-total-usd="{{ venta.get_total_usd|formato_venezolano }}"
               data-pagos-metodo='{{ venta.get_pagos_por_metodo_json|safe }}'>
             <td>#{{ venta.ID_Ventas }}</td>
             <td>
@@ -187,20 +189,20 @@
             </td>
             <td>{{ venta.Fecha_Venta|date:"d/m/Y H:i" }}</td>
             <td class="centered">
-              <strong>Bs {{ venta.get_total_pagado_bs|floatformat:2 }}</strong>
+              <strong>Bs {{ venta.get_total_pagado_bs|formato_venezolano }}</strong>
             </td>
             <td class="centered">
-              <strong>$ {{ venta.get_total_pagado_usd|floatformat:2 }}</strong>
+              <strong>$ {{ venta.get_total_pagado_usd|formato_venezolano }}</strong>
             </td>
             <td class="centered total">
-              <strong>Bs {{ venta.get_equivalente_total_bs|floatformat:2 }}</strong>
-              <br><small style="color: #7f8c8d;">≈ $ {{ venta.get_total_usd|floatformat:2 }}</small>
+              <strong>Bs {{ venta.get_equivalente_total_bs|formato_venezolano }}</strong>
+              <br><small style="color: #7f8c8d;">≈ $ {{ venta.get_total_usd|formato_venezolano }}</small>
             </td>
             <td class="centered">
               {% if venta.Tipo_Venta == 'credito' %}
-                <span class="text-danger">$ {{ venta.Saldo_Pendiente_USD|floatformat:2 }}</span>
-                <br><small class="text-muted saldo-bs-equiv" data-saldo-usd="{{ venta.Saldo_Pendiente_USD }}">
-                  Bs <span class="calc-bs">{{ venta.Saldo_Pendiente|floatformat:2 }}</span>
+                <span class="text-danger">$ {{ venta.Saldo_Pendiente_USD|formato_venezolano }}</span>
+                <br><small class="text-muted saldo-bs-equiv" data-saldo-usd="{{ venta.Saldo_Pendiente_USD|stringformat:'f' }}">
+                  Bs <span class="calc-bs-dynamic">--</span>
                 </small>
               {% else %}
                 <span class="text-success">—</span>
@@ -318,7 +320,37 @@
     // Pasar los clientes directamente al window object
     window.clientesData = {{ clientes_json|safe }};
     // Pasar la tasa actual para cálculos dinámicos
-    window.TASA_ACTUAL = {{ tasa_actual.valor|default:0 }};
+    window.TASA_ACTUAL = {{ tasa_actual.valor|stringformat:"f"|default:0 }};
 </script>
 <script src="{% static 'ventas/js/menu_ventas.js' %}"></script>
+<script>
+    // Script de respaldo INLINE para asegurar que el cálculo se ejecute
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log("Ejecutando script de respaldo para saldos...");
+        
+        function formatVzlaLocal(num) {
+            let p = num.toFixed(2).split(".");
+            return p[0].split("").reverse().reduce(function(acc, num, i, orig) {
+                return  num=="-" ? acc : num + (i && !(i % 3) ? "." : "") + acc;
+            }, "") + "," + p[1];
+        }
+
+        const tasa = parseFloat("{{ tasa_actual.valor|stringformat:'f'|default:'0' }}");
+        if (!tasa) return;
+
+        const celdas = document.querySelectorAll('.saldo-bs-equiv');
+        celdas.forEach(elem => {
+            const saldoUsdStr = elem.dataset.saldoUsd;
+            if (saldoUsdStr) {
+                const saldoUsd = parseFloat(saldoUsdStr);
+                const span = elem.querySelector('.calc-bs-dynamic');
+                if (span && !isNaN(saldoUsd)) {
+                    const totalBs = saldoUsd * tasa;
+                    span.textContent = formatVzlaLocal(totalBs);
+                    span.style.fontWeight = "bold"; // Para confirmar visualmente que fue este script
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}

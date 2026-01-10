@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
+{% load currency_tags %}
 
 {% block title %}Gestionar Abonos - {{ cliente.nombre }} {{ cliente.apellido }}{% endblock %}
 
@@ -27,8 +29,8 @@
       <i class="fas fa-money-bill-wave"></i>
     </div>
     <div class="info-total">
-      <h3 id="totalDeudaCliente">Bs {{ deuda_total_bs|floatformat:2 }}</h3>
-      <p id="totalDeudaClienteUsd">$ {{ deuda_total_usd|floatformat:2 }}</p>
+      <h3 id="totalDeudaCliente">Bs {{ deuda_total_bs|formato_venezolano }}</h3>
+      <p id="totalDeudaClienteUsd">$ {{ deuda_total_usd|formato_venezolano }}</p>
       <span>Deuda Total</span>
     </div>
   </div>
@@ -160,32 +162,32 @@
           {% for venta in ventas_pendientes %}
           <tr data-venta-id="{{ venta.ID_Ventas }}" data-fecha-venta="{{ venta.Fecha_Venta|date:'Y-m-d H:i' }}"
             data-estado-pago="{{ venta.Estado_Pago }}" data-dias="{{ venta.dias_transcurridos }}"
-            data-saldo-usd="{{ venta.Saldo_Pendiente_USD|floatformat:2 }}" 
-            data-saldo-bs="{{ venta.Saldo_Pendiente|floatformat:2 }}" 
-            data-total="{{ venta.Total|floatformat:2 }}"
-            data-abono-inicial="{{ venta.Abono_Inicial|floatformat:2 }}" data-badge-class="{{ venta.badge_class }}">
+            data-saldo-usd="{{ venta.Saldo_Pendiente_USD|formato_venezolano }}" 
+            data-saldo-bs="{{ venta.Saldo_Pendiente|formato_venezolano }}" 
+            data-total="{{ venta.Total|formato_venezolano }}"
+            data-abono-inicial="{{ venta.Abono_Inicial|formato_venezolano }}" data-badge-class="{{ venta.badge_class }}">
             <td class="text-center">
               <input type="checkbox" class="venta-checkbox" data-venta-id="{{ venta.ID_Ventas }}"
-                data-saldo-usd="{{ venta.Saldo_Pendiente_USD|floatformat:2 }}">
+                data-saldo-usd="{{ venta.Saldo_Pendiente_USD|formato_venezolano }}">
             </td>
             <td>#{{ venta.ID_Ventas }}</td>
             <td>{{ venta.Fecha_Venta|date:"d/m/Y" }}</td>
             <td class="text-center">
-              <span class="badge badge-info">{{ venta.Tasa_Venta|floatformat:2 }} Bs/$</span>
+              <span class="badge badge-tasa">{{ venta.Tasa_Venta|formato_venezolano }} Bs/$</span>
             </td>
             <td class="text-right">
-              <strong>Bs {{ venta.Total|floatformat:2 }}</strong>
+              <strong>Bs {{ venta.get_equivalente_total_bs|formato_venezolano }}</strong>
             </td>
             <td class="text-right">
-              <span class="text-success">Bs {{ venta.Abono_Inicial|floatformat:2 }}</span>
+              <span class="text-success">Bs {{ venta.Abono_Inicial|formato_venezolano }}</span>
             </td>
             <td class="text-right">
               <span class="text-danger saldo-pendiente">
-                $ {{ venta.Saldo_Pendiente_USD|floatformat:2 }}
+                $ {{ venta.Saldo_Pendiente_USD|formato_venezolano }}
               </span>
               <br>
-              <small class="text-muted saldo-bs-equiv" data-saldo-usd="{{ venta.Saldo_Pendiente_USD|floatformat:2 }}">
-                Bs {% widthratio venta.Saldo_Pendiente_USD 1 tasa_actual.valor %}
+              <small class="text-muted saldo-bs-equiv" data-saldo-usd="{{ venta.Saldo_Pendiente_USD|stringformat:'f' }}">
+                Bs <span class="calc-bs-dynamic">--</span>
               </small>
             </td>
             <td class="text-center">
@@ -201,7 +203,7 @@
             <td class="actions">
               <div class="acciones-venta">
                 <!-- Ver comprobante -->
-                <a href="{% url 'ventas:ver_comprobante' venta.ID_Ventas %}" target="_blank" class="btn-action btn-info"
+                <a href="{% url 'ventas:ver_comprobante' venta.ID_Ventas %}" target="_blank" class="btn-action btn-view-eye"
                   title="Ver Comprobante">
                   <i class="fas fa-eye"></i>
                 </a>
@@ -334,6 +336,34 @@
   </div>
 </div>
 
+<!-- ===== MODAL DE CONFIRMACIÓN DE PAGO ===== -->
+<div id="modalConfirmacionPago" class="modal-filtro">
+  <div class="modal-contenido" style="max-width: 450px;">
+    <div class="modal-header" style="background: var(--success); color: white;">
+      <h3><i class="fas fa-check-circle"></i> Confirmar Pago</h3>
+      <button class="btn-cerrar" id="btnCerrarModalConfirmacion" style="color: white;">&times;</button>
+    </div>
+    <div class="modal-body" style="text-align: center; padding: 25px 20px;">
+      <div class="confirm-icon" style="font-size: 3.5rem; color: var(--success); margin-bottom: 15px;">
+        <i class="fas fa-cash-register"></i>
+      </div>
+      <h4 style="margin-bottom: 15px;">¿Desea procesar los abonos seleccionados?</h4>
+      <div class="confirm-details" style="background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 20px;">
+        <p style="margin: 5px 0;">Total a abonar:</p>
+        <h2 id="confirmTotalBs" style="color: var(--success); margin: 0; font-weight: 800;">Bs 0,00</h2>
+        <p id="confirmTotalUsd" style="color: #666; margin: 5px 0; font-size: 1.1rem;">($ 0,00)</p>
+      </div>
+      <p style="color: #7f8c8d; font-size: 0.9rem;">Esta acción actualizará el saldo del cliente y registrará los movimientos en caja.</p>
+    </div>
+    <div class="modal-footer" style="justify-content: center; gap: 15px; padding: 20px;">
+      <button class="btn btn-secondary" id="btnCancelarConfirmacion" style="min-width: 120px; padding: 10px;">Cancelar</button>
+      <button class="btn btn-success" id="btnConfirmarProcesarPago" style="min-width: 160px; padding: 10px; font-weight: bold;">
+        <i class="fas fa-check"></i> Sí, Procesar
+      </button>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_css %}
@@ -416,6 +446,41 @@
   .total-a-pagar {
     color: var(--danger);
     font-weight: bold;
+  }
+
+  /* Mejora de visibilidad para Tasa y Ojo */
+  .badge-tasa {
+    background-color: #0b666a !important; /* Verde oscuro/petróleo para máximo contraste */
+    color: white !important;
+    padding: 6px 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    font-family: 'Roboto Mono', monospace;
+  }
+  
+  .btn-view-eye {
+    background-color: #2e7d32 !important; /* Verde bosque intenso */
+    color: white !important;
+    border-radius: 8px;
+    width: 35px;
+    height: 35px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .btn-view-eye:hover {
+    background-color: #1b5e20 !important;
+    transform: scale(1.1);
+    color: white !important;
+  }
+
+  .btn-view-eye i {
+    font-size: 1.1rem;
+    color: white !important;
   }
 
   .total-pagado {
@@ -595,23 +660,112 @@
       opacity: 1;
     }
   }
+  /* Estilos para historial agrupado */
+  .historial-grupo {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    margin-bottom: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  .historial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    cursor: pointer;
+    background: #fcfcfc;
+    border-left: 4px solid var(--success);
+    transition: background 0.2s;
+  }
+  .historial-header:hover {
+    background: #f5f5f5;
+  }
+  .historial-header-info {
+    flex: 1;
+  }
+  .historial-header-monto {
+    text-align: right;
+    margin-right: 15px;
+  }
+  .historial-detalles {
+    display: none;
+    padding: 10px 15px 10px 50px;
+    background: #fafafa;
+    border-top: 1px dashed #eee;
+  }
+  .historial-detalles.active {
+    display: block;
+  }
+  .historial-sub-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .historial-sub-item:last-child {
+    border-bottom: none;
+  }
+  .historial-sub-info {
+    color: #666;
+  }
+  .historial-sub-monto {
+    font-weight: bold;
+    color: var(--success);
+  }
+  .btn-toggle-icon {
+    color: var(--secondary);
+    transition: transform 0.2s;
+  }
+  .btn-toggle-icon.open {
+    transform: rotate(180deg);
+  }
+
+  /* Animación para el modal */
+  @keyframes modalScale {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .modal-contenido {
+    animation: modalScale 0.3s ease-out;
+  }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'cuentas_pendientes/js/gestionar_abono.js' %}"></script>
 <script>
-  // Variables globales
-  window.CLIENTE_CEDULA = "{{ cliente.cedula }}";
-  window.TASA_ACTUAL = {{ tasa_actual.valor |default:0 }};
+    // Script de respaldo INLINE
+    document.addEventListener("DOMContentLoaded", function() {
+        function formatVzlaLocal(num) {
+            let p = num.toFixed(2).split(".");
+            return p[0].split("").reverse().reduce(function(acc, num, i, orig) {
+                return  num=="-" ? acc : num + (i && !(i % 3) ? "." : "") + acc;
+            }, "") + "," + p[1];
+        }
+        
+        const tasa = parseFloat("{{ tasa_actual.valor|stringformat:'f'|default:'0' }}");
+        if (tasa) {
+            document.querySelectorAll('.saldo-bs-equiv').forEach(elem => {
+                const saldo = parseFloat(elem.dataset.saldoUsd);
+                const span = elem.querySelector('.calc-bs-dynamic');
+                if (span && !isNaN(saldo)) {
+                    span.textContent = formatVzlaLocal(saldo * tasa);
+                }
+            });
+        }
+    });
 </script>
 <script>
-  console.log('Cliente Cédula:', "{{ cliente.cedula }}");
-  console.log('Tasa Actual:', {{ tasa_actual.valor |default:0 }});
-
   // Variables globales
   window.CLIENTE_CEDULA = "{{ cliente.cedula }}";
-  window.TASA_ACTUAL = {{ tasa_actual.valor |default:0 }};
+  window.TASA_ACTUAL = {{ tasa_actual.valor|stringformat:"f"|default:0 }};
+  
+  console.log('Cliente Cédula:', window.CLIENTE_CEDULA);
+  console.log('Tasa Actual:', window.TASA_ACTUAL);
 
   // Función para debug
   function debugUrls() {

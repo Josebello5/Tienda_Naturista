@@ -1,3 +1,5 @@
+{% load static %}
+{% load currency_tags %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -233,7 +235,7 @@
         </div>
         {% if tasa_venta %}
         <div class="tasa-info">
-            <strong>Tasa de Cambio:</strong> Bs {{ tasa_venta|floatformat:2 }}/$
+            <strong>Tasa de Cambio:</strong> Bs {{ tasa_venta|formato_venezolano }}/$
         </div>
         {% endif %}
     </div>
@@ -285,7 +287,7 @@
         </div>
         <div class="total-row" style="font-size: 10px; color: #666;">
             <span>Equivalente en $:</span>
-            <span>$ {{ venta.Saldo_Pendiente_USD|floatformat:2 }}</span>
+            <span>$ {{ venta.Saldo_Pendiente_USD|formato_venezolano }}</span>
         </div>
         
         {% if abonos_detallados %}
@@ -346,11 +348,6 @@
             <span>{{ equivalente_total_bs_formatted }} Bs</span>
         </div>
         
-        {% if total_pagado_bs > 0 and total_pagado_usd > 0 %}
-        <div class="iva-detalle" style="margin-top: 4px; text-align: right;">
-            ({{ total_pagado_bs_formatted }} + [{{ total_pagado_usd_formatted }}$ × {{ tasa_venta|floatformat:2 }}])
-        </div>
-        {% endif %}
         
         <div style="margin-top: 15px; border-top: 2px dashed #000; padding-top: 10px;">
             <div class="info-row" style="font-weight: bold; margin-bottom: 8px;">

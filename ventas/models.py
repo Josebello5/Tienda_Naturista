@@ -2,6 +2,7 @@ from django.db import models
 from clientes.models import Cliente
 from lotes.models import Lote
 from dashboard.models import TasaCambiaria
+from tienda_naturista.utils import format_venezuelan_money
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 from django.utils import timezone
@@ -183,24 +184,30 @@ class Venta(models.Model):
     def get_total_pagado_bs(self):
         """Obtiene el total pagado en Bs (métodos en bolívares)"""
         total = Decimal('0')
+        # Sumar todos los pagos en Bs (incluye pagos iniciales y abonos)
         for pago in self.pagos.filter(Monto__gt=0):
             if pago.Metodo_Pago != 'efectivo_usd':
-                total += pago.Monto
+                total += pago.Monto_Bs
         return total
     
     def get_total_pagado_usd(self):
         """Obtiene el total pagado en USD (efectivo_usd)"""
         total = Decimal('0')
+        # Sumar todos los pagos en USD (incluye pagos iniciales y abonos)
         for pago in self.pagos.filter(Monto__gt=0, Metodo_Pago='efectivo_usd'):
             total += pago.Monto
         return total
     
     def get_equivalente_total_bs(self):
-        """Obtiene el equivalente total en Bs (Bs + USD convertido)"""
+        """Obtiene el equivalente total en Bs (Bs + USD convertido con tasa de cada pago)"""
         total_bs = self.get_total_pagado_bs()
-        total_usd = self.get_total_pagado_usd()
-        tasa = Decimal(str(self.get_tasa_venta()))
-        return total_bs + (total_usd * tasa)
+        
+        # Para USD, convertir usando la tasa de cada pago (no la tasa de la venta)
+        for pago in self.pagos.filter(Monto__gt=0, Metodo_Pago='efectivo_usd'):
+            tasa = pago.Tasa_Cambio if pago.Tasa_Cambio else Decimal(str(self.get_tasa_venta()))
+            total_bs += pago.Monto * tasa
+        
+        return total_bs
 
 
     def get_html_context(self):
@@ -208,36 +215,7 @@ class Venta(models.Model):
         detalles = self.detalles.select_related('ID_lote__id_producto').all()
         pagos = self.pagos.all()
         
-        # Función para formatear números con formato venezolano
-        def format_number_venezuelan(value):
-            try:
-                # Convertir Decimal a string
-                if isinstance(value, Decimal):
-                    value_str = str(value)
-                else:
-                    value_str = str(value)
-                
-                # Separar parte entera y decimal
-                parts = value_str.split('.')
-                integer_part = parts[0]
-                decimal_part = parts[1] if len(parts) > 1 else '00'
-                
-                # Si la parte decimal tiene menos de 2 dígitos, completar
-                if len(decimal_part) == 1:
-                    decimal_part += '0'
-                elif len(decimal_part) > 2:
-                    decimal_part = decimal_part[:2]
-                
-                # Agregar puntos cada 3 dígitos (de derecha a izquierda)
-                formatted_integer = ''
-                for i in range(len(integer_part)-1, -1, -1):
-                    formatted_integer = integer_part[i] + formatted_integer
-                    if (len(integer_part) - i) % 3 == 0 and i > 0:
-                        formatted_integer = '.' + formatted_integer
-                
-                return f"{formatted_integer},{decimal_part}"
-            except:
-                return str(value)
+        # Ya no necesitamos la función interna, usamos la utilidad central
         
         # Agrupar productos por ID del producto (no por serial) - CORREGIDO
         productos_agrupados = {}
@@ -289,18 +267,18 @@ class Venta(models.Model):
         fecha_venta = self.Fecha_Venta.astimezone(tz)
         
         # Formatear montos con formato venezolano
-        subtotal_formatted = format_number_venezuelan(subtotal_con_iva + subtotal_sin_iva)
-        iva_formatted = format_number_venezuelan(iva_calculado)
-        total_formatted = format_number_venezuelan(total_calculado)
-        abono_formatted = format_number_venezuelan(self.Abono_Inicial)
-        saldo_formatted = format_number_venezuelan(self.Saldo_Pendiente)
-        cambio_bs_formatted = format_number_venezuelan(cambio_bs)
-        cambio_usd_formatted = format_number_venezuelan(cambio_usd)
+        subtotal_formatted = format_venezuelan_money(subtotal_con_iva + subtotal_sin_iva)
+        iva_formatted = format_venezuelan_money(iva_calculado)
+        total_formatted = format_venezuelan_money(total_calculado)
+        abono_formatted = format_venezuelan_money(self.Abono_Inicial)
+        saldo_formatted = format_venezuelan_money(self.Saldo_Pendiente)
+        cambio_bs_formatted = format_venezuelan_money(cambio_bs)
+        cambio_usd_formatted = format_venezuelan_money(cambio_usd)
         
         # Formatear precios de productos
         for producto_id, datos in productos_agrupados.items():
-            datos['precio_sin_iva_formatted'] = format_number_venezuelan(datos['precio_sin_iva'])
-            datos['subtotal_formatted'] = format_number_venezuelan(datos['subtotal'])
+            datos['precio_sin_iva_formatted'] = format_venezuelan_money(datos['precio_sin_iva'])
+            datos['subtotal_formatted'] = format_venezuelan_money(datos['subtotal'])
         
         # Filtrar solo pagos positivos (no incluir devoluciones)
         pagos_positivos = []
@@ -319,24 +297,29 @@ class Venta(models.Model):
                 
                 # Formatear montos de pagos
                 if pago.Metodo_Pago == 'efectivo_usd':
-                    pago_dict['Monto_formatted'] = f"${format_number_venezuelan(pago.Monto)}"
-                    pago_dict['Monto_Bs_formatted'] = f"Bs {format_number_venezuelan(pago.Monto_Bs)}"
+                    pago_dict['Monto_formatted'] = f"${format_venezuelan_money(pago.Monto)}"
+                    pago_dict['Monto_Bs_formatted'] = f"Bs {format_venezuelan_money(pago.Monto_Bs)}"
                     total_pagado_usd += pago.Monto
                 else:
-                    pago_dict['Monto_formatted'] = f"Bs {format_number_venezuelan(pago.Monto)}"
-                    pago_dict['Monto_Bs_formatted'] = f"Bs {format_number_venezuelan(pago.Monto_Bs)}"
+                    pago_dict['Monto_formatted'] = f"Bs {format_venezuelan_money(pago.Monto)}"
+                    pago_dict['Monto_Bs_formatted'] = f"Bs {format_venezuelan_money(pago.Monto_Bs)}"
                     total_pagado_bs += pago.Monto
                 
                 pagos_positivos.append(pago_dict)
         
-        # Calcular equivalente total en Bs
-        equivalente_usd_en_bs = total_pagado_usd * Decimal(str(self.get_tasa_venta()))
-        equivalente_total_bs = total_pagado_bs + equivalente_usd_en_bs
+        # Calcular equivalente total en Bs usando tasas de cada pago
+        equivalente_total_bs = total_pagado_bs
+        
+        # Para pagos USD, usar la tasa de cada pago (no la tasa de la venta)
+        for pago in pagos:
+            if pago.Monto > 0 and pago.Metodo_Pago == 'efectivo_usd':
+                tasa_pago = pago.Tasa_Cambio if pago.Tasa_Cambio else Decimal(str(self.get_tasa_venta()))
+                equivalente_total_bs += pago.Monto * tasa_pago
         
         # Formatear totales de pago
-        total_pagado_bs_formatted = format_number_venezuelan(total_pagado_bs)
-        total_pagado_usd_formatted = format_number_venezuelan(total_pagado_usd)
-        equivalente_total_bs_formatted = format_number_venezuelan(equivalente_total_bs)
+        total_pagado_bs_formatted = format_venezuelan_money(total_pagado_bs)
+        total_pagado_usd_formatted = format_venezuelan_money(total_pagado_usd)
+        equivalente_total_bs_formatted = format_venezuelan_money(equivalente_total_bs)
         
         context = {
             'venta': self,
@@ -381,11 +364,11 @@ class Venta(models.Model):
                     'fecha': abono.Fecha_Abono.astimezone(tz).strftime('%d/%m/%Y'),
                     'metodo': abono.get_Metodo_Pago_display(),
                     'monto_bs': abono.Monto_Abono_Bs,
-                    'monto_bs_formatted': format_number_venezuelan(abono.Monto_Abono_Bs),
+                    'monto_bs_formatted': format_venezuelan_money(abono.Monto_Abono_Bs),
                     'monto_usd': monto_usd,
-                    'monto_usd_formatted': format_number_venezuelan(monto_usd),
+                    'monto_usd_formatted': format_venezuelan_money(monto_usd),
                     'tasa_abono': abono.Tasa_Cambio if abono.Tasa_Cambio else self.Tasa_Venta,
-                    'tasa_abono_formatted': format_number_venezuelan(abono.Tasa_Cambio if abono.Tasa_Cambio else self.Tasa_Venta),
+                    'tasa_abono_formatted': format_venezuelan_money(abono.Tasa_Cambio if abono.Tasa_Cambio else self.Tasa_Venta),
                     'tasa_venta': self.Tasa_Venta,
                     'comprobante': abono.Comprobante
                 })

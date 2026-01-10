@@ -183,12 +183,19 @@ function formatInput(input) {
     input.value = formatNumber(num);
 }
 
-// Función auxiliar para formatear números
+// Función auxiliar para formatear números estrictamente (1.234,56)
 function formatNumber(num) {
-    return num.toLocaleString('es-VE', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
+    if (num === null || num === undefined) return '0,00';
+    
+    // Asegurar 2 decimales y convertir a string con punto decimal estándar
+    let parts = parseFloat(num).toFixed(2).split('.');
+    let integerPart = parts[0];
+    let decimalPart = parts[1];
+    
+    // Agregar separador de miles (punto)
+    integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    
+    return `${integerPart},${decimalPart}`;
 }
 
 // Parsear número desde formato venezolano

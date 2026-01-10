@@ -878,7 +878,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const coincideMetodoPago = !metodoPago || (pagosData[metodoPago] && parseFloat(pagosData[metodoPago].bs) > 0);
             const coincideAnulada = !anulada || anuladaVenta === anulada;
             
-            const coincideFechaVenta = fechaEnRango(fechaVentaText, filtroFechaVenta.desde, filtroFechaVenta.hasta);
+            const coincideFechaVenta = fechaEnRango(row.getAttribute('data-fecha-venta') || '', filtroFechaVenta.desde, filtroFechaVenta.hasta);
             
             if (coincideId && coincideCliente && coincideFechaVenta && 
                 coincideEstadoPago && coincideTipoVenta && coincideMetodoPago && coincideAnulada) {
@@ -917,31 +917,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!fechaInicio && !fechaFin) return true;
 
         try {
-            const fecha = parseFechaDDMMYYYYHHMM(fechaTexto);
-            if (!fecha) return true;
-
-            let inicio = null;
-            let fin = null;
-
-            if (fechaInicio) {
-                const [anioInicio, mesInicio, diaInicio] = fechaInicio.split('-');
-                inicio = new Date(anioInicio, mesInicio - 1, diaInicio);
-                inicio.setHours(0, 0, 0, 0);
-            }
-
-            if (fechaFin) {
-                const [anioFin, mesFin, diaFin] = fechaFin.split('-');
-                fin = new Date(anioFin, mesFin - 1, diaFin);
-                fin.setHours(23, 59, 59, 999);
-            }
-
-            if (inicio && fin) {
-                return fecha >= inicio && fecha <= fin;
-            } else if (inicio) {
-                return fecha >= inicio;
-            } else if (fin) {
-                return fecha <= fin;
-            }
+            // fechaTexto viene del data-fecha-venta: "YYYY-MM-DD HH:mm"
+            // fechaInicio/fechaFin vienen de los inputs: "YYYY-MM-DD"
+            const [fechaParte, horaParte] = fechaTexto.split(' ');
+            
+            // Comparación de solo fecha (ignorando hora para los límites del día)
+            // Si queremos ser exactos: 09/01/2026 14:00 está entre 09/01/2026 y 09/01/2026
+            
+            if (fechaInicio && fechaParte < fechaInicio) return false;
+            if (fechaFin && fechaParte > fechaFin) return false;
 
             return true;
         } catch (error) {
@@ -1023,24 +1007,75 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ===== INICIALIZACIÓN =====
-    function inicializar() {
-        // Establecer filtro por defecto: ventas de hoy
-        const hoy = getFechaActual();
-        filtroFechaVenta.desde = hoy;
-        filtroFechaVenta.hasta = hoy;
 
-        inicializarModalFechas();
-        actualizarIndicadoresFiltro();
-        actualizarMonedaEnTabla();
+    // ===== APLICACIÓN FORZOSA DE FILTRO HOY =====
+    function aplicarFiltroPorDefecto() {
+        const urlParams = new URLSearchParams(window.location.search);
         
-        if (searchInput) searchInput.focus();
-        filtrarVentas(); // Aplicar filtro de fecha por defecto
-        
-        console.log('Sistema de gestión de ventas inicializado correctamente');
-        console.log('Formato venezolano activado: punto para miles, coma para decimales');
+        // Solo aplicar si NO hay parámetros de filtro relevantes
+        const tieneFiltros = Array.from(urlParams.keys()).some(key => 
+            ['q', 'cliente', 'fecha_desde', 'fecha_hasta', 'estado_pago', 'tipo_venta', 'metodo_pago', 'anulada'].includes(key)
+        );
+
+        if (!tieneFiltros) {
+            console.log('Aplicando filtro por defecto: HOY');
+            const hoy = getFechaActual();
+            
+            // 1. Establecer estado interno
+            filtroFechaVenta.desde = hoy;
+            filtroFechaVenta.hasta = hoy;
+            
+            // 2. Establecer valores visuales
+            if (fechaDesde) fechaDesde.value = hoy;
+            if (fechaHasta) fechaHasta.value = hoy;
+            
+            // 3. Ejecutar filtro inmediatamente
+            filtrarVentas();
+            
+            // 4. Forzar actualización visual explícita
+            actualizarIndicadoresFiltro();
+            
+            // Refuerzo final con timer para asegurar que prevalezca
+            setTimeout(() => {
+                if (btnFiltroFechaVenta) {
+                    btnFiltroFechaVenta.classList.add('filtro-activo');
+                    btnFiltroFechaVenta.innerHTML = `<i class="fas fa-calendar-day"></i> Fecha de Venta ✓`;
+                    console.log('Clase filtro-activo forzada visualmente');
+                }
+            }, 50);
+        } else {
+            console.log('Se detectaron filtros en la URL, respetando configuración externa.');
+            // Si hay fechas en URL, establecerlas en visuales
+            if (urlParams.has('fecha_desde') && fechaDesde) fechaDesde.value = urlParams.get('fecha_desde');
+            if (urlParams.has('fecha_hasta') && fechaHasta) fechaHasta.value = urlParams.get('fecha_hasta');
+            
+            filtrarVentas();
+        }
     }
 
+    // ===== INICIALIZACIÓN =====
+    function inicializar() {
+        console.log('Inicializando eventos...');
+        inicializarModalFechas();
+        
+        // Configurar otros inputs desde URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('q') && searchInput) searchInput.value = urlParams.get('q');
+        if (urlParams.has('cliente') && clienteSearchInput) clienteSearchInput.value = urlParams.get('cliente');
+        if (urlParams.has('estado_pago') && estadoPagoSelect) estadoPagoSelect.value = urlParams.get('estado_pago');
+        if (urlParams.has('tipo_venta') && tipoVentaSelect) tipoVentaSelect.value = urlParams.get('tipo_venta');
+        if (urlParams.has('metodo_pago') && metodoPagoSelect) metodoPagoSelect.value = urlParams.get('metodo_pago');
+        if (urlParams.has('anulada') && anuladaSelect) anuladaSelect.value = urlParams.get('anulada');
+        if (urlParams.has('moneda')) monedaActual = urlParams.get('moneda');
+
+        // Ejecutar el filtro principal
+        aplicarFiltroPorDefecto();
+        
+        actualizarMonedaEnTabla();
+        if (searchInput) searchInput.focus();
+    }
+
+    // Ejecutar inicialización
     inicializar();
     
     // ===== ACTUALIZACIÓN DINÁMICA DE SALDO PENDIENTE EN BS =====
@@ -1057,20 +1092,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Buscar todas las celdas de saldo pendiente
-        document.querySelectorAll('.saldo-bs-equiv').forEach(elem => {
-            const saldoUsd = parseFloat(elem.dataset.saldoUsd);
+        const celdas = document.querySelectorAll('.saldo-bs-equiv');
+        
+        celdas.forEach(elem => {
+            const saldoUsdStr = elem.dataset.saldoUsd;
+            if (!saldoUsdStr) return;
             
-            if (!isNaN(saldoUsd) && saldoUsd > 0) {
-                const saldoBs = saldoUsd * tasaActual;
-                const spanCalc = elem.querySelector('.calc-bs');
-                
-                if (spanCalc) {
+            // El formato ahora viene asegurado como float estándar (punto decimal)
+            const saldoUsd = parseFloat(saldoUsdStr);
+            console.log(`Saldo USD Raw: ${saldoUsdStr}, Parsed: ${saldoUsd}, Tasa: ${tasaActual}`);
+            
+            const spanCalc = elem.querySelector('.calc-bs-dynamic');
+            if (spanCalc) {
+                if (!isNaN(saldoUsd) && saldoUsd > 0) {
+                    const saldoBs = saldoUsd * tasaActual;
                     spanCalc.textContent = formatearNumeroVenezolano(saldoBs);
+                    spanCalc.classList.add('calculated'); // Marcador visual o para debug
+                } else {
+                    spanCalc.textContent = '0,00';
                 }
             }
         });
     }
     
     // Ejecutar al cargar la página
+    console.log('Iniciando cálculo de saldos pendientes...');
     actualizarSaldosPendientesBs();
 });

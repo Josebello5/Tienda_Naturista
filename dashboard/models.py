@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from tienda_naturista.utils import format_venezuelan_money
 
 class TasaCambiaria(models.Model):
     valor = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Valor del dólar en bolívares")
@@ -15,6 +16,5 @@ class TasaCambiaria(models.Model):
         return f"${self.valor} Bs - {self.fecha_creacion.strftime('%d/%m/%Y %H:%M')}"
     
     def valor_formateado(self):
-        """Devuelve el valor formateado con coma decimal"""
-        # Formatear con dos decimales y reemplazar punto por coma
-        return f"{self.valor:.2f}".replace('.', ',')
+        """Devuelve el valor formateado con la utilidad central"""
+        return format_venezuelan_money(self.valor)

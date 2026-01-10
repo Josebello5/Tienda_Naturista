@@ -28,6 +28,15 @@ def menu_cuentas_pendientes(request):
         venta__Estado_Pago__in=['pendiente', 'parcial']  # SOLO pendientes o parciales
     ).distinct()
     
+    # Obtener tasa actual para mostrar equivalente en Bs (usando zona horaria de Venezuela)
+    import pytz
+    tz_venezuela = pytz.timezone('America/Caracas')
+    ahora_venezuela = timezone.now().astimezone(tz_venezuela)
+    hoy_venezuela = ahora_venezuela.date()
+    
+    tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy_venezuela).order_by('-fecha_creacion')
+    tasa_actual = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.order_by('-fecha_creacion').first()
+
     # Calcular deuda total por cliente
     clientes_deuda_detallada = []
     for cliente in clientes_con_deuda:
@@ -61,6 +70,7 @@ def menu_cuentas_pendientes(request):
             clientes_deuda_detallada.append({
                 'cliente': cliente,
                 'deuda_total_usd': deuda_total_usd,
+                'deuda_total_bs': deuda_total_usd * tasa_actual.valor if tasa_actual and tasa_actual.valor else Decimal('0'),
                 'ventas_pendientes': ventas_cliente.count(),
                 'dias_transcurridos': dias_transcurridos,
                 'badge_class': badge_class,
@@ -74,14 +84,7 @@ def menu_cuentas_pendientes(request):
     total_cuentas = sum(item['ventas_pendientes'] for item in clientes_deuda_detallada)
     total_saldo_pendiente_usd = sum(item['deuda_total_usd'] for item in clientes_deuda_detallada)
     
-    # Obtener tasa actual para mostrar equivalente en Bs (usando zona horaria de Venezuela)
-    import pytz
-    tz_venezuela = pytz.timezone('America/Caracas')
-    ahora_venezuela = timezone.now().astimezone(tz_venezuela)
-    hoy_venezuela = ahora_venezuela.date()
-    
-    tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy_venezuela).order_by('-fecha_creacion')
-    tasa_actual = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.order_by('-fecha_creacion').first()
+
     
     if tasa_actual and tasa_actual.valor:
         total_saldo_pendiente_bs = total_saldo_pendiente_usd * tasa_actual.valor
@@ -91,20 +94,62 @@ def menu_cuentas_pendientes(request):
     # Top 5 clientes con mayor deuda
     clientes_top_5 = clientes_deuda_detallada[:5]
     
-    # Abonos recientes (últimos 30 días)
+    # Abonos recientes (últimos 30 días) agrupados jerárquicamente
     fecha_limite = hoy - timedelta(days=30)
-    abonos_recientes = Abono.objects.filter(
+    abonos_query = Abono.objects.filter(
         Fecha_Abono__gte=fecha_limite,
         anulado=False
-    ).select_related('ID_Ventas', 'Cliente').order_by('-Fecha_Abono')[:10]
+    ).select_related('ID_Ventas', 'Cliente').order_by('-Fecha_Abono')
+    
+    # Agrupar abonos por Cliente -> Venta
+    clientes_agrupados = {}
+    for abono in abonos_query:
+        cliente_id = abono.Cliente.cedula
+        venta_id = abono.ID_Ventas.ID_Ventas
+        
+        if cliente_id not in clientes_agrupados:
+            clientes_agrupados[cliente_id] = {
+                'cliente': abono.Cliente,
+                'fecha_reciente': abono.Fecha_Abono,
+                'total_bs': Decimal('0'),
+                'ventas': {}
+            }
+        
+        # Actualizar fecha reciente del cliente
+        if abono.Fecha_Abono > clientes_agrupados[cliente_id]['fecha_reciente']:
+            clientes_agrupados[cliente_id]['fecha_reciente'] = abono.Fecha_Abono
+            
+        # Agrupar dentro del cliente por venta
+        if venta_id not in clientes_agrupados[cliente_id]['ventas']:
+            clientes_agrupados[cliente_id]['ventas'][venta_id] = {
+                'id_venta': venta_id,
+                'fecha_ultimo_venta': abono.Fecha_Abono,
+                'total_bs_venta': Decimal('0'),
+                'abonos': []
+            }
+        
+        clientes_agrupados[cliente_id]['ventas'][venta_id]['abonos'].append(abono)
+        clientes_agrupados[cliente_id]['ventas'][venta_id]['total_bs_venta'] += abono.Monto_Abono_Bs
+        clientes_agrupados[cliente_id]['total_bs'] += abono.Monto_Abono_Bs
+        
+    # Convertir a lista y ordenar
+    abonos_recientes_lista = []
+    for c_id, c_data in clientes_agrupados.items():
+        # Convertir ventas a lista y ordenar por fecha reciente
+        ventas_lista = list(c_data['ventas'].values())
+        ventas_lista.sort(key=lambda x: x['fecha_ultimo_venta'], reverse=True)
+        c_data['ventas_list'] = ventas_lista
+        abonos_recientes_lista.append(c_data)
+        
+    abonos_recientes_lista.sort(key=lambda x: x['fecha_reciente'], reverse=True)
     
     context = {
         'clientes_deuda_detallada': clientes_deuda_detallada,
         'total_cuentas': total_cuentas,
         'total_saldo_pendiente_usd': total_saldo_pendiente_usd,
-        'total_saldo_pendiente_bs': total_saldo_pendiente_bs,
+        'total_saldo_pendiente': total_saldo_pendiente_bs,
         'clientes_top_5': clientes_top_5,
-        'abonos_recientes': abonos_recientes,
+        'abonos_recientes': abonos_recientes_lista,
         'tasa_actual': tasa_actual,
     }
     
@@ -612,17 +657,18 @@ def api_historial_abonos_cliente(request, cliente_cedula):
         # Obtener abonos del cliente (últimos 100)
         abonos = Abono.objects.filter(Cliente=cliente).select_related('ID_Ventas').order_by('-Fecha_Abono')[:100]
         
-        # Formatear los datos
-        abonos_data = []
+        # Agrupar abonos por ID de Venta
+        abonos_por_venta = {}
         for abono in abonos:
+            venta_id = abono.ID_Ventas.ID_Ventas
+            
             # Formatear fecha
             fecha_abono = abono.Fecha_Abono
             if timezone.is_aware(fecha_abono):
                 fecha_abono = timezone.localtime(fecha_abono)
             
-            abonos_data.append({
+            abono_dict = {
                 'id': abono.ID_Abono,
-                'venta_id': abono.ID_Ventas.ID_Ventas,
                 'monto_abono': float(abono.Monto_Abono),
                 'monto_abono_bs': float(abono.Monto_Abono_Bs),
                 'metodo_pago': abono.Metodo_Pago,
@@ -632,16 +678,34 @@ def api_historial_abonos_cliente(request, cliente_cedula):
                 'observaciones': abono.Observaciones or '',
                 'anulado': abono.anulado,
                 'registrado_por': abono.Registrado_Por or 'Sistema'
-            })
+            }
+            
+            if venta_id not in abonos_por_venta:
+                abonos_por_venta[venta_id] = {
+                    'venta_id': venta_id,
+                    'total_bs': 0,
+                    'total_usd': 0,
+                    'fecha_reciente': abono_dict['fecha_abono'],
+                    'abonos': []
+                }
+            
+            abonos_por_venta[venta_id]['abonos'].append(abono_dict)
+            if not abono.anulado:
+                abonos_por_venta[venta_id]['total_bs'] += float(abono.Monto_Abono_Bs)
+                abonos_por_venta[venta_id]['total_usd'] += float(abono.Monto_Abono)
         
-        # Calcular totales
-        total_abonado = sum(item['monto_abono_bs'] for item in abonos_data if not item['anulado'])
-        total_abonado_usd = sum(item['monto_abono'] for item in abonos_data if not item['anulado'])
+        # Convertir a lista y ordenar por fecha reciente
+        abonos_agrupados = list(abonos_por_venta.values())
+        abonos_agrupados.sort(key=lambda x: datetime.strptime(x['fecha_reciente'], '%d/%m/%Y %H:%M'), reverse=True)
+        
+        # Calcular totales globales
+        total_abonado = sum(item['total_bs'] for item in abonos_agrupados)
+        total_abonado_usd = sum(item['total_usd'] for item in abonos_agrupados)
         
         return JsonResponse({
             'success': True,
-            'abonos': abonos_data,
-            'total': len(abonos_data),
+            'abonos_agrupados': abonos_agrupados,
+            'total_ventas_con_abonos': len(abonos_agrupados),
             'total_abonado_bs': total_abonado,
             'total_abonado_usd': total_abonado_usd,
             'cliente': {

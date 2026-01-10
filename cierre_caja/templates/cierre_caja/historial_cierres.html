@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load currency_tags %}
 
 {% block title %}Historial de Cierres - Tienda Naturista{% endblock %}
 
@@ -76,19 +77,19 @@
                         </td>
                         <td
                             style="text-align: right; font-family: 'Roboto Mono', monospace; color: var(--natural-gray);">
-                            {{ cierre.Total_Sistema|floatformat:2 }}
+                            {{ cierre.Total_Sistema|formato_venezolano }}
                         </td>
                         <td style="text-align: right; font-family: 'Roboto Mono', monospace; font-weight: 600;">
-                            {{ cierre.Total_Real|floatformat:2 }}
+                            {{ cierre.Total_Real|formato_venezolano }}
                         </td>
                         <td style="text-align: center;">
                             {% if cierre.Diferencia_Total == 0 %}
                             <span class="status status-active">Cuadre Exacto</span>
                             {% elif cierre.Diferencia_Total > 0 %}
-                            <span class="status diff-positive">+{{ cierre.Diferencia_Total|floatformat:2 }}
+                            <span class="status diff-positive">+{{ cierre.Diferencia_Total|formato_venezolano }}
                                 (Sobra)</span>
                             {% else %}
-                            <span class="status diff-negative">{{ cierre.Diferencia_Total|floatformat:2 }}
+                            <span class="status diff-negative">{{ cierre.Diferencia_Total|formato_venezolano }}
                                 (Falta)</span>
                             {% endif %}
                         </td>

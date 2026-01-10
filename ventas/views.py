@@ -27,6 +27,7 @@ from reportlab.lib.units import mm, inch
 
 
 def menu_ventas(request):
+    # Obtener todas las ventas para permitir filtrado en tiempo real en el cliente
     ventas = Venta.objects.select_related('Cedula').prefetch_related('pagos', 'detalles').all().order_by('-Fecha_Venta')
     
     # Obtener tasa actual usando zona horaria de Venezuela
@@ -297,6 +298,8 @@ def procesar_venta(request):
             # Si no hay tasa de hoy, usar la última registrada
             if not tasa_actual_obj:
                 tasa_actual = TasaCambiaria.objects.order_by('-fecha_creacion').first()
+            else:
+                tasa_actual = tasa_actual_obj
             
             if not tasa_actual:
                 return JsonResponse({'success': False, 'error': 'No hay tasa cambiaria configurada'})

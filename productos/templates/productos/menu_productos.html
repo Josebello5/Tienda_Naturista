@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
+{% load currency_tags %}
 
 {% block title %}Productos - Tienda Naturista{% endblock %}
 
@@ -129,7 +131,7 @@
             <td>{% if producto.sujeto_iva == 'si' %}Sí{% else %}No{% endif %}</td>
             <td class="editable-precio" data-producto-id="{{ producto.ID_producto }}"
               data-precio-actual="{{ producto.precio_venta }}">
-              ${{ producto.precio_venta }}
+              ${{ producto.precio_venta|formato_venezolano }}
             </td>
             <td>{{ producto.ubicacion|default:"-" }}</td>
             <td>

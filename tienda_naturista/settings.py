@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'cuentas_pendientes',
     'cierre_caja',
     'estadisticas',
+    'django.contrib.humanize',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -118,9 +119,17 @@ LANGUAGE_CODE = 'es'
 TIME_ZONE = 'America/Caracas'
 
 USE_I18N = True
-
 USE_TZ = True 
+USE_L10N = False
 
+# Localización venezolana (Punto para miles, Coma para decimales)
+USE_THOUSAND_SEPARATOR = True
+THOUSAND_SEPARATOR = '.'
+DECIMAL_SEPARATOR = ','
+NUMBER_GROUPING = 3
+# Forzar configuración estricta para evitar espacios en blanco
+USE_L10N = False
+FORMAT_MODULE_PATH = None # Evitar que cargue formatos de archivos externos
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

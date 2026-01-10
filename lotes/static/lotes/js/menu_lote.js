@@ -1,5 +1,13 @@
 // menu_lote.js - Funcionalidad completa para lotes con sistema de modales
 document.addEventListener('DOMContentLoaded', function () {
+    // Función para formatear números al estilo venezolano (Mil: . Decimal: ,)
+    function formatNumber(num) {
+        if (num === null || num === undefined || isNaN(num)) return "0,00";
+        return new Intl.NumberFormat('de-DE', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(num);
+    }
     const tableBody = document.getElementById('tableBody');
     const searchInput = document.getElementById('searchInput');
     const productoSearchInput = document.getElementById('productoSearchInput');
@@ -630,11 +638,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         const celdaCostoTotal = document.querySelector(`.costo-total[data-lote-id="${loteId}"]`);
 
                         if (celdaCosto) {
-                            celdaCosto.textContent = `$${parseFloat(data.costo_unitario).toFixed(2)}`;
+                            celdaCosto.textContent = `$${formatNumber(parseFloat(data.costo_unitario))}`;
                             celdaCosto.setAttribute('data-costo-actual', data.costo_unitario);
                         }
                         if (celdaCostoTotal) {
-                            celdaCostoTotal.textContent = `$${parseFloat(data.costo_total).toFixed(2)}`;
+                            celdaCostoTotal.textContent = `$${formatNumber(parseFloat(data.costo_total))}`;
                         }
 
                         cerrarModalEditarCosto();
@@ -730,12 +738,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Formatear el costo total
-            const costoFormateado = parseFloat(costoTotal).toLocaleString('es-VE', {
-                style: 'currency',
-                currency: 'USD'
-            }).replace('US', ''); // Ajuste simple si es necesario
+            const costoFormateado = formatNumber(parseFloat(costoTotal));
 
-            detalleCostoTotal.textContent = `$${parseFloat(costoTotal).toFixed(2)}`;
+            detalleCostoTotal.textContent = `$${costoFormateado}`;
 
             modalVerDetalles.style.display = 'flex';
         }

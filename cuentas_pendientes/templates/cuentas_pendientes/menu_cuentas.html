@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
+{% load currency_tags %}
 
 {% block title %}Cuentas Pendientes - Tienda Naturista{% endblock %}
 
@@ -27,8 +29,8 @@
       <i class="fas fa-money-bill-wave"></i>
     </div>
     <div class="info-total">
-      <h3 id="totalSaldoBs">Bs {{ total_saldo_pendiente|floatformat:2 }}</h3>
-      <p id="totalSaldoUsd">$ {{ total_usd|floatformat:2 }}</p>
+      <h3 id="totalSaldoBs">Bs {{ total_saldo_pendiente|formato_venezolano }}</h3>
+      <p id="totalSaldoUsd">$ {{ total_saldo_pendiente_usd|formato_venezolano }}</p>
       <span>Saldo Total Pendiente</span>
     </div>
   </div>
@@ -55,7 +57,8 @@
         <small>{{ cliente_data.cliente.cedula }}</small>
       </div>
       <div class="deuda-info">
-        <span class="deuda-total">Bs {{ cliente_data.deuda_total|floatformat:2 }}</span>
+        <span class="deuda-total">Bs {{ cliente_data.deuda_total_bs|formato_venezolano }}</span>
+        <br><small class="text-muted">$ {{ cliente_data.deuda_total_usd|formato_venezolano }}</small>
         <small>{{ cliente_data.ventas_pendientes }} venta{{ cliente_data.ventas_pendientes|pluralize }} pendiente{{ cliente_data.ventas_pendientes|pluralize }}</small>
       </div>
       <div class="acciones-cliente">
@@ -120,7 +123,7 @@
         <tbody id="tableBody">
           {% for cliente_data in clientes_deuda_detallada %}
           <tr data-cliente-id="{{ cliente_data.cliente.cedula }}"
-            data-deuda="{{ cliente_data.deuda_total|floatformat:2 }}" data-dias="{{ cliente_data.dias_transcurridos }}">
+            data-deuda="{{ cliente_data.deuda_total|formato_venezolano }}" data-dias="{{ cliente_data.dias_transcurridos }}">
             <td>
               <strong>{{ cliente_data.cliente.nombre }} {{ cliente_data.cliente.apellido }}</strong>
               <br><small>{{ cliente_data.cliente.cedula }}</small>
@@ -130,7 +133,8 @@
               <span class="badge-dias">{{ cliente_data.ventas_pendientes }}</span>
             </td>
             <td class="text-right">
-              <span class="text-danger deuda-total">Bs {{ cliente_data.deuda_total|floatformat:2 }}</span>
+              <span class="text-danger deuda-total">Bs {{ cliente_data.deuda_total_bs|formato_venezolano }}</span>
+              <br><small class="text-muted">$ {{ cliente_data.deuda_total_usd|formato_venezolano }}</small>
             </td>
             <td class="text-center">
               <span class="badge-dias {{ cliente_data.badge_class }}">
@@ -162,32 +166,77 @@
   </div>
 </div>
 
-<!-- ===== ABONOS RECIENTES ===== -->
+<!-- ===== ABONOS RECIENTES (JERÁRQUICO) ===== -->
 <div class="panel-abonos-recientes">
   <h3><i class="fas fa-history"></i> Abonos Recientes (Últimos 30 días)</h3>
   <div class="abonos-lista">
-    {% for abono in abonos_recientes %}
-    <div class="abono-item">
-      <div class="abono-fecha">
-        <strong>{{ abono.Fecha_Abono|date:"d/m/Y" }}</strong>
-        <small>{{ abono.Fecha_Abono|time:"H:i" }}</small>
+    {% for cliente_grupo in abonos_recientes %}
+    <div class="cliente-grupo-card">
+      <!-- Encabezado del Cliente -->
+      <div class="cliente-header" onclick="toggleElement(this.nextElementSibling); toggleIcon(this.querySelector('.fa-chevron-right'))">
+        <div class="cliente-header-info">
+          <i class="fas fa-user-circle"></i>
+          <div>
+            <strong>{{ cliente_grupo.cliente.nombre }} {{ cliente_grupo.cliente.apellido }}</strong>
+            <br><small>{{ cliente_grupo.cliente.cedula }}</small>
+          </div>
+        </div>
+        <div class="cliente-header-total">
+          <span class="text-success">Bs {{ cliente_grupo.total_bs|formato_venezolano }}</span>
+          <br><small>{{ cliente_grupo.ventas_list|length }} venta{{ cliente_grupo.ventas_list|length|pluralize }}</small>
+        </div>
+        <div class="toggle-icon">
+          <i class="fas fa-chevron-right"></i>
+        </div>
       </div>
-      <div class="abono-info">
-        <span class="abono-cliente">{{ abono.Cliente.nombre }} {{ abono.Cliente.apellido }}</span>
-        <small>Venta #{{ abono.ID_Ventas.ID_Ventas }}</small>
-      </div>
-      <div class="abono-monto">
-        <strong class="text-success">Bs {{ abono.Monto_Abono_Bs|floatformat:2 }}</strong>
-        <small>{{ abono.get_Metodo_Pago_display }}</small>
-      </div>
-      <div class="abono-acciones">
-        <span class="badge badge-success">Registrado</span>
+
+      <!-- Contenedor de Ventas del Cliente -->
+      <div class="ventas-colapsable">
+        {% for venta_grupo in cliente_grupo.ventas_list %}
+        <div class="venta-grupo-container">
+          <div class="venta-header" onclick="toggleElement(this.nextElementSibling); toggleIcon(this.querySelector('.fa-plus-square'))">
+            <div class="venta-header-info">
+              <i class="fas fa-shopping-cart"></i>
+              <strong>Venta #{{ venta_grupo.id_venta }}</strong>
+              <span>({{ venta_grupo.abonos|length }} pago{{ venta_grupo.abonos|length|pluralize }})</span>
+            </div>
+            <div class="venta-header-monto">
+              <strong>Bs {{ venta_grupo.total_bs_venta|formato_venezolano }}</strong>
+              <i class="far fa-plus-square"></i>
+            </div>
+          </div>
+
+          <!-- Detalles de Abonos de la Venta -->
+          <div class="abonos-detalles-tabla">
+            <table>
+              <thead>
+                <tr>
+                  <th>Hora</th>
+                  <th>Método</th>
+                  <th>Comprobante</th>
+                  <th class="text-right">Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for abono in venta_grupo.abonos %}
+                <tr class="{% if abono.anulado %}anulado{% endif %}">
+                  <td>{{ abono.Fecha_Abono|time:"H:i" }}</td>
+                  <td>{{ abono.get_Metodo_Pago_display }}</td>
+                  <td>{{ abono.Comprobante|default:"-" }}</td>
+                  <td class="text-right text-success"><strong>Bs {{ abono.Monto_Abono_Bs|formato_venezolano }}</strong></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endfor %}
       </div>
     </div>
     {% empty %}
     <div class="empty-state">
       <i class="fas fa-coins"></i>
-      <p>No hay abonos recientes</p>
+      <p>No hay abonos registrados en los últimos 30 días</p>
     </div>
     {% endfor %}
   </div>
@@ -196,8 +245,149 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'cuentas_pendientes/css/menu_cuentas.css' %}">
+<style>
+  /* Estilos para Agrupación Jerárquica de Abonos */
+  .cliente-grupo-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    overflow: hidden;
+  }
+  .cliente-header {
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    background: #fdfdfd;
+    transition: background 0.2s;
+  }
+  .cliente-header:hover {
+    background: #f8f9fa;
+  }
+  .cliente-header-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .cliente-header-info i {
+    font-size: 2rem;
+    color: var(--primary);
+  }
+  .cliente-header-total {
+    text-align: right;
+    min-width: 150px;
+  }
+  .cliente-header-total strong {
+    font-size: 1.1rem;
+  }
+
+  .ventas-colapsable {
+    display: none;
+    padding: 0 20px 15px 20px;
+    background: #fff;
+    border-top: 1px solid #eee;
+  }
+  .ventas-colapsable.active {
+    display: block;
+  }
+
+  .venta-grupo-container {
+    margin-top: 10px;
+    border: 1px solid #edf2f7;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .venta-header {
+    background: #f7fafc;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+  }
+  .venta-header-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #4a5568;
+  }
+  .venta-header-monto {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--success);
+  }
+
+  .abonos-detalles-tabla {
+    display: none;
+    padding: 10px;
+    background: white;
+  }
+  .abonos-detalles-tabla.active {
+    display: block;
+  }
+  .abonos-detalles-tabla table {
+    width: 100%;
+    margin-bottom: 0;
+    font-size: 0.85rem;
+  }
+  .abonos-detalles-tabla th {
+    background: #f1f5f9;
+    padding: 6px 10px;
+    font-weight: 600;
+  }
+  .abonos-detalles-tabla td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .abonos-detalles-tabla tr.anulado {
+    text-decoration: line-through;
+    opacity: 0.6;
+  }
+
+  .toggle-icon i {
+    transition: transform 0.3s;
+    color: #a0aec0;
+  }
+  .toggle-icon i.fa-chevron-down {
+    transform: rotate(180deg);
+  }
+  .fa-plus-square, .fa-minus-square {
+    cursor: pointer;
+    color: var(--primary);
+  }
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'cuentas_pendientes/js/menu_cuentas.js' %}"></script>
+<script>
+  function toggleElement(el) {
+    if (el) {
+      el.classList.toggle('active');
+    }
+  }
+
+  function toggleIcon(icon) {
+    if (icon) {
+      if (icon.classList.contains('fa-chevron-right')) {
+        icon.classList.remove('fa-chevron-right');
+        icon.classList.add('fa-chevron-down');
+      } else if (icon.classList.contains('fa-chevron-down')) {
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-right');
+      } else if (icon.classList.contains('fa-plus-square')) {
+        icon.classList.remove('fa-plus-square');
+        icon.classList.add('fa-minus-square');
+      } else if (icon.classList.contains('fa-minus-square')) {
+        icon.classList.remove('fa-minus-square');
+        icon.classList.add('fa-plus-square');
+      }
+    }
+  }
+</script>
 {% endblock %}

@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
+{% load currency_tags %}
 
 {% block title %}Cierre de Caja - Tienda Naturista{% endblock %}
 
@@ -82,14 +84,14 @@
                             <td>
                                 <span class="amount-display amount-system"
                                     data-raw="{{ montos_sistema.efectivo_bs|stringformat:'.2f' }}">
-                                    Bs {{ montos_sistema.efectivo_bs|floatformat:2 }}
+                                    Bs {{ montos_sistema.efectivo_bs|formato_venezolano }}
                                 </span>
                             </td>
                             <td>
                                 <div class="amount-input-group">
                                     <span class="currency-symbol">Bs</span>
                                     <input type="text" name="real_efectivo_bs" class="amount-input"
-                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Efectivo_Bs|floatformat:2 }}{% else %}0,00{% endif %}"
+                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Efectivo_Bs|formato_venezolano }}{% else %}0,00{% endif %}"
                                         autocomplete="off">
                                 </div>
                             </td>
@@ -104,14 +106,14 @@
                             <td>
                                 <span class="amount-display amount-system"
                                     data-raw="{{ montos_sistema.efectivo_usd|stringformat:'.2f' }}">
-                                    $ {{ montos_sistema.efectivo_usd|floatformat:2 }}
+                                    $ {{ montos_sistema.efectivo_usd|formato_venezolano }}
                                 </span>
                             </td>
                             <td>
                                 <div class="amount-input-group">
                                     <span class="currency-symbol">$</span>
                                     <input type="text" name="real_efectivo_usd" class="amount-input"
-                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Efectivo_USD|floatformat:2 }}{% else %}0,00{% endif %}"
+                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Efectivo_USD|formato_venezolano }}{% else %}0,00{% endif %}"
                                         autocomplete="off">
                                 </div>
                             </td>
@@ -126,14 +128,14 @@
                             <td>
                                 <span class="amount-display amount-system"
                                     data-raw="{{ montos_sistema.punto_venta|stringformat:'.2f' }}">
-                                    Bs {{ montos_sistema.punto_venta|floatformat:2 }}
+                                    Bs {{ montos_sistema.punto_venta|formato_venezolano }}
                                 </span>
                             </td>
                             <td>
                                 <div class="amount-input-group">
                                     <span class="currency-symbol">Bs</span>
                                     <input type="text" name="real_punto_venta" class="amount-input"
-                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Punto_Venta|floatformat:2 }}{% else %}0,00{% endif %}"
+                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Punto_Venta|formato_venezolano }}{% else %}0,00{% endif %}"
                                         autocomplete="off">
                                 </div>
                             </td>
@@ -148,14 +150,14 @@
                             <td>
                                 <span class="amount-display amount-system"
                                     data-raw="{{ montos_sistema.pago_movil|stringformat:'.2f' }}">
-                                    Bs {{ montos_sistema.pago_movil|floatformat:2 }}
+                                    Bs {{ montos_sistema.pago_movil|formato_venezolano }}
                                 </span>
                             </td>
                             <td>
                                 <div class="amount-input-group">
                                     <span class="currency-symbol">Bs</span>
                                     <input type="text" name="real_pago_movil" class="amount-input"
-                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Pago_Movil|floatformat:2 }}{% else %}0,00{% endif %}"
+                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Pago_Movil|formato_venezolano }}{% else %}0,00{% endif %}"
                                         autocomplete="off">
                                 </div>
                             </td>
@@ -170,14 +172,14 @@
                             <td>
                                 <span class="amount-display amount-system"
                                     data-raw="{{ montos_sistema.transferencia|stringformat:'.2f' }}">
-                                    Bs {{ montos_sistema.transferencia|floatformat:2 }}
+                                    Bs {{ montos_sistema.transferencia|formato_venezolano }}
                                 </span>
                             </td>
                             <td>
                                 <div class="amount-input-group">
                                     <span class="currency-symbol">Bs</span>
                                     <input type="text" name="real_transferencia" class="amount-input"
-                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Transferencia|floatformat:2 }}{% else %}0,00{% endif %}"
+                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Transferencia|formato_venezolano }}{% else %}0,00{% endif %}"
                                         autocomplete="off">
                                 </div>
                             </td>
@@ -192,14 +194,14 @@
                             <td>
                                 <span class="amount-display amount-system"
                                     data-raw="{{ montos_sistema.tarjeta|stringformat:'.2f' }}">
-                                    Bs {{ montos_sistema.tarjeta|floatformat:2 }}
+                                    Bs {{ montos_sistema.tarjeta|formato_venezolano }}
                                 </span>
                             </td>
                             <td>
                                 <div class="amount-input-group">
                                     <span class="currency-symbol">Bs</span>
                                     <input type="text" name="real_tarjeta" class="amount-input"
-                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Tarjeta|floatformat:2 }}{% else %}0,00{% endif %}"
+                                        value="{% if cierre_existente %}{{ cierre_existente.Real_Tarjeta|formato_venezolano }}{% else %}0,00{% endif %}"
                                         autocomplete="off">
                                 </div>
                             </td>

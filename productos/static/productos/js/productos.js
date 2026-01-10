@@ -50,6 +50,26 @@ document.addEventListener('DOMContentLoaded', function () {
         return cookieValue;
     }
 
+    // ===== FUNCIONES DE FORMATO VENEZOLANO =====
+    function formatearNumeroVenezolano(numero, decimales = 2) {
+        if (numero === null || numero === undefined || numero === '' || isNaN(numero)) {
+            return '0,00';
+        }
+        const num = parseFloat(numero);
+        const partes = Math.abs(num).toFixed(decimales).split('.');
+        let parteEntera = partes[0];
+        let parteDecimal = partes[1] || '00';
+        if (parteDecimal.length === 1) parteDecimal += '0';
+        parteEntera = parteEntera.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        const signo = num < 0 ? '-' : '';
+        return `${signo}${parteEntera},${parteDecimal}`;
+    }
+
+    function formatearMonto(valor, conSimbolo = true) {
+        const num = formatearNumeroVenezolano(valor);
+        return conSimbolo ? `$ ${num}` : num;
+    }
+
     // ===== VALIDACIÓN PARA FILTRO UBICACIÓN =====
     function inicializarValidacionUbicacionFiltro() {
         if (!ubicacionInput) return;
@@ -513,7 +533,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (data.success) {
                         const celdaPrecio = document.querySelector(`.editable-precio[data-producto-id="${productoId}"]`);
                         if (celdaPrecio) {
-                            celdaPrecio.textContent = `$${data.precio_venta.toString().replace('.', ',')}`;
+                            celdaPrecio.textContent = formatearMonto(data.precio_venta);
                             celdaPrecio.setAttribute('data-precio-actual', data.precio_venta);
                         }
 
