@@ -821,22 +821,21 @@ def generar_pdf_lotes(request):
         y_position = height - 2.2*inch
         line_height = 0.2*inch
         
-        # Encabezados de tabla
+        # Encabezados de tabla (SIN ID)
         p.setFont("Helvetica-Bold", 7)
-        p.drawString(0.5*inch, y_position, "ID")
-        p.drawString(0.8*inch, y_position, "CÓDIGO")
-        p.drawString(1.5*inch, y_position, "PRODUCTO")
+        p.drawString(0.5*inch, y_position, "CÓDIGO")
+        p.drawString(1.3*inch, y_position, "PRODUCTO")
         p.drawString(2.8*inch, y_position, "PROVEEDOR")
         p.drawString(4.0*inch, y_position, "C.UNIT")
-        p.drawString(4.5*inch, y_position, "C.TOTAL")
-        p.drawString(5.0*inch, y_position, "CANT.")
-        p.drawString(5.5*inch, y_position, "DISP.")
-        p.drawString(6.0*inch, y_position, "F.REC.")
-        p.drawString(6.5*inch, y_position, "F.VENC.")
-        p.drawString(7.2*inch, y_position, "ESTADO")
+        p.drawString(4.7*inch, y_position, "C.TOTAL")
+        p.drawString(5.4*inch, y_position, "CANT.")
+        p.drawString(5.9*inch, y_position, "DISP.")
+        p.drawString(6.4*inch, y_position, "F.REC.")
+        p.drawString(7.0*inch, y_position, "F.VENC.")
+        p.drawString(7.6*inch, y_position, "ESTADO")
         
         y_position -= line_height
-        p.line(0.5*inch, y_position, 7.8*inch, y_position)
+        p.line(0.5*inch, y_position, 8.0*inch, y_position)
         y_position -= 0.1*inch
         
         # Datos de lotes
@@ -848,49 +847,48 @@ def generar_pdf_lotes(request):
                 y_position = height - 1*inch
                 p.setFont("Helvetica", 6)
                 
-                # Encabezados en nueva página
+                # Encabezados en nueva página (SIN ID)
                 p.setFont("Helvetica-Bold", 7)
-                p.drawString(0.5*inch, y_position, "ID")
-                p.drawString(0.8*inch, y_position, "CÓDIGO")
-                p.drawString(1.5*inch, y_position, "PRODUCTO")
+                p.drawString(0.5*inch, y_position, "CÓDIGO")
+                p.drawString(1.3*inch, y_position, "PRODUCTO")
                 p.drawString(2.8*inch, y_position, "PROVEEDOR")
                 p.drawString(4.0*inch, y_position, "C.UNIT")
-                p.drawString(4.5*inch, y_position, "C.TOTAL")
-                p.drawString(5.0*inch, y_position, "CANT.")
-                p.drawString(5.5*inch, y_position, "DISP.")
-                p.drawString(6.0*inch, y_position, "F.REC.")
-                p.drawString(6.5*inch, y_position, "F.VENC.")
-                p.drawString(7.2*inch, y_position, "ESTADO")
+                p.drawString(4.7*inch, y_position, "C.TOTAL")
+                p.drawString(5.4*inch, y_position, "CANT.")
+                p.drawString(5.9*inch, y_position, "DISP.")
+                p.drawString(6.4*inch, y_position, "F.REC.")
+                p.drawString(7.0*inch, y_position, "F.VENC.")
+                p.drawString(7.6*inch, y_position, "ESTADO")
                 
                 y_position -= line_height
-                p.line(0.5*inch, y_position, 7.8*inch, y_position)
+                p.line(0.5*inch, y_position, 8.0*inch, y_position)
                 y_position -= 0.1*inch
                 p.setFont("Helvetica", 6)
             
             # Truncar nombres largos
             producto_nombre = lote.id_producto.nombre_pro
-            if len(producto_nombre) > 15:
-                producto_nombre = producto_nombre[:12] + "..."
+            if len(producto_nombre) > 18:
+                producto_nombre = producto_nombre[:15] + "..."
             
             proveedor_nombre = lote.proveedor.nombre
-            if len(proveedor_nombre) > 12:
-                proveedor_nombre = proveedor_nombre[:9] + "..."
+            if len(proveedor_nombre) > 14:
+                proveedor_nombre = proveedor_nombre[:11] + "..."
             
             # Formatear fechas
             fecha_recibimiento = lote.fecha_recibimiento.strftime("%d/%m/%y")
             fecha_vencimiento = lote.fecha_vencimiento.strftime("%d/%m/%y")
             
-            p.drawString(0.5*inch, y_position, str(lote.id_lote))
-            p.drawString(0.8*inch, y_position, lote.codigo_lote)
-            p.drawString(1.5*inch, y_position, producto_nombre)
+            # Dibujar datos (SIN ID)
+            p.drawString(0.5*inch, y_position, lote.codigo_lote)
+            p.drawString(1.3*inch, y_position, producto_nombre)
             p.drawString(2.8*inch, y_position, proveedor_nombre)
             p.drawString(4.0*inch, y_position, f"${lote.costo_unitario}")
-            p.drawString(4.5*inch, y_position, f"${lote.costo_total}")
-            p.drawString(5.0*inch, y_position, str(lote.cantidad))
-            p.drawString(5.5*inch, y_position, str(lote.cantidad_disponible))
-            p.drawString(6.0*inch, y_position, fecha_recibimiento)
-            p.drawString(6.5*inch, y_position, fecha_vencimiento)
-            p.drawString(7.2*inch, y_position, lote.get_estado_display())
+            p.drawString(4.7*inch, y_position, f"${lote.costo_total}")
+            p.drawString(5.4*inch, y_position, str(lote.cantidad))
+            p.drawString(5.9*inch, y_position, str(lote.cantidad_disponible))
+            p.drawString(6.4*inch, y_position, fecha_recibimiento)
+            p.drawString(7.0*inch, y_position, fecha_vencimiento)
+            p.drawString(7.6*inch, y_position, lote.get_estado_display())
             
             y_position -= line_height
         
