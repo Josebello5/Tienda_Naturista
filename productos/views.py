@@ -193,14 +193,24 @@ def cambiar_estado_producto(request, id_producto):
     try:
         producto = Producto.objects.get(ID_producto=id_producto)
         
-        # Solo permitir cambiar entre activo e inactivo manualmente
-        # El estado 'agotado' se maneja automáticamente por stock
-        if producto.estado == 'agotado':
-            # Si está agotado, solo permitir activar manualmente
-            nuevo_estado = 'activo'
+        # Calcular el stock actual del producto
+        stock_actual = producto.lote_set.filter(estado='activo').aggregate(
+            total=Sum('cantidad_disponible')
+        )['total'] or 0
+        
+        # Lógica de cambio de estado:
+        # - Si está INACTIVO → intentar activar (activo si hay stock, agotado si no)
+        # - Si está ACTIVO o AGOTADO → cambiar a INACTIVO
+        
+        if producto.estado == 'inactivo':
+            # Intentar activar desde inactivo
+            if stock_actual > 0:
+                nuevo_estado = 'activo'
+            else:
+                nuevo_estado = 'agotado'
         else:
-            # Cambiar entre activo e inactivo
-            nuevo_estado = 'inactivo' if producto.estado == 'activo' else 'activo'
+            # Desde activo o agotado → siempre ir a inactivo
+            nuevo_estado = 'inactivo'
         
         producto.estado = nuevo_estado
         producto.save()
@@ -208,7 +218,8 @@ def cambiar_estado_producto(request, id_producto):
         return JsonResponse({
             'success': True, 
             'nuevo_estado': producto.estado,
-            'nuevo_estado_display': producto.get_estado_display()
+            'nuevo_estado_display': producto.get_estado_display(),
+            'stock_actual': stock_actual  # Enviar el stock para información
         })
             
     except Producto.DoesNotExist:

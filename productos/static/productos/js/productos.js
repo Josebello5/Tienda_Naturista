@@ -565,15 +565,16 @@ document.addEventListener('DOMContentLoaded', function () {
             let mensajeConfirmacion;
             let accion;
 
-            if (estadoActual === 'agotado') {
+            // Nueva lógica simplificada:
+            // - Si está inactivo → activar
+            // - Si está activo o agotado → desactivar
+            if (estadoActual === 'inactivo') {
                 accion = 'activar';
                 mensajeConfirmacion = '¿Estás seguro de que deseas activar este producto?';
-            } else if (estadoActual === 'activo') {
+            } else {
+                // Desde activo o agotado → desactivar
                 accion = 'desactivar';
                 mensajeConfirmacion = '¿Estás seguro de que deseas desactivar este producto?';
-            } else {
-                accion = 'activar';
-                mensajeConfirmacion = '¿Estás seguro de que deseas activar este producto?';
             }
 
             const confirmado = await mostrarConfirmacion(mensajeConfirmacion, `Confirmar ${accion.charAt(0).toUpperCase() + accion.slice(1)}`);
@@ -595,27 +596,38 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (data.success) {
                     const fila = document.querySelector(`tr[data-producto-id="${productoId}"]`);
                     if (fila) {
-                        const celdaEstado = fila.querySelector('td:nth-child(11) .status');
+                        // La columna de estado es la 8va (Nombre, Categoría, Patología, IVA, Precio, Ubicación, Stock, Estado)
+                        const celdaEstado = fila.querySelector('td:nth-child(8) .status');
                         const botonEstado = fila.querySelector('.btn-cambiar-estado');
                         const iconoEstado = botonEstado.querySelector('i');
 
+                        // Actualizar el atributo data-estado de la fila
                         fila.setAttribute('data-estado', data.nuevo_estado);
 
-                        celdaEstado.className = 'status ' +
-                            (data.nuevo_estado === 'activo' ? 'status-active' :
-                                data.nuevo_estado === 'inactivo' ? 'status-inactive' : 'status-agotado');
-                        celdaEstado.textContent = data.nuevo_estado_display;
-
-                        if (data.nuevo_estado === 'activo') {
-                            iconoEstado.className = 'fas fa-toggle-on';
-                        } else {
-                            iconoEstado.className = 'fas fa-toggle-off';
+                        // Actualizar la celda de estado con la clase y texto correctos
+                        if (celdaEstado) {
+                            celdaEstado.className = 'status ' +
+                                (data.nuevo_estado === 'activo' ? 'status-active' :
+                                    data.nuevo_estado === 'inactivo' ? 'status-inactive' : 'status-agotado');
+                            celdaEstado.textContent = data.nuevo_estado_display;
                         }
+
+                        // Actualizar el icono del botón
+                        if (iconoEstado) {
+                            if (data.nuevo_estado === 'activo') {
+                                iconoEstado.className = 'fas fa-toggle-on';
+                            } else {
+                                iconoEstado.className = 'fas fa-toggle-off';
+                            }
+                        }
+
+                        // Actualizar el atributo data-estado-actual del botón
                         botonEstado.setAttribute('data-estado-actual', data.nuevo_estado);
 
-                        filtrarProductos();
-
+                        // Mostrar mensaje de éxito
                         mostrarModalExito('¡Éxito!', `Producto ${accion === 'activar' ? 'activado' : 'desactivado'} correctamente`);
+                    } else {
+                        mostrarModalError('Error', 'No se pudo encontrar el producto en la tabla');
                     }
                 } else {
                     mostrarModalError('Error', data.error);
