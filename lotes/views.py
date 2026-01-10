@@ -100,7 +100,7 @@ def menu_lote(request):
         lotes = lotes.filter(fecha_vencimiento__range=[fecha_vencimiento_desde, fecha_vencimiento_hasta])
     
     # Obtener productos para el filtro
-    productos = Producto.objects.filter(estado='activo')
+    productos = Producto.objects.all().order_by('nombre_pro')
     
     # Obtener proveedores para el filtro (desde la tabla Proveedor)
     proveedores = Proveedor.objects.all().order_by('nombre')

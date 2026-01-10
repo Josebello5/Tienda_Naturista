@@ -487,6 +487,119 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ===== LÓGICA DE FILTRADO POR FECHAS (MODAL COMPARTIDO) =====
+    const modalFiltroFechas = document.getElementById('modalFiltroFechas');
+    const btnFiltroRecibimiento = document.getElementById('btnFiltroRecibimiento');
+    const btnFiltroVencimiento = document.getElementById('btnFiltroVencimiento');
+    const modalTitulo = document.getElementById('modalTitulo');
+    const btnAplicarFecha = document.getElementById('btnAplicar'); // ID en el HTML es btnAplicar
+    const btnCancelarFecha = document.getElementById('btnCancelar'); // ID en el HTML es btnCancelar
+    const btnCerrarModalFecha = document.getElementById('btnCerrarModal');
+    const inputFechaDesde = document.getElementById('fechaDesde');
+    const inputFechaHasta = document.getElementById('fechaHasta');
+    const btnsOpcionRapida = document.querySelectorAll('.btn-opcion');
+
+    let filtroFechaTipo = ''; // 'recibimiento' o 'vencimiento'
+
+    function abrirModalFiltroFecha(tipo) {
+        filtroFechaTipo = tipo;
+        if (modalTitulo) {
+            modalTitulo.textContent = tipo === 'recibimiento' ? 'Filtrar por Fecha de Recibimiento' : 'Filtrar por Fecha de Vencimiento';
+        }
+        // Limpiar inputs
+        if (inputFechaDesde) inputFechaDesde.value = '';
+        if (inputFechaHasta) inputFechaHasta.value = '';
+
+        if (modalFiltroFechas) {
+            modalFiltroFechas.style.display = 'flex';
+        }
+    }
+
+    function cerrarModalFiltroFecha() {
+        if (modalFiltroFechas) {
+            modalFiltroFechas.style.display = 'none';
+        }
+    }
+
+    if (btnFiltroRecibimiento) {
+        btnFiltroRecibimiento.addEventListener('click', () => abrirModalFiltroFecha('recibimiento'));
+    }
+
+    if (btnFiltroVencimiento) {
+        btnFiltroVencimiento.addEventListener('click', () => abrirModalFiltroFecha('vencimiento'));
+    }
+
+    if (btnCerrarModalFecha) btnCerrarModalFecha.addEventListener('click', cerrarModalFiltroFecha);
+    if (btnCancelarFecha) btnCancelarFecha.addEventListener('click', cerrarModalFiltroFecha);
+
+    if (btnAplicarFecha) {
+        btnAplicarFecha.addEventListener('click', function () {
+            const desde = inputFechaDesde.value;
+            const hasta = inputFechaHasta.value;
+
+            const params = new URLSearchParams(window.location.search);
+
+            // Limpiar params anteriores del mismo tipo
+            if (filtroFechaTipo === 'recibimiento') {
+                params.delete('fecha_recibimiento_desde');
+                params.delete('fecha_recibimiento_hasta');
+                params.delete('rango_recibimiento');
+
+                if (desde) params.set('fecha_recibimiento_desde', desde);
+                if (hasta) params.set('fecha_recibimiento_hasta', hasta);
+            } else {
+                params.delete('fecha_vencimiento_desde');
+                params.delete('fecha_vencimiento_hasta');
+                params.delete('rango_vencimiento');
+
+                if (desde) params.set('fecha_vencimiento_desde', desde);
+                if (hasta) params.set('fecha_vencimiento_hasta', hasta);
+            }
+
+            // Siempre volver a la página 1 al filtrar
+            params.delete('page');
+
+            window.location.search = params.toString();
+        });
+    }
+
+    // Opciones rápidas
+    btnsOpcionRapida.forEach(btn => {
+        btn.addEventListener('click', function () {
+            if (this.classList.contains('btn-limpiar')) {
+                inputFechaDesde.value = '';
+                inputFechaHasta.value = '';
+                return;
+            }
+
+            const dias = parseInt(this.getAttribute('data-dias'));
+            const hoy = new Date();
+            const fechaFin = new Date(hoy);
+            const fechaInicio = new Date(hoy);
+
+            if (dias === 1) { // Hoy
+                // Inicio y fin son hoy
+            } else {
+                fechaInicio.setDate(hoy.getDate() - dias);
+            }
+
+            // Formatear a YYYY-MM-DD
+            const formatoFecha = (d) => {
+                return d.toISOString().split('T')[0];
+            };
+
+            inputFechaDesde.value = formatoFecha(fechaInicio);
+            inputFechaHasta.value = formatoFecha(fechaFin);
+        });
+    });
+
+    // Cerrar modal al hacer clic fuera
+    window.addEventListener('click', function (e) {
+        if (e.target === modalFiltroFechas) {
+            cerrarModalFiltroFecha();
+        }
+    });
+
     // ===== INICIALIZACIÓN =====
     restaurarFiltrosDesdeURL();
     console.log('Sistema de filtros de lotes inicializado');
