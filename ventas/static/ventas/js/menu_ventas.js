@@ -303,7 +303,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // Actualizar elementos del DOM
         document.getElementById('totalVentas').textContent = totalVentas;
         
+        console.log('Actualizando paneles - Moneda actual:', monedaActual);
+        console.log('Totales calculados - Bs:', totalBs, 'USD:', totalUsd);
+        console.log('Subtotales calculados - Bs:', subtotalBs, 'USD:', subtotalUsd);
+        console.log('IVA calculado - Bs:', ivaBs, 'USD:', ivaUsd);
+        
         if (monedaActual === 'bs') {
+            // Mostrar en Bolívares
+            console.log('Mostrando en Bolívares');
             document.getElementById('totalGeneralBs').textContent = formatearMonto(totalBs, 'bs');
             document.getElementById('subtotalGeneralBs').textContent = formatearMonto(subtotalBs, 'bs');
             document.getElementById('ivaGeneralBs').textContent = formatearMonto(ivaBs, 'bs');
@@ -313,11 +320,13 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('subtotalGeneralUsd').style.display = 'none';
             document.getElementById('ivaGeneralUsd').style.display = 'none';
         } else {
+            // Mostrar en Dólares - CORREGIDO
+            console.log('Mostrando en Dólares');
             document.getElementById('totalGeneralBs').textContent = formatearMonto(totalUsd, 'usd');
             document.getElementById('subtotalGeneralBs').textContent = formatearMonto(subtotalUsd, 'usd');
             document.getElementById('ivaGeneralBs').textContent = formatearMonto(ivaUsd, 'usd');
             
-            // Mostrar equivalencias en Bs en pequeños
+            // Mostrar equivalencias en Bs en los elementos <p> pequeños
             document.getElementById('totalGeneralUsd').style.display = 'block';
             document.getElementById('totalGeneralUsd').textContent = formatearMonto(totalBs, 'bs');
             document.getElementById('subtotalGeneralUsd').style.display = 'block';
@@ -325,6 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('ivaGeneralUsd').style.display = 'block';
             document.getElementById('ivaGeneralUsd').textContent = formatearMonto(ivaBs, 'bs');
         }
+        console.log('Paneles actualizados correctamente');
     }
 
     /**
@@ -748,8 +758,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== CAMBIO DE MONEDA =====
     if (monedaSelect) {
         monedaSelect.addEventListener('change', function() {
+            console.log('Cambio de moneda detectado:', this.value);
             monedaActual = this.value;
-            actualizarMonedaEnTabla();
+            console.log('monedaActual actualizado a:', monedaActual);
+            actualizarResumenTotales(); // Llamar PRIMERO para actualizar paneles
+            actualizarMonedaEnTabla(); // Luego actualizar tabla
             actualizarIndicadoresFiltro();
         });
     }

@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 {% load humanize %}
 {% load currency_tags %}
@@ -29,8 +29,8 @@
       <i class="fas fa-calculator"></i>
     </div>
     <div class="info-total">
-      <h3 id="subtotalGeneralBs">Bs {{ total_bs|formato_venezolano }}</h3>
-      <p id="subtotalGeneralUsd" style="display: none;">$ {{ total_usd|formato_venezolano }}</p>
+      <h3 id="subtotalGeneralBs">Bs {{ subtotal_bs|formato_venezolano }}</h3>
+      <p id="subtotalGeneralUsd" style="display: none;">$ {{ subtotal_usd|formato_venezolano }}</p>
       <span>Subtotal General</span>
     </div>
   </div>
@@ -40,8 +40,8 @@
       <i class="fas fa-percentage"></i>
     </div>
     <div class="info-total">
-      <h3 id="ivaGeneralBs">Bs 0,00</h3>
-      <p id="ivaGeneralUsd" style="display: none;">$ 0,00</p>
+      <h3 id="ivaGeneralBs">Bs {{ iva_bs|formato_venezolano }}</h3>
+      <p id="ivaGeneralUsd" style="display: none;">$ {{ iva_usd|formato_venezolano }}</p>
       <span>IVA General</span>
     </div>
   </div>
@@ -195,8 +195,9 @@
               <strong>$ {{ venta.get_total_pagado_usd|formato_venezolano }}</strong>
             </td>
             <td class="centered total">
-              <strong>Bs {{ venta.get_equivalente_total_bs|formato_venezolano }}</strong>
-              <br><small style="color: #7f8c8d;">≈ $ {{ venta.get_total_usd|formato_venezolano }}</small>
+              <div class="total-bs"><strong>Bs {{ venta.get_equivalente_total_bs|formato_venezolano }}</strong></div>
+              <div class="total-usd"><small style="color: #7f8c8d;">≈ $ {{ venta.get_total_usd|formato_venezolano }}</small></div>
+              <div class="total-metodo" style="display: none;"></div>
             </td>
             <td class="centered">
               {% if venta.Tipo_Venta == 'credito' %}

@@ -5,6 +5,7 @@ app_name = 'cuentas_pendientes'
 
 urlpatterns = [
     path('menu/', views.menu_cuentas_pendientes, name='menu_cuentas'),
+    path('generar-reporte/', views.generar_reporte_cuentas_pendientes, name='generar_reporte_cuentas'),
     path('api/filtrar/', views.filtrar_cuentas_ajax, name='filtrar_cuentas_ajax'),
     path('buscar-ventas/', views.buscar_ventas_pendientes, name='buscar_ventas'),
     path('gestionar-abono/<str:cliente_cedula>/', views.gestionar_abono_cliente, name='gestionar_abono_cliente'),

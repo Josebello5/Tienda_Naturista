@@ -192,8 +192,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (btnGenerarReporte) {
         btnGenerarReporte.addEventListener('click', function() {
-            // Abrir reporte en nueva pestaña
-            window.open("{% url 'cuentas_pendientes:reporte_cuentas' %}", '_blank');
+            // Capturar filtros actuales
+            const query = searchInput ? searchInput.value.trim() : '';
+            const estado = estadoPagoSelect ? estadoPagoSelect.value : '';
+            
+            // Construir URL con parámetros
+            const params = new URLSearchParams();
+            if (query) params.append('q', query);
+            if (estado) params.append('estado', estado);
+            
+            // Abrir PDF en nueva pestaña
+            const pdfUrl = `/cuentas_pendientes/generar-reporte/?${params.toString()}`;
+            window.open(pdfUrl, '_blank');
         });
     }
     
