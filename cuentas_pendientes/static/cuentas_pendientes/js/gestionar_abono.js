@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let ventasSeleccionadas = [];
     let metodosPago = [];
     let totalAPagar = 0;
+    let totalAPagarUsd = 0; // CORREGIDO: Definir variable faltante
     let totalPagado = 0;
     let restantePagar = 0;
     let tasaActual = window.TASA_ACTUAL || 0;
@@ -270,7 +271,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const checkboxes = document.querySelectorAll('.venta-checkbox:not(:disabled)');
             checkboxes.forEach(checkbox => {
                 checkbox.checked = this.checked;
-                checkbox.dispatchEvent(new Event('change'));
+                // CORRECCIÓN: Agregar bubbles: true para que el listener del document lo detecte
+                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
             });
         });
 
@@ -319,6 +321,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Calcular total a pagar
         totalAPagar = ventasSeleccionadas.reduce((sum, venta) => sum + venta.saldo, 0);
+        totalAPagarUsd = ventasSeleccionadas.reduce((sum, venta) => sum + venta.saldoUsd, 0); // CORREGIDO: Calcular USD
         totalPagado = metodosPago.reduce((sum, pago) => sum + pago.montoBs, 0);
         restantePagar = Math.max(0, totalAPagar - totalPagado);
 
@@ -744,6 +747,32 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
+        // Mostrar mensaje si no hay resultados
+        const emptyRow = tableBody.querySelector('.empty-row');
+        const emptyRowFilter = tableBody.querySelector('.empty-row-filter');
+        
+        // Verificar si hay filtros activos
+        const hayFiltrosActivos = query || estadoPago || filtroFechaVenta.desde || filtroFechaVenta.hasta;
+        
+        // Contar total de filas de ventas (excluyendo las filas de mensaje)
+        const totalFilasVentas = Array.from(rows).filter(row => 
+            !row.classList.contains('empty-row') && !row.classList.contains('empty-row-filter')
+        ).length;
+        
+        if (totalFilasVentas === 0) {
+            // No hay ventas en absoluto - mostrar mensaje original de Django
+            if (emptyRow) emptyRow.style.display = '';
+            if (emptyRowFilter) emptyRowFilter.style.display = 'none';
+        } else if (hayFiltrosActivos && visibleRows === 0) {
+            // Hay ventas pero los filtros no devuelven resultados
+            if (emptyRow) emptyRow.style.display = 'none';
+            if (emptyRowFilter) emptyRowFilter.style.display = '';
+        } else {
+            // Hay resultados visibles
+            if (emptyRow) emptyRow.style.display = 'none';
+            if (emptyRowFilter) emptyRowFilter.style.display = 'none';
+        }
+
         // Actualizar selección después de filtrar
         actualizarVentasSeleccionadas();
         actualizarResumenTotales();
@@ -826,7 +855,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function actualizarIndicadoresFiltro() {
         if (filtroFechaVenta.desde || filtroFechaVenta.hasta) {
             btnFiltroFechaVenta.classList.add('filtro-activo');
-            btnFiltroFechaVenta.innerHTML = `<i class="fas fa-calendar-day"></i> Fecha de Venta <span class="badge badge-light">✓</span>`;
+            btnFiltroFechaVenta.innerHTML = `<i class="fas fa-calendar-check"></i> Fecha de Venta <span class="badge badge-light">Activo</span>`;
         } else {
             btnFiltroFechaVenta.classList.remove('filtro-activo');
             btnFiltroFechaVenta.innerHTML = `<i class="fas fa-calendar-day"></i> Fecha de Venta`;
@@ -1081,19 +1110,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (estadoPagoSelect) {
-        estadoPagoSelect.addEventListener('change', function () {
-            // Reload page with the selected filter
-            const selectedValue = this.value;
-            const currentUrl = new URL(window.location.href);
-
-            if (selectedValue) {
-                currentUrl.searchParams.set('estado_pago', selectedValue);
-            } else {
-                currentUrl.searchParams.delete('estado_pago');
-            }
-
-            window.location.href = currentUrl.toString();
-        });
+        estadoPagoSelect.addEventListener('change', filtrarVentas);
     }
 
     if (btnLimpiarFiltros) {

@@ -242,7 +242,17 @@
 
 .btn-filtro-fecha.filtro-activo {
   border-color: var(--primary);
-  background-color: rgba(58, 140, 110, 0.05);
+  background-color: var(--primary);
+  color: white;
+  box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.2);
+}
+
+.btn-filtro-fecha.filtro-activo i {
+  color: white;
+}
+
+.btn-filtro-fecha.filtro-activo .badge {
+  background: white;
   color: var(--primary);
 }
 
@@ -436,7 +446,7 @@
 }
 
 .btn-info {
-  background: var(--info);
+  background: #17a2b8;  /* Info/Cyan color */
   color: white;
 }
 
@@ -550,31 +560,52 @@
 
 /* Estados vacíos */
 .empty-state,
-.empty-row {
+.empty-row,
+.empty-row-filter {
   text-align: center;
-  padding: 40px 20px;
+  padding: 60px 40px !important;
   color: var(--gray);
+  background: white;
 }
 
 .empty-state i,
-.empty-row i {
-  font-size: 3rem;
-  margin-bottom: 15px;
-  opacity: 0.5;
+.empty-row i,
+.empty-row-filter i {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  color: var(--light-gray);
+  opacity: 0.6;
+  display: block;
+}
+
+.empty-state h3,
+.empty-row h3,
+.empty-row-filter h3 {
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--dark);
+  font-size: 1.5rem;
 }
 
 .empty-state p,
-.empty-row p {
-  margin: 10px 0;
+.empty-row p,
+.empty-row-filter p {
+  color: var(--gray);
+  font-size: 1.1rem;
+  margin: 5px 0 20px 0;
 }
 
-.empty-row td {
-  border: none;
+.empty-row td,
+.empty-row-filter td {
+  border: none !important;
+  background: white !important;
 }
 
-.empty-row .btn {
-  margin-top: 15px;
+.empty-row .btn,
+.empty-row-filter .btn {
+  margin-top: 10px;
 }
+
 
 /* Responsive (igual que ventas) */
 @media (max-width: 768px) {

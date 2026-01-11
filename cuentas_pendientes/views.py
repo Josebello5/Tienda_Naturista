@@ -21,11 +21,10 @@ def menu_cuentas_pendientes(request):
     """Vista principal para gestionar cuentas pendientes"""
     hoy = timezone.now()
     
-    # Obtener todos los clientes con deuda pendiente (solo ventas no completadas)
-    clientes_con_deuda = Cliente.objects.filter(
+    # Obtener todos los clientes que tienen o han tenido ventas a crédito
+    clientes_credito = Cliente.objects.filter(
         venta__Tipo_Venta='credito',
-        venta__anulada=False,
-        venta__Estado_Pago__in=['pendiente', 'parcial']  # SOLO pendientes o parciales
+        venta__anulada=False
     ).distinct()
     
     # Obtener tasa actual para mostrar equivalente en Bs (usando zona horaria de Venezuela)
@@ -39,42 +38,47 @@ def menu_cuentas_pendientes(request):
 
     # Calcular deuda total por cliente
     clientes_deuda_detallada = []
-    for cliente in clientes_con_deuda:
-        # Obtener ventas pendientes del cliente
-        ventas_cliente = Venta.objects.filter(
+    for cliente in clientes_credito:
+        # Obtener ventas a crédito del cliente (todas, no solo pendientes)
+        ventas_cliente_credito = Venta.objects.filter(
             Cedula=cliente,
             Tipo_Venta='credito',
-            anulada=False,
-            Estado_Pago__in=['pendiente', 'parcial']  # SOLO pendientes o parciales
-        ).select_related('Cedula').prefetch_related('pagos', 'detalles')
-        
-        if ventas_cliente.exists():
-            # Calcular totales en USD (valor real de la deuda)
-            deuda_total_usd = ventas_cliente.aggregate(
+            anulada=False
+        )
+
+        if ventas_cliente_credito.exists():
+            # Obtener solo las pendientes para el cálculo de estadísticas de deuda
+            ventas_pendientes = ventas_cliente_credito.filter(
+                Estado_Pago__in=['pendiente', 'parcial']
+            ).select_related('Cedula').prefetch_related('pagos', 'detalles')
+            
+            deuda_total_usd = ventas_pendientes.aggregate(
                 total=Sum('Saldo_Pendiente_USD')
             )['total'] or Decimal('0')
             
-            # Calcular días transcurridos desde la venta más antigua
-            venta_mas_antigua = ventas_cliente.order_by('Fecha_Venta').first()
-            diferencia = hoy - venta_mas_antigua.Fecha_Venta
-            dias_transcurridos = diferencia.days
+            # Calcular días transcurridos desde la venta pendiente más antigua (si hay)
+            dias_transcurridos = 0
+            badge_class = 'badge-success'
             
-            # Determinar color del badge según días
-            if dias_transcurridos > 30:
-                badge_class = 'badge-danger'
-            elif dias_transcurridos > 15:
-                badge_class = 'badge-warning'
-            else:
-                badge_class = 'badge-success'
+            if ventas_pendientes.exists():
+                venta_mas_antigua = ventas_pendientes.order_by('Fecha_Venta').first()
+                diferencia = hoy - venta_mas_antigua.Fecha_Venta
+                dias_transcurridos = diferencia.days
+                
+                # Determinar color del badge según días
+                if dias_transcurridos > 30:
+                    badge_class = 'badge-danger'
+                elif dias_transcurridos > 15:
+                    badge_class = 'badge-warning'
             
             clientes_deuda_detallada.append({
                 'cliente': cliente,
                 'deuda_total_usd': deuda_total_usd,
                 'deuda_total_bs': deuda_total_usd * tasa_actual.valor if tasa_actual and tasa_actual.valor else Decimal('0'),
-                'ventas_pendientes': ventas_cliente.count(),
+                'ventas_pendientes': ventas_pendientes.count(),
                 'dias_transcurridos': dias_transcurridos,
                 'badge_class': badge_class,
-                'ventas_list': ventas_cliente
+                'ventas_list': ventas_pendientes
             })
     
     # Ordenar por deuda total (descendente)
@@ -148,12 +152,149 @@ def menu_cuentas_pendientes(request):
         'total_cuentas': total_cuentas,
         'total_saldo_pendiente_usd': total_saldo_pendiente_usd,
         'total_saldo_pendiente': total_saldo_pendiente_bs,
+        'total_clientes_deuda': sum(1 for item in clientes_deuda_detallada if item['ventas_pendientes'] > 0),
         'clientes_top_5': clientes_top_5,
         'abonos_recientes': abonos_recientes_lista,
         'tasa_actual': tasa_actual,
     }
     
     return render(request, 'cuentas_pendientes/menu_cuentas.html', context)
+
+@login_required
+def filtrar_cuentas_ajax(request):
+    """Endpoint AJAX para filtrar cuentas pendientes dinámicamente"""
+    if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+        return JsonResponse({'error': 'Solicitud no válida'}, status=400)
+    
+    # Obtener parámetros de filtro
+    query = request.GET.get('q', '').strip().lower()
+    estado = request.GET.get('estado', '')
+    
+    hoy = timezone.now()
+    
+    # Obtener todos los clientes con historial de crédito
+    clientes_credito = Cliente.objects.filter(
+        venta__Tipo_Venta='credito',
+        venta__anulada=False
+    ).distinct()
+    
+    # Obtener tasa actual
+    import pytz
+    tz_venezuela = pytz.timezone('America/Caracas')
+    ahora_venezuela = timezone.now().astimezone(tz_venezuela)
+    hoy_venezuela = ahora_venezuela.date()
+    
+    tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy_venezuela).order_by('-fecha_creacion')
+    tasa_actual = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.order_by('-fecha_creacion').first()
+    
+    # Calcular deuda total por cliente
+    clientes_deuda_detallada = []
+    for cliente in clientes_credito:
+        # Aplicar filtro de búsqueda por nombre/cédula
+        if query:
+            nombre_completo = f"{cliente.nombre} {cliente.apellido}".lower()
+            cedula = cliente.cedula.lower()
+            if query not in nombre_completo and query not in cedula:
+                continue
+        
+        # Obtener todas las ventas a crédito
+        ventas_cliente_credito = Venta.objects.filter(
+            Cedula=cliente,
+            Tipo_Venta='credito',
+            anulada=False
+        )
+        
+        if ventas_cliente_credito.exists():
+            # Obtener las pendientes para cálculos
+            ventas_pendientes = ventas_cliente_credito.filter(
+                Estado_Pago__in=['pendiente', 'parcial']
+            ).select_related('Cedula').prefetch_related('pagos', 'detalles')
+            
+            deuda_total_usd = ventas_pendientes.aggregate(
+                total=Sum('Saldo_Pendiente_USD')
+            )['total'] or Decimal('0')
+            
+            dias_transcurridos = 0
+            badge_class = 'badge-success'
+            
+            if ventas_pendientes.exists():
+                venta_mas_antigua = ventas_pendientes.order_by('Fecha_Venta').first()
+                diferencia = hoy - venta_mas_antigua.Fecha_Venta
+                dias_transcurridos = diferencia.days
+                
+                # Determinar color del badge
+                if dias_transcurridos > 30:
+                    badge_class = 'badge-danger'
+                elif dias_transcurridos > 15:
+                    badge_class = 'badge-warning'
+            
+            # Aplicar filtro de estado (sólo si se especifica y hay deuda)
+            if estado:
+                if not ventas_pendientes.exists():
+                    continue # Si se busca por mora, ignorar los que no tienen deuda
+                    
+                if estado == 'alta' and dias_transcurridos <= 30:
+                    continue
+                elif estado == 'media' and (dias_transcurridos < 15 or dias_transcurridos > 30):
+                    continue
+                elif estado == 'baja' and dias_transcurridos >= 15:
+                    continue
+            
+            clientes_deuda_detallada.append({
+                'cliente': cliente,
+                'deuda_total_usd': deuda_total_usd,
+                'deuda_total_bs': deuda_total_usd * tasa_actual.valor if tasa_actual and tasa_actual.valor else Decimal('0'),
+                'ventas_pendientes': ventas_pendientes.count(),
+                'dias_transcurridos': dias_transcurridos,
+                'badge_class': badge_class,
+            })
+    
+    # Ordenar por deuda total (descendente)
+    clientes_deuda_detallada.sort(key=lambda x: x['deuda_total_usd'], reverse=True)
+    
+    # Estadísticas filtradas
+    total_cuentas = sum(item['ventas_pendientes'] for item in clientes_deuda_detallada)
+    total_saldo_pendiente_usd = sum(item['deuda_total_usd'] for item in clientes_deuda_detallada)
+    
+    if tasa_actual and tasa_actual.valor:
+        total_saldo_pendiente_bs = total_saldo_pendiente_usd * tasa_actual.valor
+    else:
+        total_saldo_pendiente_bs = Decimal('0')
+    
+    # Top 5 clientes con mayor deuda
+    clientes_top_5 = clientes_deuda_detallada[:5]
+    
+    # Formatear datos para JSON
+    def formatear_moneda(valor):
+        """Formatea un número con separadores de miles y decimales"""
+        if valor is None:
+            return "0,00"
+        valor_str = f"{float(valor):,.2f}"
+        # Convertir formato inglés a venezolano (. por , y , por .)
+        return valor_str.replace(',', 'X').replace('.', ',').replace('X', '.')
+    
+    top_5_data = []
+    for item in clientes_top_5:
+        cliente = item['cliente']
+        top_5_data.append({
+            'nombre': f"{cliente.nombre} {cliente.apellido}",
+            'cedula': cliente.cedula,
+            'deuda_total_bs': formatear_moneda(item['deuda_total_bs']),
+            'deuda_total_usd': formatear_moneda(item['deuda_total_usd']),
+            'ventas_pendientes': item['ventas_pendientes'],
+            'url_abono': f"/cuentas_pendientes/gestionar_abono/{cliente.cedula}/"
+        })
+    
+    return JsonResponse({
+        'success': True,
+        'total_cuentas': total_cuentas,
+        'total_saldo_bs': formatear_moneda(total_saldo_pendiente_bs),
+        'total_saldo_usd': formatear_moneda(total_saldo_pendiente_usd),
+        'total_clientes': len(clientes_deuda_detallada),
+        'total_clientes_deuda': sum(1 for item in clientes_deuda_detallada if item['ventas_pendientes'] > 0),
+        'top_5': top_5_data,
+    })
+
 
 @login_required
 def buscar_ventas_pendientes(request):
@@ -223,13 +364,20 @@ def gestionar_abono_cliente(request, cliente_cedula):
             anulada=False,
             Estado_Pago='parcial'
         )
-    else:
-        # Por defecto, mostrar pendientes y parciales (no completas)
+    elif estado_pago_filtro == 'pendiente':
+        # Si se selecciona "pendiente", mostrar solo ventas pendientes
         ventas_pendientes = Venta.objects.filter(
             Cedula=cliente,
             Tipo_Venta='credito',
             anulada=False,
-            Estado_Pago__in=['pendiente', 'parcial']
+            Estado_Pago='pendiente'
+        )
+    else:
+        # Por defecto, mostrar TODAS las ventas a crédito (incluyendo completas)
+        ventas_pendientes = Venta.objects.filter(
+            Cedula=cliente,
+            Tipo_Venta='credito',
+            anulada=False
         )
     
     ventas_pendientes = ventas_pendientes.select_related('Cedula').prefetch_related('pagos', 'detalles').order_by('Fecha_Venta')
@@ -881,3 +1029,284 @@ def debug_venta(request, venta_id):
     }
     
     return JsonResponse(debug_info)
+
+@login_required
+def imprimir_ventas_cliente(request, cliente_cedula):
+    """Generar PDF con listado de ventas a crédito de un cliente"""
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.units import inch
+    from tienda_naturista.utils import format_venezuelan_money
+    
+    try:
+        cliente = get_object_or_404(Cliente, cedula=cliente_cedula)
+        
+        # Obtener parámetros de filtro
+        query = request.GET.get('q', '').strip()
+        estado_pago_filtro = request.GET.get('estado_pago', '').strip()
+        fecha_desde = request.GET.get('fecha_desde', '').strip()
+        fecha_hasta = request.GET.get('fecha_hasta', '').strip()
+        
+        # Obtener todas las ventas a crédito del cliente
+        ventas = Venta.objects.filter(
+            Cedula=cliente,
+            Tipo_Venta='credito',
+            anulada=False
+        ).select_related('Cedula').prefetch_related('pagos', 'detalles')
+        
+        # Aplicar filtros
+        if estado_pago_filtro == 'completo':
+            ventas = ventas.filter(Estado_Pago='completo')
+        elif estado_pago_filtro == 'parcial':
+            ventas = ventas.filter(Estado_Pago='parcial')
+        elif estado_pago_filtro == 'pendiente':
+            ventas = ventas.filter(Estado_Pago='pendiente')
+        
+        # Filtro por ID de venta (búsqueda)
+        if query:
+            try:
+                venta_id = int(query)
+                ventas = ventas.filter(ID_Ventas=venta_id)
+            except ValueError:
+                # Si no es un número, no filtrar por ID
+                pass
+        
+        # Filtro por rango de fechas
+        if fecha_desde:
+            try:
+                fecha_desde_obj = datetime.strptime(fecha_desde, '%Y-%m-%d')
+                ventas = ventas.filter(Fecha_Venta__gte=fecha_desde_obj)
+            except ValueError:
+                pass
+        
+        if fecha_hasta:
+            try:
+                fecha_hasta_obj = datetime.strptime(fecha_hasta, '%Y-%m-%d')
+                # Agregar 1 día para incluir todo el día hasta
+                fecha_hasta_obj = fecha_hasta_obj.replace(hour=23, minute=59, second=59)
+                ventas = ventas.filter(Fecha_Venta__lte=fecha_hasta_obj)
+            except ValueError:
+                pass
+        
+        ventas = ventas.order_by('-Fecha_Venta')
+        
+        # Calcular totales
+        hoy = timezone.now()
+        total_deuda_bs = Decimal('0')
+        total_deuda_usd = Decimal('0')
+        
+        ventas_data = []
+        for venta in ventas:
+            diferencia = hoy - venta.Fecha_Venta
+            dias_transcurridos = diferencia.days
+            
+            ventas_data.append({
+                'venta': venta,
+                'dias': dias_transcurridos
+            })
+            
+            if venta.Estado_Pago in ['pendiente', 'parcial']:
+                total_deuda_bs += venta.Saldo_Pendiente
+                total_deuda_usd += venta.Saldo_Pendiente_USD
+        
+        # Generar nombre de archivo dinámico basado en filtros
+        nombre_partes = ['ventas_credito', cliente.cedula]
+        
+        if estado_pago_filtro:
+            nombre_partes.append(estado_pago_filtro)
+        
+        if query:
+            nombre_partes.append(f'venta{query}')
+        
+        if fecha_desde or fecha_hasta:
+            if fecha_desde and fecha_hasta:
+                nombre_partes.append(f'{fecha_desde}_a_{fecha_hasta}')
+            elif fecha_desde:
+                nombre_partes.append(f'desde_{fecha_desde}')
+            elif fecha_hasta:
+                nombre_partes.append(f'hasta_{fecha_hasta}')
+        
+        nombre_archivo = '_'.join(nombre_partes) + '.pdf'
+        
+        # Crear PDF
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="{nombre_archivo}"'
+        
+        p = canvas.Canvas(response, pagesize=letter)
+        width, height = letter
+        
+        # Configuración inicial
+        p.setTitle(f"Ventas a Crédito - {cliente.nombre} {cliente.apellido}")
+        
+        # Encabezado
+        p.setFont("Helvetica-Bold", 16)
+        p.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
+        
+        p.setFont("Helvetica", 12)
+        p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
+        
+        p.setFont("Helvetica-Bold", 12)
+        p.drawString(1*inch, height-1.6*inch, f"Reporte de Ventas a Crédito")
+        
+        p.setFont("Helvetica", 10)
+        p.drawString(1*inch, height-1.9*inch, f"Cliente: {cliente.nombre} {cliente.apellido}")
+        p.drawString(1*inch, height-2.1*inch, f"Cédula: {cliente.cedula}")
+        
+        fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
+        p.drawString(1*inch, height-2.3*inch, f"Fecha de impresión: {fecha_actual}")
+        
+        # Mostrar filtros aplicados
+        y_filtros = height-2.5*inch
+        if estado_pago_filtro or query or fecha_desde or fecha_hasta:
+            p.setFont("Helvetica-Bold", 9)
+            p.drawString(1*inch, y_filtros, "Filtros aplicados:")
+            y_filtros -= 0.15*inch
+            p.setFont("Helvetica", 8)
+            
+            if query:
+                p.drawString(1.2*inch, y_filtros, f"• Venta №: {query}")
+                y_filtros -= 0.12*inch
+            
+            if estado_pago_filtro:
+                estado_display = {
+                    'completo': 'Completo',
+                    'pendiente': 'Pendiente',
+                    'parcial': 'Parcial'
+                }.get(estado_pago_filtro, estado_pago_filtro)
+                p.drawString(1.2*inch, y_filtros, f"• Estado: {estado_display}")
+                y_filtros -= 0.12*inch
+            
+            if fecha_desde or fecha_hasta:
+                if fecha_desde and fecha_hasta:
+                    p.drawString(1.2*inch, y_filtros, f"• Período: {fecha_desde} a {fecha_hasta}")
+                elif fecha_desde:
+                    p.drawString(1.2*inch, y_filtros, f"• Desde: {fecha_desde}")
+                elif fecha_hasta:
+                    p.drawString(1.2*inch, y_filtros, f"• Hasta: {fecha_hasta}")
+                y_filtros -= 0.12*inch
+            
+            y_filtros -= 0.1*inch
+        
+        # Resumen de deuda
+        p.setFont("Helvetica-Bold", 10)
+        p.drawString(1*inch, y_filtros, f"Deuda Total: Bs {format_venezuelan_money(total_deuda_bs)} (${format_venezuelan_money(total_deuda_usd)})")
+        
+        # Línea separadora
+        y_linea = y_filtros - 0.2*inch
+        p.line(0.5*inch, y_linea, 8*inch, y_linea)
+        
+        # Configurar posición inicial para la tabla
+        y_position = y_linea - 0.3*inch
+        line_height = 0.22*inch
+        
+        # Encabezados de tabla
+        p.setFont("Helvetica-Bold", 8)
+        p.drawString(0.6*inch, y_position, "№")
+        p.drawString(1*inch, y_position, "Fecha")
+        p.drawString(1.8*inch, y_position, "Tasa")
+        p.drawString(2.4*inch, y_position, "Total Venta")
+        p.drawString(3.4*inch, y_position, "Abono Inicial")
+        p.drawString(4.5*inch, y_position, "Saldo Pend.")
+        p.drawString(5.6*inch, y_position, "Días")
+        p.drawString(6.2*inch, y_position, "Estado")
+        
+        y_position -= line_height
+        p.line(0.5*inch, y_position, 8*inch, y_position)
+        y_position -= 0.15*inch
+        
+        # Datos de ventas
+        p.setFont("Helvetica", 7)
+        
+        for item in ventas_data:
+            venta = item['venta']
+            dias = item['dias']
+            
+            if y_position < 1*inch:
+                p.showPage()
+                y_position = height - 1*inch
+                
+                # Encabezados en nueva página
+                p.setFont("Helvetica-Bold", 8)
+                p.drawString(0.6*inch, y_position, "№")
+                p.drawString(1*inch, y_position, "Fecha")
+                p.drawString(1.8*inch, y_position, "Tasa")
+                p.drawString(2.4*inch, y_position, "Total Venta")
+                p.drawString(3.4*inch, y_position, "Abono Inicial")
+                p.drawString(4.5*inch, y_position, "Saldo Pend.")
+                p.drawString(5.6*inch, y_position, "Días")
+                p.drawString(6.2*inch, y_position, "Estado")
+                
+                y_position -= line_height
+                p.line(0.5*inch, y_position, 8*inch, y_position)
+                y_position -= 0.15*inch
+                p.setFont("Helvetica", 7)
+            
+            # Número de venta
+            p.drawString(0.6*inch, y_position, str(venta.ID_Ventas))
+            
+            # Fecha
+            fecha_str = venta.Fecha_Venta.strftime('%d/%m/%Y')
+            p.drawString(1*inch, y_position, fecha_str)
+            
+            # Tasa
+            tasa_str = format_venezuelan_money(venta.Tasa_Venta) if venta.Tasa_Venta else "N/A"
+            p.drawString(1.8*inch, y_position, tasa_str)
+            
+            # Total Venta
+            total_str = f"Bs {format_venezuelan_money(venta.Total)}"
+            p.drawString(2.4*inch, y_position, total_str)
+            
+            # Abono Inicial
+            abono_str = f"Bs {format_venezuelan_money(venta.Abono_Inicial)}"
+            p.drawString(3.4*inch, y_position, abono_str)
+            
+            # Saldo Pendiente
+            saldo_str = f"Bs {format_venezuelan_money(venta.Saldo_Pendiente)}"
+            p.drawString(4.5*inch, y_position, saldo_str)
+            
+            # Días
+            p.drawString(5.6*inch, y_position, str(dias))
+            
+            # Estado
+            estado_display = {
+                'completo': 'Completo',
+                'pendiente': 'Pendiente',
+                'parcial': 'Parcial'
+            }.get(venta.Estado_Pago, venta.Estado_Pago)
+            p.drawString(6.2*inch, y_position, estado_display)
+            
+            y_position -= line_height
+        
+        # Total
+        p.setFont("Helvetica-Bold", 9)
+        y_position -= 0.2*inch
+        p.drawString(0.6*inch, y_position, f"Total de ventas: {ventas.count()}")
+        
+        # Pie de página
+        p.setFont("Helvetica-Oblique", 8)
+        p.drawString(1*inch, 0.5*inch, "Sistema de Gestión - Tienda Naturista")
+        
+        p.showPage()
+        p.save()
+        
+        return response
+        
+    except Exception as e:
+        # En caso de error, generar PDF de error
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename="error.pdf"'
+        
+        p = canvas.Canvas(response, pagesize=letter)
+        width, height = letter
+        
+        p.setFont("Helvetica-Bold", 16)
+        p.drawString(1*inch, height-2*inch, "Error al generar el PDF")
+        
+        p.setFont("Helvetica", 12)
+        p.drawString(1*inch, height-2.5*inch, "Ocurrió un error inesperado al generar el listado.")
+        p.drawString(1*inch, height-2.8*inch, f"Error: {str(e)}")
+        
+        p.showPage()
+        p.save()
+        
+        return response

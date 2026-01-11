@@ -40,8 +40,9 @@
       <i class="fas fa-users"></i>
     </div>
     <div class="info-total">
-      <h3 id="totalClientes">{{ clientes_deuda_detallada|length }}</h3>
-      <p>Clientes con Deuda</p>
+      <h3 id="totalClientes">{{ total_clientes_deuda }}</h3>
+      <p id="totalClientesSub">De {{ clientes_deuda_detallada|length }} clientes a crédito</p>
+      <span>Clientes con Deuda</span>
     </div>
   </div>
 </div>
@@ -154,12 +155,22 @@
           {% empty %}
           <tr class="empty-row">
             <td colspan="5">
-              <i class="fas fa-check-circle"></i>
-              <h3>¡No hay clientes con deuda pendiente!</h3>
-              <p>Todos los clientes están al día con sus pagos</p>
+              <i class="fas fa-smile-beam"></i>
+              <h3>¡No hay clientes que hayan comprado a crédito!</h3>
+              <p>El historial de ventas a crédito está vacío.</p>
             </td>
           </tr>
           {% endfor %}
+          <!-- Fila para mostrar cuando los filtros no devuelven resultados -->
+          <tr class="empty-row-filter" style="display: none;">
+            <td colspan="5">
+              <div class="empty-state-container">
+                <i class="fas fa-search"></i>
+                <h3>No se encontraron resultados</h3>
+                <p>No hay clientes que coincidan con tu búsqueda o los filtros aplicados.</p>
+              </div>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>

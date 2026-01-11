@@ -5,6 +5,7 @@ app_name = 'cuentas_pendientes'
 
 urlpatterns = [
     path('menu/', views.menu_cuentas_pendientes, name='menu_cuentas'),
+    path('api/filtrar/', views.filtrar_cuentas_ajax, name='filtrar_cuentas_ajax'),
     path('buscar-ventas/', views.buscar_ventas_pendientes, name='buscar_ventas'),
     path('gestionar-abono/<str:cliente_cedula>/', views.gestionar_abono_cliente, name='gestionar_abono_cliente'),
     path('registrar-abono/', views.registrar_abono, name='registrar_abono'),
@@ -16,4 +17,5 @@ urlpatterns = [
     path('api-historial-abonos-cliente/<str:cliente_cedula>/', views.api_historial_abonos_cliente, name='api_historial_abonos_cliente'),
     path('anular-abono/<int:abono_id>/', views.anular_abono, name='anular_abono'),
     path('reporte/', views.reporte_cuentas_pendientes, name='reporte_cuentas'),
+    path('imprimir-ventas-cliente/<str:cliente_cedula>/', views.imprimir_ventas_cliente, name='imprimir_ventas_cliente'),
 ]

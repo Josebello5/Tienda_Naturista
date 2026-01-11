@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let searchTimeout;
     
-    // Función para filtrar la tabla
+    // Función para filtrar la tabla y actualizar paneles
     function filtrarTabla() {
         const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
         const estado = estadoPagoSelect ? estadoPagoSelect.value : '';
@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const filas = tableBody.querySelectorAll('tr');
         let filasVisibles = 0;
         
+        // Filtrar filas de la tabla (mantener comportamiento local)
         filas.forEach(fila => {
             if (fila.classList.contains('empty-row')) {
                 fila.style.display = 'none';
@@ -48,28 +49,120 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // Mostrar mensaje si no hay resultados
+        // Mostrar mensaje si no hay resultados en la tabla
         const emptyRow = tableBody.querySelector('.empty-row');
+        const emptyRowFilter = tableBody.querySelector('.empty-row-filter');
         const hayFiltros = query || estado;
         
-        if (hayFiltros && filasVisibles === 0) {
-            if (emptyRow) {
-                emptyRow.style.display = '';
-                emptyRow.innerHTML = `
-                    <td colspan="5">
-                        <i class="fas fa-search"></i>
-                        <h3>No se encontraron clientes</h3>
-                        <p>Intenta con otros términos de búsqueda</p>
-                    </td>
-                `;
-            }
-        } else if (emptyRow) {
+        // Ocultar siempre la fila empty original del template
+        if (emptyRow) {
             emptyRow.style.display = 'none';
         }
+        
+        if (hayFiltros && filasVisibles === 0) {
+            // Mostrar mensaje de filtros sin resultados
+            if (emptyRowFilter) {
+                emptyRowFilter.style.display = '';
+            }
+        } else {
+            // Ocultar mensaje de filtros
+            if (emptyRowFilter) {
+                emptyRowFilter.style.display = 'none';
+            }
+        }
+
+        
+        // Llamar AJAX para actualizar paneles
+        actualizarPanelesAjax(query, estado);
         
         // Actualizar indicadores de filtro
         actualizarIndicadoresFiltro();
     }
+    
+    // Función para actualizar paneles mediante AJAX
+    function actualizarPanelesAjax(query, estado) {
+        const params = new URLSearchParams();
+        if (query) params.set('q', query);
+        if (estado) params.set('estado', estado);
+        
+        fetch(`/cuentas_pendientes/api/filtrar/?${params.toString()}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Actualizar paneles de resumen
+                actualizarPanelesResumen(data);
+                
+                // Actualizar Top 5
+                actualizarTop5(data.top_5);
+            }
+        })
+        .catch(error => {
+            console.error('Error al actualizar paneles:', error);
+        });
+    }
+    
+    // Función para actualizar paneles de resumen
+    function actualizarPanelesResumen(data) {
+        const totalCuentasEl = document.getElementById('totalCuentas');
+        const totalSaldoBsEl = document.getElementById('totalSaldoBs');
+        const totalSaldoUsdEl = document.getElementById('totalSaldoUsd');
+        const totalClientesEl = document.getElementById('totalClientes');
+        const totalClientesSubEl = document.getElementById('totalClientesSub');
+        
+        if (totalCuentasEl) totalCuentasEl.textContent = data.total_cuentas;
+        if (totalSaldoBsEl) totalSaldoBsEl.textContent = `Bs ${data.total_saldo_bs}`;
+        if (totalSaldoUsdEl) totalSaldoUsdEl.textContent = `$ ${data.total_saldo_usd}`;
+        if (totalClientesEl) totalClientesEl.textContent = data.total_clientes_deuda;
+        if (totalClientesSubEl) totalClientesSubEl.textContent = `De ${data.total_clientes} clientes a crédito`;
+    }
+    
+    // Función para actualizar Top 5
+    function actualizarTop5(clientes) {
+        const panelTop5 = document.querySelector('.panel-deudas-clientes .clientes-lista');
+        if (!panelTop5) return;
+        
+        // Limpiar contenido actual
+        panelTop5.innerHTML = '';
+        
+        if (!clientes || clientes.length === 0) {
+            // Mostrar mensaje de estado vacío
+            panelTop5.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <p>No hay clientes que coincidan con los filtros aplicados</p>
+                </div>
+            `;
+        } else {
+            // Renderizar clientes
+            clientes.forEach(cliente => {
+                const clienteHtml = `
+                    <div class="cliente-deuda-item">
+                        <div class="cliente-info">
+                            <strong>${cliente.nombre}</strong>
+                            <small>${cliente.cedula}</small>
+                        </div>
+                        <div class="deuda-info">
+                            <span class="deuda-total">Bs ${cliente.deuda_total_bs}</span>
+                            <br><small class="text-muted">$ ${cliente.deuda_total_usd}</small>
+                            <small>${cliente.ventas_pendientes} venta${cliente.ventas_pendientes !== 1 ? 's' : ''} pendiente${cliente.ventas_pendientes !== 1 ? 's' : ''}</small>
+                        </div>
+                        <div class="acciones-cliente">
+                            <a href="${cliente.url_abono}"
+                                class="btn-action btn-abonar" title="Gestionar Abono">
+                                <i class="fas fa-money-bill"></i>
+                            </a>
+                        </div>
+                    </div>
+                `;
+                panelTop5.insertAdjacentHTML('beforeend', clienteHtml);
+            });
+        }
+    }
+
     
     // Función para actualizar indicadores visuales de filtro
     function actualizarIndicadoresFiltro() {
@@ -104,22 +197,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Función para limpiar todos los filtros
-    function limpiarFiltros() {
+    // Función para limpiar todos los filtros (ahora global)
+    window.limpiarFiltros = function() {
         if (searchInput) searchInput.value = '';
         if (estadoPagoSelect) estadoPagoSelect.value = '';
         filtrarTabla();
     }
-    
-    // Agregar botón de limpiar filtros (opcional)
-    const toolbar = document.querySelector('.filtros-container');
-    if (toolbar) {
-        const limpiarBtn = document.createElement('button');
-        limpiarBtn.className = 'btn btn-outline-secondary';
-        limpiarBtn.innerHTML = '<i class="fas fa-times"></i> Limpiar';
-        limpiarBtn.addEventListener('click', limpiarFiltros);
-        toolbar.appendChild(limpiarBtn);
-    }
+
     
     // Inicializar
     actualizarIndicadoresFiltro();

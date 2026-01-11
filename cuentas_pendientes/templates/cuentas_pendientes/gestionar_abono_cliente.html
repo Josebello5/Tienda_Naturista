@@ -133,6 +133,9 @@
         <button id="btnPagarSeleccionadas" class="btn btn-success" disabled>
           <i class="fas fa-money-bill-wave"></i> Pagar Seleccionadas
         </button>
+        <button class="btn btn-secondary" id="btnImprimirReporte">
+          <i class="fas fa-print"></i> Imprimir Reporte
+        </button>
         <a href="{% url 'cuentas_pendientes:menu_cuentas' %}" class="btn btn-secondary">
           <i class="fas fa-arrow-left"></i> Volver al Menú
         </a>
@@ -147,7 +150,7 @@
             <th width="50">
               <input type="checkbox" id="selectAll">
             </th>
-            <th>ID Venta</th>
+            <th>№ Venta</th>
             <th>Fecha Venta</th>
             <th>Tasa</th>
             <th>Total Venta</th>
@@ -210,7 +213,6 @@
               </div>
             </td>
           </tr>
-
           {% empty %}
           <tr class="empty-row">
             <td colspan="10">
@@ -220,6 +222,17 @@
             </td>
           </tr>
           {% endfor %}
+          
+          <!-- Fila para mostrar cuando los filtros no devuelven resultados -->
+          <tr class="empty-row-filter" style="display: none;">
+            <td colspan="10">
+              <div class="empty-state-container">
+                <i class="fas fa-search"></i>
+                <h3>No se encontraron resultados</h3>
+                <p>No hay ventas que coincidan con tu búsqueda o los filtros aplicados.</p>
+              </div>
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -736,7 +749,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'cuentas_pendientes/js/gestionar_abono.js' %}"></script>
+<script src="{% static 'cuentas_pendientes/js/gestionar_abono.js' %}?v={% now 'U' %}"></script>
 <script>
     // Script de respaldo INLINE
     document.addEventListener("DOMContentLoaded", function() {
@@ -774,6 +787,43 @@
   }
 
   // Llamar al debug cuando se cargue
-  document.addEventListener('DOMContentLoaded', debugUrls);
+  document.addEventListener('DOMContentLoaded', function() {
+    debugUrls();
+  
+    // Manejar el botón de imprimir reporte
+    const btnImprimirReporte = document.getElementById('btnImprimirReporte');
+    if (btnImprimirReporte) {
+      btnImprimirReporte.addEventListener('click', function() {
+        const searchInput = document.getElementById('searchInput');
+        const estadoPagoSelect = document.getElementById('estadoPagoSelect');
+        
+        const params = new URLSearchParams();
+        
+        // Agregar búsqueda si existe
+        if (searchInput && searchInput.value.trim()) {
+          params.append('q', searchInput.value.trim());
+        }
+        
+        // Agregar filtro de estado de pago si existe
+        if (estadoPagoSelect && estadoPagoSelect.value) {
+          params.append('estado_pago', estadoPagoSelect.value);
+        }
+        
+        // Agregar filtros de fecha si existen
+        if (window.filtroFechaVenta && (window.filtroFechaVenta.desde || window.filtroFechaVenta.hasta)) {
+          if (window.filtroFechaVenta.desde) {
+            params.append('fecha_desde', window.filtroFechaVenta.desde);
+          }
+          if (window.filtroFechaVenta.hasta) {
+            params.append('fecha_hasta', window.filtroFechaVenta.hasta);
+          }
+        }
+        
+        // Construir URL del PDF
+        const pdfUrl = `/cuentas_pendientes/imprimir-ventas-cliente/${window.CLIENTE_CEDULA}/?${params.toString()}`;
+        window.open(pdfUrl, '_blank');
+      });
+    }
+  });
 </script>
 {% endblock %}
