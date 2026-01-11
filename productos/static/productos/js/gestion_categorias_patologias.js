@@ -229,21 +229,46 @@ document.addEventListener('DOMContentLoaded', function () {
         const tbody = document.getElementById(tbodyId);
         if (!tbody) return;
 
-        const filas = Array.from(tbody.querySelectorAll('tr:not(.empty-message)'));
-        const totalFilas = filas.length;
-        const totalPaginas = Math.ceil(totalFilas / itemsPorPagina) || 1;
+        // Get all rows except empty messages
+        const todasLasFilas = Array.from(tbody.querySelectorAll('tr:not(.empty-message)'));
+
+        // Filter to only get rows that are NOT filtered out by search
+        const filasVisibles = todasLasFilas.filter(fila => {
+            return fila.getAttribute('data-filtered-out') !== 'true';
+        });
+
+        const totalFilasVisibles = filasVisibles.length;
+        const totalPaginas = Math.ceil(totalFilasVisibles / itemsPorPagina) || 1;
+
+        // Ensure current page is within valid range
+        if (paginacionEstado[tipo].paginaActual > totalPaginas) {
+            paginacionEstado[tipo].paginaActual = totalPaginas;
+        }
+
         const paginaActual = paginacionEstado[tipo].paginaActual;
 
-        // Mostrar solo las filas de la página actual
+        // Calculate pagination range for visible rows only
         const inicio = (paginaActual - 1) * itemsPorPagina;
         const fin = inicio + itemsPorPagina;
 
-        filas.forEach((fila, index) => {
-            fila.style.display = (index >= inicio && index < fin) ? '' : 'none';
+        // Apply pagination: show/hide rows based on current page
+        filasVisibles.forEach((fila, index) => {
+            if (index >= inicio && index < fin) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
         });
 
-        // Siempre renderizar controles de paginación
-        renderizarControlesPaginacion(paginationId, paginaActual, totalPaginas, totalFilas, inicio, fin, tipo);
+        // Hide all rows that are filtered out
+        todasLasFilas.forEach(fila => {
+            if (fila.getAttribute('data-filtered-out') === 'true') {
+                fila.style.display = 'none';
+            }
+        });
+
+        // Render pagination controls
+        renderizarControlesPaginacion(paginationId, paginaActual, totalPaginas, totalFilasVisibles, inicio, fin, tipo);
     }
 
     function renderizarControlesPaginacion(containerId, paginaActual, totalPaginas, totalFilas, inicio, fin, tipo) {
@@ -415,45 +440,43 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .catch(error => {
-                console.error('Error al cargar categorías:', error);
                 mostrarErrorGeneral('No se pudieron cargar las categorías');
             });
     }
 
     function filtrarTablaCategorias() {
+        if (!searchCategorias) {
+            return;
+        }
+
         const filtro = searchCategorias.value.toLowerCase();
         const tbody = document.getElementById('tbodyCategorias');
-        if (!tbody) return;
+        if (!tbody) {
+            return;
+        }
 
-        const filas = tbody.querySelectorAll('tr');
+        const filas = tbody.querySelectorAll('tr:not(.empty-message)');
         let visibleRows = 0;
 
         filas.forEach(fila => {
-            if (fila.classList.contains('empty-message')) {
-                if (filtro === '') {
-                    fila.remove();
-                }
-                return;
-            }
-
             const nombre = fila.cells[1].textContent.toLowerCase();
             if (nombre.includes(filtro)) {
-                fila.style.display = '';
+                fila.removeAttribute('data-filtered-out');
                 visibleRows++;
             } else {
-                fila.style.display = 'none';
+                fila.setAttribute('data-filtered-out', 'true');
             }
         });
 
-        if (visibleRows === 0) {
-            if (filtro !== '') {
-                mostrarMensajeTablaVacia('tbodyCategorias', 'categorías');
-            } else {
-                cargarCategorias();
-            }
+        if (visibleRows === 0 && filtro !== '') {
+            mostrarMensajeTablaVacia('tbodyCategorias', 'categorías');
+        } else {
+            // Remove empty message if it exists
+            const emptyMsg = tbody.querySelector('.empty-message');
+            if (emptyMsg) emptyMsg.remove();
         }
 
-        // Resetear paginación al filtrar
+        // Reset pagination to first page when filtering
         paginacionEstado.categorias.paginaActual = 1;
         paginarTabla('tbodyCategorias', 'paginationCategorias', 'categorias');
     }
@@ -494,8 +517,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                const errorElement = document.getElementById('errorNombreCategoria');
                 mostrarErrorValidacion(nombreCategoria, errorElement, 'Error de conexión al guardar la categoría');
             });
     }
@@ -598,45 +619,38 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .catch(error => {
-                console.error('Error al cargar patologías:', error);
                 mostrarErrorGeneral('No se pudieron cargar las patologías');
             });
     }
 
     function filtrarTablaPatologias() {
+        if (!searchPatologias) return;
+
         const filtro = searchPatologias.value.toLowerCase();
         const tbody = document.getElementById('tbodyPatologias');
         if (!tbody) return;
 
-        const filas = tbody.querySelectorAll('tr');
+        const filas = tbody.querySelectorAll('tr:not(.empty-message)');
         let visibleRows = 0;
 
         filas.forEach(fila => {
-            if (fila.classList.contains('empty-message')) {
-                if (filtro === '') {
-                    fila.remove();
-                }
-                return;
-            }
-
             const nombre = fila.cells[1].textContent.toLowerCase();
             if (nombre.includes(filtro)) {
-                fila.style.display = '';
+                fila.removeAttribute('data-filtered-out');
                 visibleRows++;
             } else {
-                fila.style.display = 'none';
+                fila.setAttribute('data-filtered-out', 'true');
             }
         });
 
-        if (visibleRows === 0) {
-            if (filtro !== '') {
-                mostrarMensajeTablaVacia('tbodyPatologias', 'patologías');
-            } else {
-                cargarPatologias();
-            }
+        if (visibleRows === 0 && filtro !== '') {
+            mostrarMensajeTablaVacia('tbodyPatologias', 'patologías');
+        } else {
+            const emptyMsg = tbody.querySelector('.empty-message');
+            if (emptyMsg) emptyMsg.remove();
         }
 
-        // Resetear paginación al filtrar
+        // Reset pagination to first page when filtering
         paginacionEstado.patologias.paginaActual = 1;
         paginarTabla('tbodyPatologias', 'paginationPatologias', 'patologias');
     }
@@ -677,8 +691,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                const errorElement = document.getElementById('errorNombrePatologia');
                 mostrarErrorValidacion(nombrePatologia, errorElement, 'Error de conexión al guardar la patología');
             });
     }
@@ -757,7 +769,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // Verificar si es un array
                 if (!Array.isArray(data)) {
-                    console.error('Formato de respuesta inválido:', data);
                     mostrarErrorGeneral('Error al procesar datos de ubicaciones');
                     return;
                 }
@@ -794,45 +805,38 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .catch(error => {
-                console.error('Error al cargar ubicaciones:', error);
                 mostrarErrorGeneral('No se pudieron cargar las ubicaciones');
             });
     }
 
     function filtrarTablaUbicaciones() {
+        if (!searchUbicaciones) return;
+
         const filtro = searchUbicaciones.value.toLowerCase();
         const tbody = document.getElementById('tbodyUbicaciones');
         if (!tbody) return;
 
-        const filas = tbody.querySelectorAll('tr');
+        const filas = tbody.querySelectorAll('tr:not(.empty-message)');
         let visibleRows = 0;
 
         filas.forEach(fila => {
-            if (fila.classList.contains('empty-message')) {
-                if (filtro === '') {
-                    fila.remove();
-                }
-                return;
-            }
-
             const nombre = fila.cells[1].textContent.toLowerCase();
             if (nombre.includes(filtro)) {
-                fila.style.display = '';
+                fila.removeAttribute('data-filtered-out');
                 visibleRows++;
             } else {
-                fila.style.display = 'none';
+                fila.setAttribute('data-filtered-out', 'true');
             }
         });
 
-        if (visibleRows === 0) {
-            if (filtro !== '') {
-                mostrarMensajeTablaVacia('tbodyUbicaciones', 'ubicaciones');
-            } else {
-                cargarUbicaciones();
-            }
+        if (visibleRows === 0 && filtro !== '') {
+            mostrarMensajeTablaVacia('tbodyUbicaciones', 'ubicaciones');
+        } else {
+            const emptyMsg = tbody.querySelector('.empty-message');
+            if (emptyMsg) emptyMsg.remove();
         }
 
-        // Resetear paginación al filtrar
+        // Reset pagination to first page when filtering
         paginacionEstado.ubicaciones.paginaActual = 1;
         paginarTabla('tbodyUbicaciones', 'paginationUbicaciones', 'ubicaciones');
     }
@@ -873,8 +877,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                const errorElement = document.getElementById('errorNombreUbicacion');
                 mostrarErrorValidacion(nombreUbicacion, errorElement, 'Error de conexión al guardar la ubicación');
             });
     }
@@ -929,7 +931,6 @@ document.addEventListener('DOMContentLoaded', function () {
                             mostrarErrorGeneral(data.error);
                         }
                     } catch (error) {
-                        console.error('Error:', error);
                         mostrarErrorGeneral('Error al eliminar la categoría');
                     }
                 }
@@ -986,7 +987,6 @@ document.addEventListener('DOMContentLoaded', function () {
                             mostrarErrorGeneral(data.error);
                         }
                     } catch (error) {
-                        console.error('Error:', error);
                         mostrarErrorGeneral('Error al eliminar la patología');
                     }
                 }
@@ -1043,7 +1043,6 @@ document.addEventListener('DOMContentLoaded', function () {
                             mostrarErrorGeneral(data.error);
                         }
                     } catch (error) {
-                        console.error('Error:', error);
                         mostrarErrorGeneral('Error al eliminar la ubicación');
                     }
                 }
@@ -1079,7 +1078,10 @@ document.addEventListener('DOMContentLoaded', function () {
     btnGuardarCategoria.addEventListener('click', guardarCategoria);
     btnCancelarCategoria.addEventListener('click', cerrarModalEditarCategoria);
     btnCerrarModalEditarCategoria.addEventListener('click', cerrarModalEditarCategoria);
-    searchCategorias.addEventListener('input', filtrarTablaCategorias);
+    // Attach event listeners with null checks
+    if (searchCategorias) {
+        searchCategorias.addEventListener('input', filtrarTablaCategorias);
+    }
 
     // Patologías
     patologiasBtn.addEventListener('click', abrirModalPatologias);
@@ -1089,7 +1091,9 @@ document.addEventListener('DOMContentLoaded', function () {
     btnGuardarPatologia.addEventListener('click', guardarPatologia);
     btnCancelarPatologia.addEventListener('click', cerrarModalEditarPatologia);
     btnCerrarModalEditarPatologia.addEventListener('click', cerrarModalEditarPatologia);
-    searchPatologias.addEventListener('input', filtrarTablaPatologias);
+    if (searchPatologias) {
+        searchPatologias.addEventListener('input', filtrarTablaPatologias);
+    }
 
     // Ubicaciones
     ubicacionesBtn.addEventListener('click', abrirModalUbicaciones);
@@ -1099,7 +1103,9 @@ document.addEventListener('DOMContentLoaded', function () {
     btnGuardarUbicacion.addEventListener('click', guardarUbicacion);
     btnCancelarUbicacion.addEventListener('click', cerrarModalEditarUbicacion);
     btnCerrarModalEditarUbicacion.addEventListener('click', cerrarModalEditarUbicacion);
-    searchUbicaciones.addEventListener('input', filtrarTablaUbicaciones);
+    if (searchUbicaciones) {
+        searchUbicaciones.addEventListener('input', filtrarTablaUbicaciones);
+    }
 
     // Imprimir
     btnImprimirCategorias.addEventListener('click', () => {
