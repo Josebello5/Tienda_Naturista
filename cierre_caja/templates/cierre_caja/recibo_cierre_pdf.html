@@ -151,18 +151,27 @@
                 <td width="50%" class="text-right">{{ total_sistema_formatted }}</td>
             </tr>
             <tr>
-                <td><strong>Total Real (Ref):</strong></td>
-                <td class="text-right">{{ total_real_formatted }}</td>
-            </tr>
-            <tr>
-                <td><strong>Diferencia Total (Ref):</strong></td>
-                <td
-                    class="text-right bold {% if cierre.Diferencia_Total >= 0 %}diff-positive{% else %}diff-negative{% endif %}">
-                    {{ diferencia_total_formatted }}
-                </td>
-            </tr>
-        </table>
-    </div>
+        <td><strong>Total Real (Ref):</strong></td>
+        <td class="text-right">{{ total_real_formatted }}</td>
+    </tr>
+    
+
+
+    <tr>
+        <td><strong>Diferencia Total (Ref):</strong></td>
+        <td class="text-right bold 
+            {% if cierre.Diferencia_Total > 0 %}diff-positive
+            {% elif cierre.Diferencia_Total < 0 %}diff-negative
+            {% endif %}">
+            
+            {{ diferencia_total_formatted }}
+        </td>
+    </tr>
+    
+
+
+    </table>
+</div>
 
     <div class="section-title">DETALLE COMPARATIVO POR MÉTODO DE PAGO</div>
 

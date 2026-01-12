@@ -22,22 +22,34 @@
     </div>
 
     <!-- Resumen de Diferencias -->
-    {% if diferencia_total_formatted != "0,00" %}
-    <div class="alert {% if cierre.Diferencia_Total >= 0 %}alert-success{% else %}alert-error{% endif %}"
-        style="text-align: center; margin-bottom: 2rem;">
-        <h4 style="margin: 0 0 0.5rem 0; font-size: 1.2rem;">Diferencia Total</h4>
-        <p style="font-size: 1.8rem; font-weight: 700; margin: 0.5rem 0; font-family: 'Roboto Mono', monospace;">{{
-            diferencia_total_formatted }}</p>
-        <p style="margin: 0;">
-            {% if cierre.Diferencia_Total > 0 %}Sobrante en caja
-            {% elif cierre.Diferencia_Total < 0 %}Faltante en caja {% else %}Cuadre perfecto{% endif %} </p>
-    </div>
-    {% else %}
-    <div class="alert alert-success" style="text-align: center; margin-bottom: 2rem;">
-        <h4 style="margin: 0 0 0.5rem 0;"><i class="fas fa-check-circle"></i> Caja Cuadrada</h4>
-        <p style="margin: 0;">Los montos reales coinciden perfectamente con el sistema.</p>
-    </div>
-    {% endif %}
+    {% if cierre.Diferencia_Total != 0 %}
+
+<div class="alert {% if cierre.Diferencia_Total > 0 %}alert-success{% else %}alert-danger{% endif %}"
+    style="text-align: center; margin-bottom: 2rem;">
+    
+    <h4 style="margin: 0 0 0.5rem 0; font-size: 1.2rem;">Diferencia Total</h4>
+    
+    <p style="font-size: 1.8rem; font-weight: 700; margin: 0.5rem 0; font-family: 'Roboto Mono', monospace;">
+        {{ diferencia_total_formatted }}
+    </p>
+    
+    <p style="margin: 0;">
+        {% if cierre.Diferencia_Total > 0 %}
+            Sobrante en caja
+        {% else %}
+            Faltante en caja 
+        {% endif %} 
+    </p>
+</div>
+
+{% else %}
+
+<div class="alert alert-success" style="text-align: center; margin-bottom: 2rem;">
+    <h4 style="margin: 0 0 0.5rem 0;"><i class="fas fa-check-circle"></i> Caja Cuadrada</h4>
+    <p style="margin: 0;">Los montos reales coinciden perfectamente con el sistema.</p>
+</div>
+
+{% endif %}
 
     <!-- Tabla Comparativa -->
     <div class="receipt-section">

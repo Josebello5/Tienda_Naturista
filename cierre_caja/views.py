@@ -90,8 +90,7 @@ def menu_cierre_caja(request):
     
     # Si hay cierre existente, agregar sus datos
     if cierre_existente:
-        context['cierre'] = cierre_existente
-        context['diferencias'] = cierre_existente.get_diferencias_por_metodo()
+        context.update(cierre_existente.get_html_context())
     
     return render(request, 'cierre_caja/menu_cierre_caja.html', context)
 

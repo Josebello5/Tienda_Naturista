@@ -186,15 +186,15 @@ function formatInput(input) {
 // Función auxiliar para formatear números estrictamente (1.234,56)
 function formatNumber(num) {
     if (num === null || num === undefined) return '0,00';
-    
+
     // Asegurar 2 decimales y convertir a string con punto decimal estándar
     let parts = parseFloat(num).toFixed(2).split('.');
     let integerPart = parts[0];
     let decimalPart = parts[1];
-    
+
     // Agregar separador de miles (punto)
     integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    
+
     return `${integerPart},${decimalPart}`;
 }
 
@@ -255,11 +255,8 @@ function calculateRowDiff(event) {
 
 // Calcular totales generales
 function calculateTotals() {
-    let totalRealBs = 0;
-    let totalRealUsd = 0;
-
-    let totalSystemBs = 0;
-    let totalSystemUsd = 0;
+    let totalReal = 0;
+    let totalSystem = 0;
 
     document.querySelectorAll('tbody tr:not(.total-row)').forEach(row => {
         const systemElem = row.querySelector('.amount-system');
@@ -269,17 +266,9 @@ function calculateTotals() {
             const sysVal = parseFloat(systemElem.dataset.raw);
             const realVal = parseNumber(inputElem.value);
 
-            // Determinar moneda por el símbolo de moneda en la fila
-            const currencySymbol = row.querySelector('.currency-symbol');
-            const isUsd = currencySymbol && currencySymbol.textContent.trim() === '$';
-
-            if (isUsd) {
-                totalSystemUsd += sysVal;
-                totalRealUsd += realVal;
-            } else {
-                totalSystemBs += sysVal;
-                totalRealBs += realVal;
-            }
+            // Suma directa (mezcla monedas tal como lo hace el backend)
+            totalSystem += sysVal;
+            totalReal += realVal;
         }
     });
 
@@ -287,38 +276,30 @@ function calculateTotals() {
     const totalRealElem = document.getElementById('totalRealDisplay');
     const totalDiffElem = document.getElementById('totalDiffDisplay');
 
+    // Actualizar display del Total Real (Ref)
     if (totalRealElem) {
-        // Mostrar totales separados
-        totalRealElem.innerHTML = `
-            <div>Bs ${formatNumber(totalRealBs)}</div>
-            <div style="color: #28a745;">$ ${formatNumber(totalRealUsd)}</div>
-        `;
+        totalRealElem.textContent = formatNumber(totalReal);
     }
 
     if (totalDiffElem) {
-        const diffBs = totalRealBs - totalSystemBs;
-        const diffUsd = totalRealUsd - totalSystemUsd;
-
+        const diff = totalReal - totalSystem;
         let html = '';
+        let className = 'difference-display';
 
-        // Diferencia en Bs
-        let classBs = 'diff-neutral';
-        let signBs = '';
-        if (diffBs > 0.01) { classBs = 'diff-positive'; signBs = '+'; }
-        else if (diffBs < -0.01) { classBs = 'diff-negative'; }
-
-        html += `<div class="${classBs}">Bs ${signBs}${formatNumber(diffBs)}</div>`;
-
-        // Diferencia en USD
-        let classUsd = 'diff-neutral';
-        let signUsd = '';
-        if (diffUsd > 0.01) { classUsd = 'diff-positive'; signUsd = '+'; }
-        else if (diffUsd < -0.01) { classUsd = 'diff-negative'; }
-
-        html += `<div class="${classUsd}">$ ${signUsd}${formatNumber(diffUsd)}</div>`;
+        // Determinar estado (Sobrante/Faltante)
+        if (diff > 0.01) {
+            className += ' diff-positive';
+            html = `<i class="fas fa-arrow-up"></i> ${formatNumber(diff)} <small>(Sobrante)</small>`;
+        } else if (diff < -0.01) {
+            className += ' diff-negative';
+            html = `<i class="fas fa-arrow-down"></i> ${formatNumber(diff)} <small>(Faltante)</small>`;
+        } else {
+            className += ' diff-neutral';
+            html = `<i class="fas fa-check"></i> ${formatNumber(diff)} <small>(Cuadre)</small>`;
+        }
 
         totalDiffElem.innerHTML = html;
-        totalDiffElem.className = 'difference-display';
+        totalDiffElem.className = className;
     }
 }
 
