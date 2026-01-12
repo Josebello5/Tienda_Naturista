@@ -32,6 +32,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let searchTimeout;
 
+    // ===== ESTADO DE PAGINACIÓN =====
+    let paginacionProductos = {
+        paginaActual: 1,
+        itemsPorPagina: 10
+    };
+
     // ===== FUNCIONES AUXILIARES =====
 
     function getCSRFToken() {
@@ -779,6 +785,131 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ===== FUNCIONES DE PAGINACIÓN =====
+    function paginarTablaProductos() {
+        const tbody = tableBody;
+        if (!tbody) return;
+
+        // Get all rows except empty messages
+        const todasLasFilas = Array.from(tbody.querySelectorAll('tr:not(.empty-row)'));
+
+        // Filter to only get rows that are visible (not hidden by FILTERS)
+        // Rows hidden by pagination have data-pagination-hidden attribute
+        // We want to count those as "visible" for pagination purposes
+        const filasVisibles = todasLasFilas.filter(fila => {
+            const displayStyle = fila.style.display;
+            const isPaginationHidden = fila.hasAttribute('data-pagination-hidden');
+
+            // A row is "visible" for pagination if:
+            // - It's not hidden by display:none, OR
+            // - It's only hidden by pagination (has data-pagination-hidden)
+            return displayStyle !== 'none' || isPaginationHidden;
+        });
+
+        const totalFilasVisibles = filasVisibles.length;
+        const totalPaginas = Math.ceil(totalFilasVisibles / paginacionProductos.itemsPorPagina) || 1;
+
+        // Ensure current page is within valid range
+        if (paginacionProductos.paginaActual > totalPaginas) {
+            paginacionProductos.paginaActual = totalPaginas;
+        }
+
+        const paginaActual = paginacionProductos.paginaActual;
+
+        // Calculate pagination range for visible rows only
+        const inicio = (paginaActual - 1) * paginacionProductos.itemsPorPagina;
+        const fin = inicio + paginacionProductos.itemsPorPagina;
+
+        // Logic change: Do NOT hide all rows blindly. This causes filtered rows to be marked as "hidden by pagination".
+        // Instead, only toggle the rows that are part of the valid dataset (filasVisibles).
+
+        filasVisibles.forEach((fila, index) => {
+            if (index >= inicio && index < fin) {
+                // Show rows for the current page
+                fila.removeAttribute('data-pagination-hidden');
+                fila.style.display = '';
+            } else {
+                // Hide rows for other pages (but mark them as part of the pagination set)
+                fila.setAttribute('data-pagination-hidden', 'true');
+                fila.style.display = 'none';
+            }
+        });
+
+        // Render pagination controls
+        renderizarControlesPaginacionProductos(paginaActual, totalPaginas, totalFilasVisibles, inicio, fin);
+    }
+
+    function renderizarControlesPaginacionProductos(paginaActual, totalPaginas, totalFilas, inicio, fin) {
+        const container = document.getElementById('paginationProductos');
+        if (!container) return;
+
+        // Hide pagination if there are no products or only one page
+        if (totalFilas === 0 || totalPaginas <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+
+        const mostrandoDesde = totalFilas > 0 ? inicio + 1 : 0;
+        const mostrandoHasta = Math.min(fin, totalFilas);
+
+        let html = `
+            <button class="pagination-btn" ${paginaActual === 1 ? 'disabled' : ''} 
+                    onclick="cambiarPaginaProductos(${paginaActual - 1})">
+                Anterior
+            </button>
+        `;
+
+        // Show page numbers (maximum 5 visible buttons)
+        let startPage = Math.max(1, paginaActual - 2);
+        let endPage = Math.min(totalPaginas, startPage + 4);
+
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+
+        if (startPage > 1) {
+            html += `<button class="pagination-btn" onclick="cambiarPaginaProductos(1)">1</button>`;
+            if (startPage > 2) {
+                html += `<span class="pagination-info">...</span>`;
+            }
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += `
+                <button class="pagination-btn ${i === paginaActual ? 'active' : ''}" 
+                        onclick="cambiarPaginaProductos(${i})">
+                    ${i}
+                </button>
+            `;
+        }
+
+        if (endPage < totalPaginas) {
+            if (endPage < totalPaginas - 1) {
+                html += `<span class="pagination-info">...</span>`;
+            }
+            html += `<button class="pagination-btn" onclick="cambiarPaginaProductos(${totalPaginas})">Última</button>`;
+        }
+
+        html += `
+            <button class="pagination-btn" ${paginaActual === totalPaginas ? 'disabled' : ''} 
+                    onclick="cambiarPaginaProductos(${paginaActual + 1})">
+                Siguiente
+            </button>
+            <span class="pagination-info">
+                ${mostrandoDesde}-${mostrandoHasta} de ${totalFilas}
+            </span>
+        `;
+
+        container.innerHTML = html;
+    }
+
+    function cambiarPaginaProductos(nuevaPagina) {
+        paginacionProductos.paginaActual = nuevaPagina;
+        paginarTablaProductos();
+        // Scroll to top of table
+        document.querySelector('.table-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     function filtrarProductos() {
         const query = searchInput.value.trim().toLowerCase();
         const ubicacion = ubicacionInput.value.trim().toLowerCase();
@@ -795,6 +926,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 row.style.display = visibleRows === 0 ? '' : 'none';
                 return;
             }
+
+            // CORRECCIÓN VITAL: Limpiar estado de paginación previo
+            // Si no se quita, paginarTablaProductos creerá que la fila es visible pero está paginada
+            row.removeAttribute('data-pagination-hidden');
 
             const nombre = row.cells[0].textContent.toLowerCase();
             const categoriaFila = row.cells[1].textContent.toLowerCase();
@@ -852,6 +987,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 emptyRow.style.display = 'none';
             }
         }
+
+        // Reset pagination to first page when filters change
+        paginacionProductos.paginaActual = 1;
+        paginarTablaProductos();
     }
 
     printBtn.addEventListener('click', function () {
@@ -935,6 +1074,9 @@ document.addEventListener('DOMContentLoaded', function () {
         inicializarVerDetalles();
         inicializarModales();
 
+        // Initialize pagination on page load
+        paginarTablaProductos();
+
         if (searchInput) {
             searchInput.focus();
         }
@@ -947,6 +1089,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.mostrarModalEliminacion = mostrarModalEliminacion;
     window.mostrarModalError = mostrarModalError;
     window.mostrarConfirmacion = mostrarConfirmacion;
+    window.cambiarPaginaProductos = cambiarPaginaProductos;
 
     inicializar();
 });
