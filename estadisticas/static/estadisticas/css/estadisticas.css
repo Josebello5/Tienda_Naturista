@@ -134,6 +134,39 @@
     font-weight: 500;
 }
 
+/* Barra de búsqueda */
+.search-container {
+    position: relative;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-gray);
+    background: var(--light-gray);
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 15px 10px 40px;
+    border: 2px solid var(--border-gray);
+    border-radius: 25px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.1);
+}
+
+.search-icon {
+    position: absolute;
+    left: 35px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--natural-gray);
+    pointer-events: none;
+}
+
 .card-body {
     padding: 0;
     /* Removing padding to let grid/list touch edges */
@@ -450,7 +483,264 @@
     }
 
     .productos-container {
-        max-width: 100%;
+        max-width: 100%
+;
         padding: 0;
+    }
+}
+
+/* ===== SECCIÓN DE GRÁFICOS ===== */
+.charts-section {
+    margin-top: 3rem;
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: var(--shadow-medium);
+    border: 1px solid var(--border-gray);
+}
+
+.charts-header {
+    margin-bottom: 2rem;
+}
+
+.charts-header h2 {
+    margin: 0 0 0.5rem 0;
+    color: var(--dark-gray);
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+}
+
+.charts-header p {
+    margin: 0;
+    color: var(--natural-gray);
+    font-size: 0.95rem;
+}
+
+/* Tabs de gráficos */
+.chart-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--border-gray);
+    flex-wrap: wrap;
+}
+
+.chart-tab {
+    padding: 1rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--natural-gray);
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chart-tab:hover {
+    color: var(--primary-green);
+    background: var(--light-gray);
+}
+
+.chart-tab.active {
+    border-bottom-color: var(--primary-green);
+    color: var(--primary-green);
+}
+
+/* Contenedores de gráficos */
+.chart-container {
+    display: none;
+    padding: 1.5rem 0;
+}
+
+.chart-container.active {
+    display: block;
+}
+
+/* Controles de filtros */
+.chart-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    padding: 1.5rem;
+    background: var(--soft-blue);
+    border-radius: 10px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.quick-filters {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.btn-quick {
+    padding: 0.6rem 0.8rem;
+    border: 2px solid var(--border-gray);
+    background: white;
+    border-radius: 8px;
+    color: var(--text-gray);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    height: 42px; /* Alinear con inputs */
+}
+
+.btn-quick:hover {
+    background: var(--light-green);
+    color: var(--primary-green);
+    border-color: var(--primary-green);
+}
+
+.control-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--dark-gray);
+}
+
+.chart-select,
+.chart-date {
+    padding: 0.6rem 1rem;
+    border: 2px solid var(--border-gray);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    background: white;
+    min-width: 150px;
+}
+
+.chart-select:focus,
+.chart-date:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.1);
+}
+
+.btn-toggle-chart {
+    padding: 0.6rem 1.2rem;
+    border: 2px solid var(--border-gray);
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--dark-gray);
+}
+
+.btn-toggle-chart:hover {
+    border-color: var(--primary-green);
+    background: var(--light-gray);
+}
+
+.btn-toggle-chart[data-moneda="usd"] {
+    background: var(--primary-green);
+    color: white;
+    border-color: var(--primary-green);
+}
+
+.btn-apply-chart {
+    padding: 0.6rem 1.5rem;
+    background: var(--primary-green);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: var(--shadow-light);
+}
+
+.btn-apply-chart:hover {
+    background: #2d7058;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(58, 140, 110, 0.3);
+}
+
+.btn-print-chart {
+    background: white;
+    color: var(--text-gray);
+    border: 2px solid var(--border-gray);
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px; /* Cuadrado */
+}
+
+.btn-print-chart:hover {
+    color: var(--primary-green);
+    border-color: var(--primary-green);
+    background: var(--light-green);
+    transform: translateY(-2px);
+}
+
+/* Canvas wrapper */
+.chart-canvas-wrapper {
+    position: relative;
+    height: 400px;
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+}
+
+.chart-canvas-wrapper canvas {
+    max-height: 100%;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .chart-tabs {
+        flex-direction: column;
+    }
+
+    .chart-tab {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .chart-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .control-group {
+        width: 100%;
+    }
+
+    .chart-select,
+    .chart-date {
+        width: 100%;
+    }
+
+    .btn-apply-chart {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .chart-canvas-wrapper {
+        height: 300px;
     }
 }

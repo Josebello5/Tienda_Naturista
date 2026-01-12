@@ -8,6 +8,7 @@ from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 import io
+import pytz
 
 from ventas.models import Venta, DetalleVenta
 from productos.models import Producto
@@ -19,27 +20,51 @@ def menu_estadisticas(request):
     """
     Vista principal del dashboard de estadísticas.
     Muestra 3 paneles: Productos más vendidos, Clientes frecuentes, Lotes por vencer.
-    Permite filtrar cada panel por fechas independientemente.
+    Permite filtrar cada panel por fechas independientemente y búsqueda por nombre.
     """
+    
+    # Obtener tasa actual para conversión USD
+    from django.db.models import Q
+    tz_venezuela = pytz.timezone('America/Caracas')
+    ahora_venezuela = timezone.now().astimezone(tz_venezuela)
+    hoy = ahora_venezuela.date()
+    
+    from dashboard.models import TasaCambiaria
+    tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy).order_by('-fecha_creacion')
+    if tasas_hoy.exists():
+        tasa_actual = tasas_hoy.first()
+    else:
+        tasa_actual = TasaCambiaria.objects.order_by('-fecha_creacion').first()
     
     # === PANEL 1: PRODUCTOS MÁS VENDIDOS (Pasado) ===
     # Por defecto: Últimos 30 días
     fecha_fin_prod = timezone.now().date()
     fecha_ini_prod = fecha_fin_prod - timedelta(days=30)
+    search_prod = request.GET.get('search_prod', '').strip()
     
-    # Filtro opcional por URL/AJAX
-    if request.GET.get('filtro_prod') == 'si':
+    # Filtro opcional por URL/AJAX - detectar si hay parámetros de fecha o búsqueda
+    if request.GET.get('filtro_prod') == 'si' or search_prod or request.GET.get('fecha_ini_prod'):
          fecha_ini_str = request.GET.get('fecha_ini_prod')
          fecha_fin_str = request.GET.get('fecha_fin_prod')
          if fecha_ini_str: fecha_ini_prod = datetime.strptime(fecha_ini_str, '%Y-%m-%d').date()
          if fecha_fin_str: fecha_fin_prod = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
 
-    top_productos = (
+    top_productos_query = (
         DetalleVenta.objects
         .filter(
             ID_Ventas__Fecha_Venta__date__range=[fecha_ini_prod, fecha_fin_prod],
             ID_Ventas__anulada=False
         )
+    )
+    
+    # Aplicar filtro de búsqueda si existe
+    if search_prod:
+        top_productos_query = top_productos_query.filter(
+            ID_lote__id_producto__nombre_pro__icontains=search_prod
+        )
+    
+    top_productos = (
+        top_productos_query
         .values('ID_lote__id_producto__nombre_pro', 'ID_lote__id_producto__ID_producto')
         .annotate(total_cantidad=Sum('Cantidad'))
         .order_by('-total_cantidad')[:10]
@@ -49,23 +74,43 @@ def menu_estadisticas(request):
     # Por defecto: Últimos 30 días
     fecha_fin_cli = timezone.now().date()
     fecha_ini_cli = fecha_fin_cli - timedelta(days=30)
+    search_cli = request.GET.get('search_cli', '').strip()
+    moneda_cli = request.GET.get('moneda_cli', 'bs')  # 'bs' o 'usd'
     
-    if request.GET.get('filtro_cli') == 'si':
+    # Filtro opcional por URL/AJAX - detectar si hay parámetros de fecha, búsqueda o moneda
+    if request.GET.get('filtro_cli') == 'si' or search_cli or moneda_cli != 'bs' or request.GET.get('fecha_ini_cli'):
          fecha_ini_str = request.GET.get('fecha_ini_cli')
          fecha_fin_str = request.GET.get('fecha_fin_cli')
          if fecha_ini_str: fecha_ini_cli = datetime.strptime(fecha_ini_str, '%Y-%m-%d').date()
          if fecha_fin_str: fecha_fin_cli = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
 
-    top_clientes = (
+    top_clientes_query = (
         Venta.objects
         .filter(
             Fecha_Venta__date__range=[fecha_ini_cli, fecha_fin_cli],
             anulada=False
         )
+    )
+    
+    # Aplicar filtro de búsqueda si existe
+    if search_cli:
+        top_clientes_query = top_clientes_query.filter(
+            Q(Cedula__nombre__icontains=search_cli) |
+            Q(Cedula__apellido__icontains=search_cli)
+        )
+    
+    # Seleccionar campo de total según moneda
+    if moneda_cli == 'usd':
+        total_field = 'Total_USD'
+    else:
+        total_field = 'Total'
+    
+    top_clientes = (
+        top_clientes_query
         .values('Cedula__nombre', 'Cedula__apellido', 'Cedula__cedula')
         .annotate(
             total_compras=Count('ID_Ventas'),
-            total_gastado=Sum('Total')
+            total_gastado=Sum(total_field)
         )
         .order_by('-total_compras')[:10]
     )
@@ -74,8 +119,10 @@ def menu_estadisticas(request):
     # Por defecto: Próximos 30 días
     fecha_ini_venc = timezone.now().date()
     fecha_fin_venc = fecha_ini_venc + timedelta(days=30)
+    search_venc = request.GET.get('search_venc', '').strip()
     
-    if request.GET.get('filtro_venc') == 'si':
+    # Filtro opcional por URL/AJAX - detectar si hay parámetros de fecha o búsqueda
+    if request.GET.get('filtro_venc') == 'si' or search_venc or request.GET.get('fecha_ini_venc'):
          fecha_ini_str = request.GET.get('fecha_ini_venc')
          fecha_fin_str = request.GET.get('fecha_fin_venc')
          if fecha_ini_str: fecha_ini_venc = datetime.strptime(fecha_ini_str, '%Y-%m-%d').date()
@@ -89,8 +136,15 @@ def menu_estadisticas(request):
             estado='activo'
         )
         .select_related('id_producto')
-        .order_by('fecha_vencimiento')
     )
+    
+    # Aplicar filtro de búsqueda si existe
+    if search_venc:
+        lotes_por_vencer_qs = lotes_por_vencer_qs.filter(
+            id_producto__nombre_pro__icontains=search_venc
+        )
+    
+    lotes_por_vencer_qs = lotes_por_vencer_qs.order_by('fecha_vencimiento')
     
     # Calcular tiempo restante (para coincidir con lógica JS)
     lotes_por_vencer = []
@@ -100,6 +154,43 @@ def menu_estadisticas(request):
         dias = delta.days
         lote.tiempo_restante = f"{dias} días" if dias > 0 else "Vence hoy"
         lotes_por_vencer.append(lote)
+
+    # === PANEL 4: TOP CATEGORÍAS (Pasado) ===
+    # Por defecto: Últimos 30 días
+    fecha_fin_cat = timezone.now().date()
+    fecha_ini_cat = fecha_fin_cat - timedelta(days=30)
+    search_cat = request.GET.get('search_cat', '').strip()
+    
+    # Filtro opcional por URL/AJAX
+    if request.GET.get('filtro_cat') == 'si' or search_cat or request.GET.get('fecha_ini_cat'):
+         fecha_ini_str = request.GET.get('fecha_ini_cat')
+         fecha_fin_str = request.GET.get('fecha_fin_cat')
+         if fecha_ini_str: fecha_ini_cat = datetime.strptime(fecha_ini_str, '%Y-%m-%d').date()
+         if fecha_fin_str: fecha_fin_cat = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+    
+    top_categorias_query = (
+        DetalleVenta.objects
+        .filter(
+            ID_Ventas__Fecha_Venta__date__range=[fecha_ini_cat, fecha_fin_cat],
+            ID_Ventas__anulada=False
+        )
+    )
+    
+    # Aplicar filtro de búsqueda si existe
+    if search_cat:
+        top_categorias_query = top_categorias_query.filter(
+            ID_lote__id_producto__categoria__nombre__icontains=search_cat
+        )
+    
+    top_categorias = (
+        top_categorias_query
+        .values('ID_lote__id_producto__categoria__nombre')
+        .annotate(
+            total_cantidad=Sum('Cantidad'),
+            total_ventas=Sum(ExpressionWrapper(F('Precio_Unitario') * F('Cantidad'), output_field=DecimalField()))
+        )
+        .order_by('-total_cantidad')[:10]
+    )
 
     # RESPUESTA AJAX JSON
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -118,7 +209,8 @@ def menu_estadisticas(request):
                 'nombre': f"{item['Cedula__nombre']} {item['Cedula__apellido']}",
                 'cedula': item['Cedula__cedula'],
                 'compras': item['total_compras'],
-                'total': float(item['total_gastado'])
+                'total': float(item['total_gastado']),
+                'moneda': moneda_cli
             })
             
         vencimiento_data = []
@@ -137,14 +229,31 @@ def menu_estadisticas(request):
                 'tiempo': tiempo_restante
             })
 
+        categorias_data = []
+        for item in top_categorias:
+            categorias_data.append({
+                'nombre': item['ID_lote__id_producto__categoria__nombre'],
+                'cantidad': float(item['total_cantidad']),
+                'total': float(item['total_ventas'])
+            })
+
         return JsonResponse({
             'productos': productos_data,
             'clientes': clientes_data,
             'vencimiento': vencimiento_data,
+            'categorias': categorias_data,
             'fechas': {
                 'prod': f"Del {fecha_ini_prod.strftime('%d/%m/%Y')} al {fecha_fin_prod.strftime('%d/%m/%Y')}",
                 'cli': f"Del {fecha_ini_cli.strftime('%d/%m/%Y')} al {fecha_fin_cli.strftime('%d/%m/%Y')}",
-                'venc': f"Del {fecha_ini_venc.strftime('%d/%m/%Y')} al {fecha_fin_venc.strftime('%d/%m/%Y')}"
+                'venc': f"Del {fecha_ini_venc.strftime('%d/%m/%Y')} al {fecha_fin_venc.strftime('%d/%m/%Y')}",
+                'cat': f"Del {fecha_ini_cat.strftime('%d/%m/%Y')} al {fecha_fin_cat.strftime('%d/%m/%Y')}"
+            },
+            'filtros': {
+                'search_prod': search_prod,
+                'search_cli': search_cli,
+                'search_venc': search_venc,
+                'search_cat': search_cat,
+                'moneda_cli': moneda_cli
             }
         })
 
@@ -152,14 +261,24 @@ def menu_estadisticas(request):
         'top_productos': top_productos,
         'fecha_ini_prod': fecha_ini_prod,
         'fecha_fin_prod': fecha_fin_prod,
+        'search_prod': search_prod,
         
         'top_clientes': top_clientes,
         'fecha_ini_cli': fecha_ini_cli,
         'fecha_fin_cli': fecha_fin_cli,
+        'search_cli': search_cli,
+        'moneda_cli': moneda_cli,
+        'tasa_actual': tasa_actual,
         
         'lotes_por_vencer': lotes_por_vencer,
         'fecha_ini_venc': fecha_ini_venc,
         'fecha_fin_venc': fecha_fin_venc,
+        'search_venc': search_venc,
+
+        'top_categorias': top_categorias,
+        'fecha_ini_cat': fecha_ini_cat,
+        'fecha_fin_cat': fecha_fin_cat,
+        'search_cat': search_cat,
     }
     
     return render(request, 'estadisticas/menu_estadisticas.html', context)
@@ -171,16 +290,27 @@ def reporte_productos_mas_vendidos(request):
     try:
         fecha_ini = request.GET.get('fecha_ini')
         fecha_fin = request.GET.get('fecha_fin')
+        search = request.GET.get('search', '').strip()
         
         if not fecha_ini or not fecha_fin:
              return HttpResponse("Fechas requeridas", status=400)
-             
-        productos = (
+        
+        productos_query = (
             DetalleVenta.objects
             .filter(
                 ID_Ventas__Fecha_Venta__date__range=[fecha_ini, fecha_fin],
                 ID_Ventas__anulada=False
             )
+        )
+        
+        # Aplicar filtro de búsqueda si existe
+        if search:
+            productos_query = productos_query.filter(
+                ID_lote__id_producto__nombre_pro__icontains=search
+            )
+        
+        productos = (
+            productos_query
             .values(
                 'ID_lote__id_producto__nombre_pro', 
                 'ID_lote__id_producto__ID_producto'
@@ -195,10 +325,19 @@ def reporte_productos_mas_vendidos(request):
             'fecha_fin': datetime.strptime(fecha_fin, '%Y-%m-%d').date(),
             'datos': productos,
             'tipo_reporte': 'productos',
-            'fecha_generacion': timezone.now()
+            'fecha_generacion': timezone.now(),
+            'filtro_busqueda': search
         }
         
-        return generar_pdf_generico('estadisticas/reporte_pdf.html', context, f"productos_top_{fecha_ini}_{fecha_fin}.pdf")
+        # Generar nombre de archivo dinámico
+        filename_parts = ["productos"]
+        if search:
+            search_clean = search.replace(' ', '_')[:20]
+            filename_parts.append(f"busqueda_{search_clean}")
+        filename_parts.append(f"{fecha_ini}_{fecha_fin}")
+        filename = "_".join(filename_parts) + ".pdf"
+        
+        return generar_pdf_generico('estadisticas/reporte_pdf.html', context, filename)
         
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=500)
@@ -210,20 +349,40 @@ def reporte_clientes_frecuentes(request):
     try:
         fecha_ini = request.GET.get('fecha_ini')
         fecha_fin = request.GET.get('fecha_fin')
+        search = request.GET.get('search', '').strip()
+        moneda = request.GET.get('moneda', 'bs')
         
         if not fecha_ini or not fecha_fin:
              return HttpResponse("Fechas requeridas", status=400)
-
-        clientes = (
+        
+        from django.db.models import Q
+        clientes_query = (
             Venta.objects
             .filter(
                 Fecha_Venta__date__range=[fecha_ini, fecha_fin],
                 anulada=False
             )
+        )
+        
+        # Aplicar filtro de búsqueda si existe
+        if search:
+            clientes_query = clientes_query.filter(
+                Q(Cedula__nombre__icontains=search) |
+                Q(Cedula__apellido__icontains=search)
+            )
+        
+        # Seleccionar campo de total según moneda
+        if moneda == 'usd':
+            total_field = 'Total_USD'
+        else:
+            total_field = 'Total'
+        
+        clientes = (
+            clientes_query
             .values('Cedula__nombre', 'Cedula__apellido', 'Cedula__cedula')
             .annotate(
                 total_compras=Count('ID_Ventas'),
-                total_gastado=Sum('Total')
+                total_gastado=Sum(total_field)
             )
             .order_by('-total_compras')
         )
@@ -234,10 +393,21 @@ def reporte_clientes_frecuentes(request):
             'fecha_fin': datetime.strptime(fecha_fin, '%Y-%m-%d').date(),
             'datos': clientes,
             'tipo_reporte': 'clientes',
-            'fecha_generacion': timezone.now()
+            'fecha_generacion': timezone.now(),
+            'filtro_busqueda': search,
+            'moneda': moneda
         }
         
-        return generar_pdf_generico('estadisticas/reporte_pdf.html', context, f"clientes_top_{fecha_ini}_{fecha_fin}.pdf")
+        # Generar nombre de archivo dinámico
+        filename_parts = ["clientes"]
+        if search:
+            search_clean = search.replace(' ', '_')[:20]
+            filename_parts.append(f"busqueda_{search_clean}")
+        filename_parts.append(f"{fecha_ini}_{fecha_fin}")
+        filename_parts.append(moneda)
+        filename = "_".join(filename_parts) + ".pdf"
+        
+        return generar_pdf_generico('estadisticas/reporte_pdf.html', context, filename)
 
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=500)
@@ -249,11 +419,12 @@ def reporte_por_vencer(request):
     try:
         fecha_ini = request.GET.get('fecha_ini')
         fecha_fin = request.GET.get('fecha_fin')
+        search = request.GET.get('search', '').strip()
         
         if not fecha_ini or not fecha_fin:
              return HttpResponse("Fechas requeridas", status=400)
-
-        lotes = (
+        
+        lotes_query = (
             Lote.objects
             .filter(
                 fecha_vencimiento__range=[fecha_ini, fecha_fin],
@@ -261,8 +432,15 @@ def reporte_por_vencer(request):
                 estado='activo'
             )
             .select_related('id_producto')
-            .order_by('fecha_vencimiento')
         )
+        
+        # Aplicar filtro de búsqueda si existe
+        if search:
+            lotes_query = lotes_query.filter(
+                id_producto__nombre_pro__icontains=search
+            )
+        
+        lotes = lotes_query.order_by('fecha_vencimiento')
 
         context = {
             'titulo': 'Reporte de Productos por Vencer',
@@ -270,10 +448,19 @@ def reporte_por_vencer(request):
             'fecha_fin': datetime.strptime(fecha_fin, '%Y-%m-%d').date(),
             'datos': lotes,
             'tipo_reporte': 'vencimiento',
-            'fecha_generacion': timezone.now()
+            'fecha_generacion': timezone.now(),
+            'filtro_busqueda': search
         }
         
-        return generar_pdf_generico('estadisticas/reporte_pdf.html', context, f"vencimiento_{fecha_ini}_{fecha_fin}.pdf")
+        # Generar nombre de archivo dinámico
+        filename_parts = ["vencimiento"]
+        if search:
+            search_clean = search.replace(' ', '_')[:20]
+            filename_parts.append(f"busqueda_{search_clean}")
+        filename_parts.append(f"{fecha_ini}_{fecha_fin}")
+        filename = "_".join(filename_parts) + ".pdf"
+        
+        return generar_pdf_generico('estadisticas/reporte_pdf.html', context, filename)
 
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=500)
@@ -292,3 +479,370 @@ def generar_pdf_generico(template_src, context_dict, filename):
         return response
     
     return HttpResponse(f"Error al generar PDF: {pdf.err}", status=500)
+
+
+# ===== ENDPOINTS PARA GRÁFICOS =====
+
+@login_required
+def datos_ventas_tiempo(request):
+    """Endpoint para datos del gráfico de ventas en el tiempo"""
+    try:
+        from django.db.models.functions import TruncDate, TruncWeek, TruncMonth
+        from decimal import Decimal
+        
+        periodo = request.GET.get('periodo', 'mes')  # dia, semana, mes
+        moneda = request.GET.get('moneda', 'bs')  # bs o usd
+        fecha_ini = request.GET.get('fecha_ini')
+        fecha_fin = request.GET.get('fecha_fin')
+        
+        # Determinar rango de fechas
+        if fecha_ini and fecha_fin:
+            fecha_inicio = datetime.strptime(fecha_ini, '%Y-%m-%d').date()
+            fecha_final = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+        else:
+            # Por defecto: últimos 30 días
+            fecha_final = timezone.now().date()
+            fecha_inicio = fecha_final - timedelta(days=30)
+        
+        # Determinar función de truncado según período
+        if periodo == 'dia':
+            trunc_func = TruncDate
+        elif periodo == 'semana':
+            trunc_func = TruncWeek
+        else:  # mes
+            trunc_func = TruncMonth
+        
+        # Seleccionar campo según moneda
+        campo_total = 'Total_USD' if moneda == 'usd' else 'Total'
+        
+        # Obtener ventas agrupadas por fecha
+        ventas = (
+            Venta.objects
+            .filter(
+                Fecha_Venta__date__gte=fecha_inicio,
+                Fecha_Venta__date__lte=fecha_final,
+                anulada=False
+            )
+            .annotate(fecha=trunc_func('Fecha_Venta'))
+            .values('fecha')
+            .annotate(total=Sum(campo_total))
+            .order_by('fecha')
+        )
+        
+        # Formatear datos para Chart.js
+        labels = []
+        data = []
+        
+        for venta in ventas:
+            fecha_venta = venta['fecha']
+            # Asegurar que sea date o datetime para evitar errores
+            if not hasattr(fecha_venta, 'strftime'):
+                continue
+
+            if periodo == 'mes':
+                # Para mes, mostrar mes/año (ej. Ene 2026)
+                labels.append(fecha_venta.strftime('%b %Y'))
+            elif periodo == 'semana':
+                # Para semana, mostrar inicio de semana
+                labels.append(f"Sem {fecha_venta.strftime('%W')} - {fecha_venta.strftime('%d/%m')}")
+            else:
+                # Para día, mostrar día/mes
+                labels.append(fecha_venta.strftime('%d/%m'))
+            data.append(float(venta['total'] or 0))
+        
+        return JsonResponse({
+            'labels': labels,
+            'data': data,
+            'moneda': moneda,
+            'periodo': periodo
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def datos_top_productos(request):
+    """Endpoint para datos del gráfico de top productos"""
+    try:
+        fecha_ini = request.GET.get('fecha_ini')
+        fecha_fin = request.GET.get('fecha_fin')
+        limit = int(request.GET.get('limit', 10))
+        
+        # Si no hay fechas, usar últimos 30 días
+        if not fecha_ini or not fecha_fin:
+            fecha_fin = timezone.now().date()
+            fecha_ini = fecha_fin - timedelta(days=30)
+        else:
+            fecha_ini = datetime.strptime(fecha_ini, '%Y-%m-%d').date()
+            fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+        
+        # Obtener top productos
+        top_productos = (
+            DetalleVenta.objects
+            .filter(
+                ID_Ventas__Fecha_Venta__date__range=[fecha_ini, fecha_fin],
+                ID_Ventas__anulada=False
+            )
+            .values('ID_lote__id_producto__nombre_pro')
+            .annotate(total_cantidad=Sum('Cantidad'))
+            .order_by('-total_cantidad')[:limit]
+        )
+        
+        # Formatear datos
+        labels = []
+        data = []
+        
+        for item in top_productos:
+            labels.append(item['ID_lote__id_producto__nombre_pro'])
+            data.append(float(item['total_cantidad']))
+        
+        return JsonResponse({
+            'labels': labels,
+            'data': data,
+            'fecha_ini': fecha_ini.strftime('%d/%m/%Y'),
+            'fecha_fin': fecha_fin.strftime('%d/%m/%Y')
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def datos_ventas_categoria(request):
+    """Endpoint para datos del gráfico de ventas por categoría"""
+    try:
+        fecha_ini = request.GET.get('fecha_ini')
+        fecha_fin = request.GET.get('fecha_fin')
+        moneda = request.GET.get('moneda', 'bs')
+        
+        # Si no hay fechas, usar últimos 30 días
+        if not fecha_ini or not fecha_fin:
+            fecha_fin = timezone.now().date()
+            fecha_ini = fecha_fin - timedelta(days=30)
+        else:
+            fecha_ini = datetime.strptime(fecha_ini, '%Y-%m-%d').date()
+            fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+        
+        # Seleccionar campo según moneda
+        if moneda == 'bs':
+            # Usar F('Precio_Unitario') explícitamente como expresión
+            campo_precio = F('Precio_Unitario')
+        else:
+            # Calcular USD: Precio_Bs / Tasa
+            campo_precio = F('Precio_Unitario') / F('ID_Tasa__valor')
+        
+        # Obtener ventas por categoría
+        ventas_categoria = (
+            DetalleVenta.objects
+            .filter(
+                ID_Ventas__Fecha_Venta__date__range=[fecha_ini, fecha_fin],
+                ID_Ventas__anulada=False
+            )
+            .values('ID_lote__id_producto__categoria__nombre')
+            .annotate(
+                total=Sum(
+                    ExpressionWrapper(
+                        F('Cantidad') * campo_precio,
+                        output_field=DecimalField(max_digits=15, decimal_places=2)
+                    )
+                )
+            )
+            .order_by('-total')[:10]
+        )
+        
+        # Formatear datos
+        labels = []
+        data = []
+        
+        for item in ventas_categoria:
+            categoria = item['ID_lote__id_producto__categoria__nombre']
+            if categoria:  # Solo incluir si tiene categoría
+                labels.append(categoria)
+                data.append(float(item['total'] or 0))
+        
+        return JsonResponse({
+            'labels': labels,
+            'data': data,
+            'moneda': moneda,
+            'fecha_ini': fecha_ini.strftime('%d/%m/%Y'),
+            'fecha_fin': fecha_fin.strftime('%d/%m/%Y')
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+# ===== VISTAS PARA GENERAR REPORTES PDF DE GRÁFICOS =====
+@login_required
+def reporte_ventas_tiempo(request):
+    """Genera PDF del gráfico de Ventas en el Tiempo (mismos filtros)"""
+    try:
+        from django.db.models.functions import TruncDate, TruncWeek, TruncMonth
+        
+        periodo = request.GET.get('periodo', 'mes')
+        moneda = request.GET.get('moneda', 'bs')
+        fecha_ini = request.GET.get('fecha_ini')
+        fecha_fin = request.GET.get('fecha_fin')
+        
+        if fecha_ini and fecha_fin:
+            fecha_inicio = datetime.strptime(fecha_ini, '%Y-%m-%d').date()
+            fecha_final = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+        else:
+            fecha_final = timezone.now().date()
+            fecha_inicio = fecha_final - timedelta(days=30)
+            
+        # Determinar truncado
+        if periodo == 'dia': trunc_func = TruncDate
+        elif periodo == 'semana': trunc_func = TruncWeek
+        else: trunc_func = TruncMonth
+        
+        campo_total = 'Total_USD' if moneda == 'usd' else 'Total'
+        
+        ventas = (
+            Venta.objects
+            .filter(
+                Fecha_Venta__date__gte=fecha_inicio,
+                Fecha_Venta__date__lte=fecha_final,
+                anulada=False
+            )
+            .annotate(fecha=trunc_func('Fecha_Venta'))
+            .values('fecha')
+            .annotate(total=Sum(campo_total))
+            .order_by('fecha')
+        )
+        
+        context = {
+            'titulo': f'Reporte de Ventas por {periodo.capitalize()}',
+            'fecha_ini': fecha_inicio,
+            'fecha_fin': fecha_final,
+            'datos': ventas,
+            'tipo_reporte': 'ventas_tiempo',
+            'moneda': moneda,
+            'periodo': periodo,
+            'fecha_generacion': timezone.now()
+        }
+        
+        filename = f"ventas_{periodo}_{fecha_inicio}_{fecha_final}.pdf"
+        return generar_pdf_generico('estadisticas/reporte_pdf.html', context, filename)
+        
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=500)
+
+@login_required
+def reporte_top_productos(request):
+    """Genera PDF similar al gráfico de Top Productos"""
+    try:
+        limit = int(request.GET.get('limit', 10))
+        fecha_ini = request.GET.get('fecha_ini')
+        fecha_fin = request.GET.get('fecha_fin')
+        
+        if fecha_ini and fecha_fin:
+            fecha_inicio = datetime.strptime(fecha_ini, '%Y-%m-%d').date()
+            fecha_final = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+        else:
+            fecha_final = timezone.now().date()
+            fecha_inicio = fecha_final - timedelta(days=30)
+            
+        top_productos = (
+            DetalleVenta.objects
+            .filter(
+                ID_Ventas__Fecha_Venta__date__range=[fecha_inicio, fecha_final],
+                ID_Ventas__anulada=False
+            )
+            .values('ID_lote__id_producto__nombre_pro')
+            .annotate(total_cantidad=Sum('Cantidad'))
+            .order_by('-total_cantidad')[:limit]
+        )
+        
+        context = {
+            'titulo': 'Top Productos (Gráfico)',
+            'fecha_ini': fecha_inicio,
+            'fecha_fin': fecha_final,
+            'datos': top_productos,
+            'tipo_reporte': 'top_productos_chart',
+            'fecha_generacion': timezone.now()
+        }
+        
+        filename = f"top_productos_{fecha_inicio}_{fecha_final}.pdf"
+        return generar_pdf_generico('estadisticas/reporte_pdf.html', context, filename)
+
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=500)
+
+@login_required
+def reporte_ventas_categoria(request):
+    """Genera PDF del gráfico/panel de Categorías"""
+    try:
+        fecha_ini = request.GET.get('fecha_ini')
+        fecha_fin = request.GET.get('fecha_fin')
+        moneda = request.GET.get('moneda', 'bs')
+        search_cat = request.GET.get('search_cat', '').strip()
+        modo = request.GET.get('modo', '') # 'panel' o 'chart'
+
+        # Usamos variables globales si venimos del panel y no hay params?
+        # Mejor confiar en query params que insertó el JS
+        
+        if fecha_ini and fecha_fin:
+            try:
+                fecha_inicio = datetime.strptime(fecha_ini, '%Y-%m-%d').date()
+                fecha_final = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+            except ValueError:
+                # Fallback format or error
+                 fecha_final = timezone.now().date()
+                 fecha_inicio = fecha_final - timedelta(days=30)
+        else:
+            fecha_final = timezone.now().date()
+            fecha_inicio = fecha_final - timedelta(days=30)
+            
+        if moneda == 'bs':
+            campo_precio = F('Precio_Unitario')
+        else:
+            campo_precio = F('Precio_Unitario') / F('ID_Tasa__valor')
+            
+        query = (
+            DetalleVenta.objects
+            .filter(
+                ID_Ventas__Fecha_Venta__date__range=[fecha_inicio, fecha_final],
+                ID_Ventas__anulada=False
+            )
+        )
+        
+        # Filtro de búsqueda para categorías
+        if search_cat:
+            query = query.filter(ID_lote__id_producto__categoria__nombre__icontains=search_cat)
+            
+        ventas_categoria = (
+            query
+            .values('ID_lote__id_producto__categoria__nombre')
+            .annotate(
+                total=Sum(
+                    ExpressionWrapper(
+                        F('Cantidad') * campo_precio,
+                        output_field=DecimalField(max_digits=15, decimal_places=2)
+                    )
+                ),
+                total_cantidad=Sum('Cantidad') # Agregamos cantidad también
+            )
+            .order_by('-total')
+        )
+        # Limit? El panel muestra top 5, el chart top 10.
+        # Si es reporte impreso, mostramos más? Digamos top 20
+        ventas_categoria = ventas_categoria[:20]
+
+        context = {
+            'titulo': 'Reporte de Ventas por Categoría',
+            'fecha_ini': fecha_inicio,
+            'fecha_fin': fecha_final,
+            'datos': ventas_categoria,
+            'tipo_reporte': 'categorias', # Reutilizamos lógica de template si existe, o nueva
+            'moneda': moneda,
+            'fecha_generacion': timezone.now(),
+            'filtro_busqueda': search_cat
+        }
+        
+        filename = f"categorias_{fecha_inicio}_{fecha_final}.pdf"
+        return generar_pdf_generico('estadisticas/reporte_pdf.html', context, filename)
+
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=500)

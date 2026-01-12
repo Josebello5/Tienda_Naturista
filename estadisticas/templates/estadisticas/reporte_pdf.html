@@ -115,6 +115,18 @@
                 <th>Lote</th>
                 <th class="text-center">Disponible</th>
                 <th class="text-right">Fecha Vencimiento</th>
+                {% elif tipo_reporte == 'ventas_tiempo' %}
+                <th>Fecha / Período</th>
+                <th class="text-right">Total ({% if moneda == 'usd' %}USD{% else %}Bs{% endif %})</th>
+                {% elif tipo_reporte == 'top_productos_chart' %}
+                <th class="rank-col">#</th>
+                <th>Producto</th>
+                <th class="text-right">Cantidad Vendida</th>
+                {% elif tipo_reporte == 'categorias' %}
+                <th class="rank-col">#</th>
+                <th>Categoría</th>
+                <th class="text-center">Cant. Productos</th>
+                <th class="text-right">Total Ventas ({% if moneda == 'usd' %}USD{% else %}Bs{% endif %})</th>
                 {% endif %}
             </tr>
         </thead>
@@ -131,12 +143,28 @@
                 <td>{{ item.Cedula__nombre }} {{ item.Cedula__apellido }}</td>
                 <td>{{ item.Cedula__cedula }}</td>
                 <td class="text-center">{{ item.total_compras }}</td>
-                <td class="text-right">Bs {{ item.total_gastado|floatformat:2 }}</td>
+                <td class="text-right">{% if moneda == 'usd' %}${% else %}Bs{% endif %} {{ item.total_gastado|floatformat:2 }}</td>
                 {% elif tipo_reporte == 'vencimiento' %}
                 <td>{{ item.id_producto.nombre_pro }}</td>
                 <td>{{ item.codigo_lote }}</td>
                 <td class="text-center">{{ item.cantidad_disponible }}</td>
                 <td class="text-right">{{ item.fecha_vencimiento|date:"d/m/Y" }}</td>
+                {% elif tipo_reporte == 'ventas_tiempo' %}
+                <td>
+                    {% if periodo == 'mes' %}{{ item.fecha|date:"F Y" }}
+                    {% elif periodo == 'semana' %}Semana del {{ item.fecha|date:"d/m/Y" }}
+                    {% else %}{{ item.fecha|date:"d/m/Y" }}{% endif %}
+                </td>
+                <td class="text-right">{% if moneda == 'usd' %}${% else %}Bs{% endif %} {{ item.total|floatformat:2 }}</td>
+                {% elif tipo_reporte == 'top_productos_chart' %}
+                <td class="rank-col">{{ forloop.counter }}</td>
+                <td>{{ item.ID_lote__id_producto__nombre_pro }}</td>
+                <td class="text-right">{{ item.total_cantidad }}</td>
+                {% elif tipo_reporte == 'categorias' %}
+                <td class="rank-col">{{ forloop.counter }}</td>
+                <td>{{ item.ID_lote__id_producto__categoria__nombre }}</td>
+                <td class="text-center">{{ item.total_cantidad }}</td>
+                <td class="text-right">{% if moneda == 'usd' %}${% else %}Bs{% endif %} {{ item.total|floatformat:2 }}</td>
                 {% endif %}
             </tr>
             {% empty %}

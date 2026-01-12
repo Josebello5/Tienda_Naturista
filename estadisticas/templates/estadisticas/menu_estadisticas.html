@@ -31,12 +31,17 @@
                     </button>
                     <!-- Agregamos target="_blank" para asegurar apertura y depuracion -->
                     <a href="{% url 'estadisticas:reporte_productos' %}?fecha_ini={{ fecha_ini_prod|date:'Y-m-d' }}&fecha_fin={{ fecha_fin_prod|date:'Y-m-d' }}"
-                        class="btn-icon-card" title="Descargar PDF" target="_blank">
+                        class="btn-icon-card btn-print-prod" title="Descargar PDF" target="_blank">
                         <i class="fas fa-print"></i>
                     </a>
                 </div>
             </div>
             <div class="card-body">
+                <!-- Barra de búsqueda -->
+                <div class="search-container">
+                    <input type="text" class="search-input" id="search-prod" placeholder="Buscar producto..." value="{{ search_prod }}">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
                 <ul class="ranking-list" id="list-productos">
                     {% if top_productos %}
                     {% for item in top_productos %}
@@ -75,18 +80,27 @@
                     </span>
                 </div>
                 <div class="card-actions">
+                    <!-- Toggle de moneda -->
+                    <button class="btn-icon-card btn-toggle-moneda" title="Cambiar Moneda" data-moneda="{{ moneda_cli }}">
+                        <i class="fas fa-dollar-sign"></i>
+                    </button>
                     <button class="btn-icon-card btn-filter-date" title="Filtrar Fechas" data-context="cli"
                         data-ini="{{ fecha_ini_cli|date:'Y-m-d' }}" data-fin="{{ fecha_fin_cli|date:'Y-m-d' }}"
                         data-type="past">
                         <i class="fas fa-filter"></i>
                     </button>
                     <a href="{% url 'estadisticas:reporte_clientes' %}?fecha_ini={{ fecha_ini_cli|date:'Y-m-d' }}&fecha_fin={{ fecha_fin_cli|date:'Y-m-d' }}"
-                        class="btn-icon-card" title="Descargar PDF" target="_blank">
+                        class="btn-icon-card btn-print-cli" title="Descargar PDF" target="_blank">
                         <i class="fas fa-print"></i>
                     </a>
                 </div>
             </div>
             <div class="card-body">
+                <!-- Barra de búsqueda -->
+                <div class="search-container">
+                    <input type="text" class="search-input" id="search-cli" placeholder="Buscar cliente..." value="{{ search_cli }}">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
                 <ul class="ranking-list" id="list-clientes">
                     {% if top_clientes %}
                     {% for item in top_clientes %}
@@ -98,7 +112,7 @@
                         </div>
                         <div class="text-end">
                             <div class="item-value" style="font-size: 0.9rem;">{{ item.total_compras }} compras</div>
-                            <span class="item-meta">Bs {{ item.total_gastado|floatformat:2 }}</span>
+                            <span class="item-meta" id="total-cli-{{ forloop.counter }}" data-bs="{{ item.total_gastado }}" data-usd="{{ item.total_gastado|floatformat:2 }}">{% if moneda_cli == 'usd' %}${% else %}Bs{% endif %} {{ item.total_gastado|floatformat:2 }}</span>
                         </div>
                     </li>
                     {% endfor %}
@@ -132,12 +146,17 @@
                         <i class="fas fa-filter"></i>
                     </button>
                     <a href="{% url 'estadisticas:reporte_vencimiento' %}?fecha_ini={{ fecha_ini_venc|date:'Y-m-d' }}&fecha_fin={{ fecha_fin_venc|date:'Y-m-d' }}"
-                        class="btn-icon-card" title="Descargar PDF" target="_blank">
+                        class="btn-icon-card btn-print-venc" title="Descargar PDF" target="_blank">
                         <i class="fas fa-print"></i>
                     </a>
                 </div>
             </div>
             <div class="card-body">
+                <!-- Barra de búsqueda -->
+                <div class="search-container">
+                    <input type="text" class="search-input" id="search-venc" placeholder="Buscar producto..." value="{{ search_venc }}">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
                 <ul class="ranking-list" id="list-vencimiento">
                     {% if lotes_por_vencer %}
                     {% for lote in lotes_por_vencer %}
@@ -166,6 +185,187 @@
             </div>
         </div>
 
+        <!-- === PANEL 4: TOP CATEGORÍAS === -->
+        <div class="stats-card">
+            <div class="card-header">
+                <div>
+                    <h3><i class="fas fa-layer-group text-primary"></i> Top Categorías</h3>
+                    <span class="filter-info" id="info-cat">
+                        Del {{ fecha_ini_cat|date:"d/m/Y" }} al {{ fecha_fin_cat|date:"d/m/Y" }}
+                    </span>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-icon-card btn-filter-date" title="Filtrar Fechas" data-context="cat"
+                        data-ini="{{ fecha_ini_cat|date:'Y-m-d' }}" data-fin="{{ fecha_fin_cat|date:'Y-m-d' }}"
+                        data-type="past">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                    <a href="#" id="btn-print-categorias-panel" class="btn-icon-card" title="Descargar PDF" target="_blank">
+                        <i class="fas fa-print"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="search-container">
+                    <input type="text" class="search-input" id="search-cat-panel" placeholder="Buscar categoría..." value="{{ search_cat }}">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+                <ul class="ranking-list" id="list-categorias-panel">
+                    {% if top_categorias %}
+                    {% for item in top_categorias %}
+                    <li class="ranking-item">
+                        <span class="rank-badge">{{ forloop.counter }}</span>
+                        <div class="item-info">
+                            <span class="item-name">{{ item.ID_lote__id_producto__categoria__nombre }}</span>
+                        </div>
+                        <div class="text-end">
+                            <div class="item-value" style="font-size: 0.9rem;">{{ item.total_cantidad|floatformat:0 }} un.</div>
+                            <span class="item-meta">Bs {{ item.total_ventas|floatformat:2 }}</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state text-center p-4">
+                        <i class="fas fa-layer-group fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">No hay ventas registradas en este período.</p>
+                    </div>
+                    {% endif %}
+                </ul>
+                <div id="no-cat" class="empty-row text-center p-4" style="display: none;">
+                    <i class="fas fa-layer-group fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">No hay ventas registradas en este período.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ===== SECCIÓN DE GRÁFICOS ===== -->
+<div class="charts-section">
+    <div class="charts-header">
+        <h2><i class="fas fa-chart-pie me-2"></i>Análisis Visual</h2>
+        <p>Gráficos interactivos para análisis de tendencias</p>
+    </div>
+    
+    <!-- Tabs para cambiar entre gráficos -->
+    <div class="chart-tabs">
+        <button class="chart-tab active" data-chart="ventas">
+            <i class="fas fa-chart-line"></i> Ventas en el Tiempo
+        </button>
+        <button class="chart-tab" data-chart="productos">
+            <i class="fas fa-chart-bar"></i> Top Productos
+        </button>
+        <button class="chart-tab" data-chart="categorias">
+            <i class="fas fa-layer-group"></i> Por Categoría
+        </button>
+    </div>
+    
+    <!-- Contenedor: Ventas en el Tiempo -->
+    <div class="chart-container active" id="chart-ventas">
+        <div class="chart-controls">
+            <div class="control-group">
+                <label>Desde:</label>
+                <input type="date" id="fecha-ini-ventas" class="chart-date">
+            </div>
+            <div class="control-group">
+                <label>Hasta:</label>
+                <input type="date" id="fecha-fin-ventas" class="chart-date">
+            </div>
+            <div class="quick-filters">
+                <button class="btn-quick" data-target="ventas" data-range="hoy">Hoy</button>
+                <button class="btn-quick" data-target="ventas" data-range="semana">Semana</button>
+                <button class="btn-quick" data-target="ventas" data-range="mes">Mes</button>
+                <button class="btn-quick" data-target="ventas" data-range="anio">Año</button>
+            </div>
+            <div class="control-group">
+                <label>Período:</label>
+                <select id="periodo-ventas" class="chart-select">
+                    <option value="dia">Por Día</option>
+                    <option value="semana">Por Semana</option>
+                    <option value="mes" selected>Por Mes</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Moneda:</label>
+                <button class="btn-toggle-chart" id="toggle-moneda-ventas" data-moneda="bs">
+                    <i class="fas fa-dollar-sign"></i> <span>Bs</span>
+                </button>
+            </div>
+            <button class="btn-apply-chart" id="apply-ventas">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+            <a href="#" id="btn-print-ventas" target="_blank" class="btn-print-chart">
+                <i class="fas fa-print"></i>
+            </a>
+        </div>
+        <div class="chart-canvas-wrapper">
+            <canvas id="canvas-ventas"></canvas>
+        </div>
+    </div>
+    
+    <!-- Contenedor: Top Productos -->
+    <div class="chart-container" id="chart-productos">
+        <div class="chart-controls">
+            <div class="control-group">
+                <label>Desde:</label>
+                <input type="date" id="fecha-ini-productos" class="chart-date">
+            </div>
+            <div class="control-group">
+                <label>Hasta:</label>
+                <input type="date" id="fecha-fin-productos" class="chart-date">
+            </div>
+            <div class="quick-filters">
+                <button class="btn-quick" data-target="productos" data-range="hoy">Hoy</button>
+                <button class="btn-quick" data-target="productos" data-range="semana">Semana</button>
+                <button class="btn-quick" data-target="productos" data-range="mes">Mes</button>
+                <button class="btn-quick" data-target="productos" data-range="anio">Año</button>
+            </div>
+            <button class="btn-apply-chart" id="apply-productos">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+            <a href="#" id="btn-print-productos" target="_blank" class="btn-print-chart">
+                <i class="fas fa-print"></i>
+            </a>
+        </div>
+        <div class="chart-canvas-wrapper">
+            <canvas id="canvas-productos"></canvas>
+        </div>
+    </div>
+    
+    <!-- Contenedor: Ventas por Categoría -->
+    <div class="chart-container" id="chart-categorias">
+        <div class="chart-controls">
+            <div class="control-group">
+                <label>Desde:</label>
+                <input type="date" id="fecha-ini-categorias" class="chart-date">
+            </div>
+            <div class="control-group">
+                <label>Hasta:</label>
+                <input type="date" id="fecha-fin-categorias" class="chart-date">
+            </div>
+            <div class="quick-filters">
+                <button class="btn-quick" data-target="categorias" data-range="hoy">Hoy</button>
+                <button class="btn-quick" data-target="categorias" data-range="semana">Semana</button>
+                <button class="btn-quick" data-target="categorias" data-range="mes">Mes</button>
+                <button class="btn-quick" data-target="categorias" data-range="anio">Año</button>
+            </div>
+            <div class="control-group">
+                <label>Moneda:</label>
+                <button class="btn-toggle-chart" id="toggle-moneda-categorias" data-moneda="bs">
+                    <i class="fas fa-dollar-sign"></i> <span>Bs</span>
+                </button>
+            </div>
+            <button class="btn-apply-chart" id="apply-categorias">
+                <i class="fas fa-sync-alt"></i> Actualizar
+            </button>
+            <a href="#" id="btn-print-categorias" target="_blank" class="btn-print-chart">
+                <i class="fas fa-print"></i>
+            </a>
+        </div>
+        <div class="chart-canvas-wrapper">
+            <canvas id="canvas-categorias"></canvas>
+        </div>
     </div>
 </div>
 
@@ -223,5 +423,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="{% static 'estadisticas/js/estadisticas.js' %}"></script>
+<script src="{% static 'estadisticas/js/charts.js' %}"></script>
 {% endblock %}
