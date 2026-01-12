@@ -23,7 +23,7 @@
       <p>Total Ventas</p>
     </div>
   </div>
-  
+
   <div class="tarjeta-total">
     <div class="icono-total">
       <i class="fas fa-calculator"></i>
@@ -34,7 +34,7 @@
       <span>Subtotal General</span>
     </div>
   </div>
-  
+
   <div class="tarjeta-total">
     <div class="icono-total">
       <i class="fas fa-percentage"></i>
@@ -45,7 +45,7 @@
       <span>IVA General</span>
     </div>
   </div>
-  
+
   <div class="tarjeta-total total-general">
     <div class="icono-total">
       <i class="fas fa-chart-line"></i>
@@ -62,10 +62,10 @@
 {% if messages %}
 <div class="messages-container">
   {% for message in messages %}
-    <div class="alert alert-{{ message.tags }}">
-      <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
-      {{ message }}
-    </div>
+  <div class="alert alert-{{ message.tags }}">
+    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+    {{ message }}
+  </div>
   {% endfor %}
 </div>
 {% endif %}
@@ -73,7 +73,7 @@
 <!-- ===== CONTENEDOR PRINCIPAL DE VENTAS ===== -->
 <div class="productos-container">
   <div class="productos-main">
-    
+
     <!-- ===== BARRA DE HERRAMIENTAS ===== -->
     <div class="productos-toolbar">
       <div class="filtros-container">
@@ -139,6 +139,8 @@
             <option value="usd">Mostrar en $</option>
           </select>
         </div>
+
+
       </div>
 
       <div class="toolbar-actions">
@@ -172,16 +174,13 @@
         </thead>
         <tbody id="tableBody">
           {% for venta in ventas %}
-          <tr data-cliente-id="{{ venta.Cedula.cedula }}" 
-              data-estado-pago="{{ venta.Estado_Pago }}"
-              data-tipo-venta="{{ venta.Tipo_Venta }}"
-              data-metodo-pago="{{ venta.get_metodo_pago_codigo }}"
-              data-anulada="{{ venta.anulada|yesno:'si,no' }}"
-              data-fecha-venta="{{ venta.Fecha_Venta|date:'Y-m-d H:i' }}"
-              data-tasa="{{ venta.get_tasa_venta|formato_venezolano }}"
-              data-total-bs="{{ venta.Total|formato_venezolano }}"
-              data-total-usd="{{ venta.get_total_usd|formato_venezolano }}"
-              data-pagos-metodo='{{ venta.get_pagos_por_metodo_json|safe }}'>
+          <tr data-cliente-id="{{ venta.Cedula.cedula }}" data-estado-pago="{{ venta.Estado_Pago }}"
+            data-tipo-venta="{{ venta.Tipo_Venta }}" data-metodo-pago="{{ venta.get_metodo_pago_codigo }}"
+            data-anulada="{{ venta.anulada|yesno:'si,no' }}" data-fecha-venta="{{ venta.Fecha_Venta|date:'Y-m-d H:i' }}"
+            data-tasa="{{ venta.get_tasa_venta|formato_venezolano }}"
+            data-total-bs="{{ venta.Total|formato_venezolano }}"
+            data-total-usd="{{ venta.get_total_usd|formato_venezolano }}"
+            data-pagos-metodo='{{ venta.get_pagos_por_metodo_json|safe }}'>
             <td>#{{ venta.ID_Ventas }}</td>
             <td>
               <strong>{{ venta.Cedula.nombre }} {{ venta.Cedula.apellido }}</strong>
@@ -196,17 +195,19 @@
             </td>
             <td class="centered total">
               <div class="total-bs"><strong>Bs {{ venta.get_equivalente_total_bs|formato_venezolano }}</strong></div>
-              <div class="total-usd"><small style="color: #7f8c8d;">≈ $ {{ venta.get_total_usd|formato_venezolano }}</small></div>
+              <div class="total-usd"><small style="color: #7f8c8d;">≈ $ {{ venta.get_total_usd|formato_venezolano
+                  }}</small></div>
               <div class="total-metodo" style="display: none;"></div>
             </td>
             <td class="centered">
               {% if venta.Tipo_Venta == 'credito' %}
-                <span class="text-danger">$ {{ venta.Saldo_Pendiente_USD|formato_venezolano }}</span>
-                <br><small class="text-muted saldo-bs-equiv" data-saldo-usd="{{ venta.Saldo_Pendiente_USD|stringformat:'f' }}">
-                  Bs <span class="calc-bs-dynamic">--</span>
-                </small>
+              <span class="text-danger">$ {{ venta.Saldo_Pendiente_USD|formato_venezolano }}</span>
+              <br><small class="text-muted saldo-bs-equiv"
+                data-saldo-usd="{{ venta.Saldo_Pendiente_USD|stringformat:'f' }}">
+                Bs <span class="calc-bs-dynamic">--</span>
+              </small>
               {% else %}
-                <span class="text-success">—</span>
+              <span class="text-success">—</span>
               {% endif %}
             </td>
             <td>
@@ -227,19 +228,15 @@
             <td class="actions">
               <div class="acciones-venta">
                 <!-- Ver comprobante -->
-                <a href="{% url 'ventas:ver_comprobante' venta.ID_Ventas %}" 
-                   target="_blank" 
-                   class="btn-action btn-ver" 
-                   title="Ver Comprobante">
+                <a href="{% url 'ventas:ver_comprobante' venta.ID_Ventas %}" target="_blank" class="btn-action btn-ver"
+                  title="Ver Comprobante">
                   <i class="fas fa-eye"></i>
                 </a>
-                
+
                 <!-- Devolución (solo si no está anulada) -->
                 {% if not venta.anulada %}
-                <button class="btn-action btn-devolucion" 
-                        title="Devolver Venta" 
-                        data-venta-id="{{ venta.ID_Ventas }}"
-                        onclick="devolverVenta({{ venta.ID_Ventas }})">
+                <button class="btn-action btn-devolucion" title="Devolver Venta" data-venta-id="{{ venta.ID_Ventas }}"
+                  onclick="devolverVenta({{ venta.ID_Ventas }})">
                   <i class="fas fa-undo"></i>
                 </button>
                 {% else %}
@@ -286,7 +283,8 @@
         </div>
       </div>
       <!-- Mensaje de error para validación de fechas -->
-      <div id="fechaError" class="error-message" style="display: none; color: #e74c3c; font-size: 0.85rem; margin-top: 10px; text-align: center; padding: 8px; background: rgba(231, 76, 60, 0.1); border-radius: 5px;">
+      <div id="fechaError" class="error-message"
+        style="display: none; color: #e74c3c; font-size: 0.85rem; margin-top: 10px; text-align: center; padding: 8px; background: rgba(231, 76, 60, 0.1); border-radius: 5px;">
         <i class="fas fa-exclamation-triangle"></i> La fecha "Hasta" no puede ser menor que la fecha "Desde"
       </div>
       <div class="opciones-rapidas">
@@ -310,48 +308,48 @@
 
 {% block extra_css %}
 <!-- ===== ESTILOS ESPECÍFICOS PARA VENTAS ===== -->
-<link rel="stylesheet" href="{% static 'ventas/css/menu_ventas.css' %}">
+<link rel="stylesheet" href="{% static 'ventas/css/menu_ventas.css' %}?v=2.2">
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Pasar datos de Django al JavaScript - CORREGIDO
-    const DEVOLVER_VENTA_URL = "{% url 'ventas:devolver_venta' 0 %}".replace('/0/', '/');
-    const GENERAR_PDF_URL = "{% url 'ventas:generar_pdf_ventas' %}";
-    // Pasar los clientes directamente al window object
-    window.clientesData = {{ clientes_json|safe }};
-    // Pasar la tasa actual para cálculos dinámicos
-    window.TASA_ACTUAL = {{ tasa_actual.valor|stringformat:"f"|default:0 }};
+  // Pasar datos de Django al JavaScript - CORREGIDO
+  const DEVOLVER_VENTA_URL = "{% url 'ventas:devolver_venta' 0 %}".replace('/0/', '/');
+  const GENERAR_PDF_URL = "{% url 'ventas:generar_pdf_ventas' %}";
+  // Pasar los clientes directamente al window object
+  window.clientesData = {{ clientes_json | safe }};
+  // Pasar la tasa actual para cálculos dinámicos
+  ventana.TASA_ACTUAL = {{ tasa_actual.valor|default:0|stringformat:"f" }};
 </script>
-<script src="{% static 'ventas/js/menu_ventas.js' %}"></script>
+<script src="{% static 'ventas/js/menu_ventas.js' %}?v=2.2"></script>
 <script>
-    // Script de respaldo INLINE para asegurar que el cálculo se ejecute
-    document.addEventListener("DOMContentLoaded", function() {
-        console.log("Ejecutando script de respaldo para saldos...");
-        
-        function formatVzlaLocal(num) {
-            let p = num.toFixed(2).split(".");
-            return p[0].split("").reverse().reduce(function(acc, num, i, orig) {
-                return  num=="-" ? acc : num + (i && !(i % 3) ? "." : "") + acc;
-            }, "") + "," + p[1];
+  // Script de respaldo INLINE para asegurar que el cálculo se ejecute
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("Ejecutando script de respaldo para saldos...");
+
+    function formatVzlaLocal(num) {
+      let p = num.toFixed(2).split(".");
+      return p[0].split("").reverse().reduce(function (acc, num, i, orig) {
+        return num == "-" ? acc : num + (i && !(i % 3) ? "." : "") + acc;
+      }, "") + "," + p[1];
+    }
+
+    const tasa = parseFloat("{{ tasa_actual.valor|stringformat:'f'|default:'0' }}");
+    if (!tasa) return;
+
+    const celdas = document.querySelectorAll('.saldo-bs-equiv');
+    celdas.forEach(elem => {
+      const saldoUsdStr = elem.dataset.saldoUsd;
+      if (saldoUsdStr) {
+        const saldoUsd = parseFloat(saldoUsdStr);
+        const span = elem.querySelector('.calc-bs-dynamic');
+        if (span && !isNaN(saldoUsd)) {
+          const totalBs = saldoUsd * tasa;
+          span.textContent = formatVzlaLocal(totalBs);
+          span.style.fontWeight = "bold"; // Para confirmar visualmente que fue este script
         }
-
-        const tasa = parseFloat("{{ tasa_actual.valor|stringformat:'f'|default:'0' }}");
-        if (!tasa) return;
-
-        const celdas = document.querySelectorAll('.saldo-bs-equiv');
-        celdas.forEach(elem => {
-            const saldoUsdStr = elem.dataset.saldoUsd;
-            if (saldoUsdStr) {
-                const saldoUsd = parseFloat(saldoUsdStr);
-                const span = elem.querySelector('.calc-bs-dynamic');
-                if (span && !isNaN(saldoUsd)) {
-                    const totalBs = saldoUsd * tasa;
-                    span.textContent = formatVzlaLocal(totalBs);
-                    span.style.fontWeight = "bold"; // Para confirmar visualmente que fue este script
-                }
-            }
-        });
+      }
     });
+  });
 </script>
 {% endblock %}

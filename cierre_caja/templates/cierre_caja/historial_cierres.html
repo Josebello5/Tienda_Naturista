@@ -18,20 +18,39 @@
         <!-- ===== BARRA DE HERRAMIENTAS ===== -->
         <div class="productos-toolbar">
             <div class="filtros-container">
-                <form method="get" style="display: flex; gap: 15px; width: 100%;">
-                    <div class="filtro-select" style="flex: 1;">
-                        <input type="date" name="fecha_desde" value="{{ fecha_desde|default:'' }}"
-                            style="width: 100%; padding: 14px 18px; border: 2px solid var(--border-gray); border-radius: 50px; font-size: 1rem;">
-                    </div>
-                    <div class="filtro-select" style="flex: 1;">
-                        <input type="date" name="fecha_hasta" value="{{ fecha_hasta|default:'' }}"
-                            style="width: 100%; padding: 14px 18px; border: 2px solid var(--border-gray); border-radius: 50px; font-size: 1rem;">
-                    </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-filter"></i> Filtrar
+                <form method="get" id="filterForm" style="display: flex; gap: 15px; width: 100%;">
+                    <!-- Inputs ocultos para enviar el formulario -->
+                    <input type="hidden" name="fecha_desde" id="inputFechaDesde" value="{{ fecha_desde|default:'' }}">
+                    <input type="hidden" name="fecha_hasta" id="inputFechaHasta" value="{{ fecha_hasta|default:'' }}">
+
+                    <!-- Botón para abrir modal de fechas -->
+                    <button type="button"
+                        class="btn-filtro-fecha {% if fecha_desde or fecha_hasta %}filtro-activo{% endif %}"
+                        id="btnFiltroFecha" style="width: 175px; justify-content: center;">
+                        <i class="fas fa-calendar-day"></i>
+                        {% if fecha_desde_obj or fecha_hasta_obj %}
+                        {{ fecha_desde_obj|date:"d/m" }} - {{ fecha_hasta_obj|date:"d/m" }}
+                        {% else %}
+                        Filtrar por Fecha
+                        {% endif %}
                     </button>
+
+                    <!-- Filtro por Estado -->
+                    <select name="estado" class="form-select" onchange="this.form.submit()"
+                        style="width: 175px; padding: 8px; border-radius: 5px; border: 1px solid #ddd; background: white; color: #555; cursor: pointer;">
+                        <option value="">Todos los Estados</option>
+                        <option value="completo" {% if estado == 'completo' %}selected{% endif %}>Cuadre Exacto</option>
+                        <option value="sobra" {% if estado == 'sobra' %}selected{% endif %}>Sobra Dinero</option>
+                        <option value="falta" {% if estado == 'falta' %}selected{% endif %}>Falta Dinero</option>
+                    </select>
+
                     <a href="{% url 'cierre_caja:historial_cierres' %}" class="btn btn-secondary">
                         <i class="fas fa-sync-alt"></i> Limpiar
+                    </a>
+
+                    <a href="{% url 'cierre_caja:generar_reporte_cierres' %}?fecha_desde={{ fecha_desde|default:'' }}&fecha_hasta={{ fecha_hasta|default:'' }}&estado={{ estado|default:'' }}"
+                        class="btn btn-secondary" target="_blank" title="Generar Reporte PDF">
+                        <i class="fas fa-file-pdf"></i> Reporte
                     </a>
                 </form>
             </div>
@@ -137,11 +156,51 @@
         </div>
     </div>
 </div>
+
+<!-- ===== MODAL FILTRO FECHAS ===== -->
+<div id="modalFiltroFechas" class="modal-filtro">
+    <div class="modal-contenido">
+        <div class="modal-header">
+            <h3>Filtrar por Fecha</h3>
+            <button class="btn-cerrar" id="btnCerrarModalFiltro">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="fecha-inputs">
+                <div class="fecha-group">
+                    <label for="fechaDesde">Desde:</label>
+                    <input type="date" id="fechaDesde">
+                </div>
+                <div class="fecha-group">
+                    <label for="fechaHasta">Hasta:</label>
+                    <input type="date" id="fechaHasta">
+                </div>
+            </div>
+            <!-- Mensaje de error para validación de fechas -->
+            <div id="fechaError" class="error-message" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i> La fecha "Hasta" no puede ser menor que la fecha "Desde"
+            </div>
+            <div class="opciones-rapidas">
+                <h4>Opciones Rápidas:</h4>
+                <div class="botones-opciones">
+                    <button type="button" class="btn-opcion" data-dias="1">Hoy</button>
+                    <button type="button" class="btn-opcion" data-dias="8">Última semana</button>
+                    <button type="button" class="btn-opcion" data-dias="31">Último mes</button>
+                    <button type="button" class="btn-opcion" data-dias="365">Último año</button>
+                    <button type="button" class="btn-opcion btn-limpiar">Limpiar Fechas</button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="btnCancelarFiltro">Cancelar</button>
+            <button class="btn btn-primary" id="btnAplicarFiltro">Aplicar Filtro</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'cierre_caja/css/cierre_caja.css' %}">
 <link rel="stylesheet" href="{% static 'productos/css/productos.css' %}">
+<link rel="stylesheet" href="{% static 'cierre_caja/css/cierre_caja.css' %}?v=2.0">
 <style>
     .no-results {
         text-align: center;
@@ -193,6 +252,114 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // --- LÓGICA DEL FILTRO DE FECHAS ---
+        const btnFiltroFecha = document.getElementById('btnFiltroFecha');
+        const modalFiltroFechas = document.getElementById('modalFiltroFechas');
+        const btnCerrarModalFiltro = document.getElementById('btnCerrarModalFiltro');
+        const btnCancelarFiltro = document.getElementById('btnCancelarFiltro');
+        const btnAplicarFiltro = document.getElementById('btnAplicarFiltro');
+
+        const fechaDesdeInput = document.getElementById('fechaDesde');
+        const fechaHastaInput = document.getElementById('fechaHasta');
+        const fechaError = document.getElementById('fechaError');
+
+        const inputHiddenDesde = document.getElementById('inputFechaDesde');
+        const inputHiddenHasta = document.getElementById('inputFechaHasta');
+        const filterForm = document.getElementById('filterForm');
+
+        // Valores actuales
+        let fechaDesdeVal = inputHiddenDesde.value;
+        let fechaHastaVal = inputHiddenHasta.value;
+
+        // Abrir Modal
+        btnFiltroFecha.addEventListener('click', function () {
+            fechaDesdeInput.value = fechaDesdeVal;
+            fechaHastaInput.value = fechaHastaVal;
+            validarFechas();
+            modalFiltroFechas.style.display = 'flex';
+        });
+
+        // Cerrar Modal
+        function cerrarModalFiltro() {
+            modalFiltroFechas.style.display = 'none';
+        }
+
+        if (btnCerrarModalFiltro) btnCerrarModalFiltro.addEventListener('click', cerrarModalFiltro);
+        if (btnCancelarFiltro) btnCancelarFiltro.addEventListener('click', cerrarModalFiltro);
+
+        window.addEventListener('click', function (e) {
+            if (e.target == modalFiltroFechas) {
+                cerrarModalFiltro();
+            }
+        });
+
+        // Opciones Rápidas
+        document.querySelectorAll('.btn-opcion').forEach(btn => {
+            btn.addEventListener('click', function () {
+                if (this.classList.contains('btn-limpiar')) {
+                    fechaDesdeInput.value = '';
+                    fechaHastaInput.value = '';
+                } else {
+                    const dias = parseInt(this.dataset.dias);
+                    const hoy = new Date();
+                    const fin = new Date();
+                    const inicio = new Date();
+
+                    if (dias === 1) {
+                        // Hoy
+                        fechaDesdeInput.value = formatDate(hoy);
+                        fechaHastaInput.value = formatDate(hoy);
+                    } else {
+                        inicio.setDate(hoy.getDate() - (dias - 1));
+                        fechaDesdeInput.value = formatDate(inicio);
+                        fechaHastaInput.value = formatDate(fin);
+                    }
+                }
+                validarFechas();
+            });
+        });
+
+        function formatDate(date) {
+            const d = new Date(date);
+            let month = '' + (d.getMonth() + 1);
+            let day = '' + d.getDate();
+            const year = d.getFullYear();
+
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+
+            return [year, month, day].join('-');
+        }
+
+        // Validación
+        function validarFechas() {
+            const desde = fechaDesdeInput.value;
+            const hasta = fechaHastaInput.value;
+
+            if (desde && hasta && desde > hasta) {
+                fechaError.style.display = 'block';
+                btnAplicarFiltro.disabled = true;
+                btnAplicarFiltro.style.opacity = '0.5';
+            } else {
+                fechaError.style.display = 'none';
+                btnAplicarFiltro.disabled = false;
+                btnAplicarFiltro.style.opacity = '1';
+            }
+        }
+
+        fechaDesdeInput.addEventListener('change', validarFechas);
+        fechaHastaInput.addEventListener('change', validarFechas);
+
+        // Aplicar Filtro
+        btnAplicarFiltro.addEventListener('click', function () {
+            inputHiddenDesde.value = fechaDesdeInput.value;
+            inputHiddenHasta.value = fechaHastaInput.value;
+            filterForm.submit();
+        });
+
+        // --- FIN LÓGICA FILTRO ---
+
+
         // Modal Ver Nota
         const modalVerNota = document.getElementById('modalVerNota');
         const btnCerrarModalNota = document.getElementById('btnCerrarModalNota');

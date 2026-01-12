@@ -807,7 +807,7 @@ def generar_pdf_ventas(request):
         p.setFont("Helvetica", 12)
         p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
         p.setFont("Helvetica", 10)
-        fecha_actual = datetime.now().strftime("%d/%m/Y %H:%M")
+        fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
         p.drawString(1*inch, height-1.6*inch, f"Reporte de Ventas - {fecha_actual}")
         p.line(1*inch, height-1.7*inch, 7.5*inch, height-1.7*inch)
 
@@ -900,7 +900,7 @@ def generar_pdf_ventas(request):
             if len(cliente_nombre) > 20:
                 cliente_nombre = cliente_nombre[:17] + "..."
 
-            fecha_venta = venta.Fecha_Venta.strftime("%d/%m/%y %H:%M")
+            fecha_venta = venta.Fecha_Venta.strftime("%d/%m/%Y %H:%M")
 
             if moneda == 'usd':
                 # Usar los valores USD guardados en la venta

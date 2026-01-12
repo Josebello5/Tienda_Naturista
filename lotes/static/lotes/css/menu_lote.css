@@ -253,14 +253,14 @@
 }
 
 .btn-filtro-fecha.filtro-activo {
-  border-color: var(--primary-green);
-  background: var(--primary-green);
-  color: white;
+  border-color: var(--primary-green) !important;
+  background: var(--primary-green) !important;
+  color: white !important;
   box-shadow: 0 4px 12px rgba(58, 140, 110, 0.3);
 }
 
 .btn-filtro-fecha.filtro-activo i {
-  color: white;
+  color: white !important;
 }
 
 .btn-filtro-fecha.filtro-activo::after {

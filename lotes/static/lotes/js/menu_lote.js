@@ -66,6 +66,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 proveedorSearchInput.value = proveedor.nombre;
             }
         }
+
+        // ===== NUEVO: Restaurar filtros de fecha =====
+        const formatDate = (dateStr) => {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            return `${parts[2]}/${parts[1]}`;
+        };
+
+        // Fecha Recibimiento
+        const recDesde = params.get('fecha_recibimiento_desde');
+        const recHasta = params.get('fecha_recibimiento_hasta');
+        if ((recDesde || recHasta) && btnFiltroRecibimiento) {
+            btnFiltroRecibimiento.classList.add('filtro-activo');
+            const rango = recDesde && recHasta ? `${formatDate(recDesde)} - ${formatDate(recHasta)}` : (formatDate(recDesde) || formatDate(recHasta));
+            btnFiltroRecibimiento.innerHTML = `<i class="fas fa-calendar-day"></i> Fecha: ${rango}`;
+        }
+
+        // Fecha Vencimiento
+        const venDesde = params.get('fecha_vencimiento_desde');
+        const venHasta = params.get('fecha_vencimiento_hasta');
+        if ((venDesde || venHasta) && btnFiltroVencimiento) {
+            btnFiltroVencimiento.classList.add('filtro-activo');
+            const rango = venDesde && venHasta ? `${formatDate(venDesde)} - ${formatDate(venHasta)}` : (formatDate(venDesde) || formatDate(venHasta));
+            btnFiltroVencimiento.innerHTML = `<i class="fas fa-calendar-times"></i> Fecha: ${rango}`;
+        }
     }
 
     // ===== FUNCIÓN PARA REGRESAR A PÁGINA 1 Y APLICAR FILTROS =====
@@ -506,9 +531,21 @@ document.addEventListener('DOMContentLoaded', function () {
         if (modalTitulo) {
             modalTitulo.textContent = tipo === 'recibimiento' ? 'Filtrar por Fecha de Recibimiento' : 'Filtrar por Fecha de Vencimiento';
         }
-        // Limpiar inputs
-        if (inputFechaDesde) inputFechaDesde.value = '';
-        if (inputFechaHasta) inputFechaHasta.value = '';
+        // Pre-llenar inputs desde URL
+        const params = new URLSearchParams(window.location.search);
+        let desde = '';
+        let hasta = '';
+
+        if (tipo === 'recibimiento') {
+            desde = params.get('fecha_recibimiento_desde');
+            hasta = params.get('fecha_recibimiento_hasta');
+        } else {
+            desde = params.get('fecha_vencimiento_desde');
+            hasta = params.get('fecha_vencimiento_hasta');
+        }
+
+        if (inputFechaDesde) inputFechaDesde.value = desde || '';
+        if (inputFechaHasta) inputFechaHasta.value = hasta || '';
 
         if (modalFiltroFechas) {
             modalFiltroFechas.style.display = 'flex';
