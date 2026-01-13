@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load currency_tags %}
+{% load humanize %}
 
 {% block title %}Historial de Cierres - Tienda Naturista{% endblock %}
 
@@ -37,7 +38,7 @@
 
                     <!-- Filtro por Estado -->
                     <select name="estado" class="form-select" onchange="this.form.submit()"
-                        style="width: 175px; padding: 8px; border-radius: 5px; border: 1px solid #ddd; background: white; color: #555; cursor: pointer;">
+                        style="width: 175px; padding: 10px 15px; border-radius: 50px; border: 2px solid var(--border-gray); background: white; color: var(--dark-gray); cursor: pointer; font-family: inherit; font-size: 0.95rem; font-weight: 500;">
                         <option value="">Todos los Estados</option>
                         <option value="completo" {% if estado == 'completo' %}selected{% endif %}>Cuadre Exacto</option>
                         <option value="sobra" {% if estado == 'sobra' %}selected{% endif %}>Sobra Dinero</option>
@@ -72,8 +73,8 @@
                     <tr>
                         <th>Fecha</th>
                         <th>Usuario</th>
-                        <th style="text-align: right;">Total Sistema (Ref)</th>
-                        <th style="text-align: right;">Total Real (Ref)</th>
+                        <th style="text-align: right;">Total Sistema</th>
+                        <th style="text-align: right;">Total Real</th>
                         <th style="text-align: center;">Diferencia</th>
                         <th style="text-align: center;">Notas</th>
                         <th style="text-align: center;">Acciones</th>
@@ -96,21 +97,23 @@
                         </td>
                         <td
                             style="text-align: right; font-family: 'Roboto Mono', monospace; color: var(--natural-gray);">
-                            {{ cierre.Total_Sistema|formato_venezolano }}
+                            <div>Bs {{ cierre.total_sistema_bs|formato_venezolano }}</div>
+                            <div class="text-muted small">Ref {{ cierre.total_sistema_usd|formato_venezolano }}</div>
                         </td>
-                        <td style="text-align: right; font-family: 'Roboto Mono', monospace; font-weight: 600;">
-                            {{ cierre.Total_Real|formato_venezolano }}
+                        <td
+                            style="text-align: right; font-family: 'Roboto Mono', monospace; color: var(--natural-gray);">
+                            <div>Bs {{ cierre.total_real_bs|formato_venezolano }}</div>
+                            <div class="text-muted small">Ref {{ cierre.total_real_usd|formato_venezolano }}</div>
                         </td>
-                        <td style="text-align: center;">
-                            {% if cierre.Diferencia_Total == 0 %}
-                            <span class="status status-active">Cuadre Exacto</span>
-                            {% elif cierre.Diferencia_Total > 0 %}
-                            <span class="status diff-positive">+{{ cierre.Diferencia_Total|formato_venezolano }}
-                                (Sobra)</span>
-                            {% else %}
-                            <span class="status diff-negative">{{ cierre.Diferencia_Total|formato_venezolano }}
-                                (Falta)</span>
-                            {% endif %}
+                        <td style="text-align: center; font-family: 'Roboto Mono', monospace;">
+    <div class="{% if cierre.diferencia_bs == 0 %}text-success{% elif cierre.diferencia_bs > 0 %}text-primary{% else %}text-danger{% endif %}">
+        Bs {% if cierre.diferencia_bs > 0 %}+{% endif %}{{ cierre.diferencia_bs|formato_venezolano }}
+    </div>
+    
+    <div class="small {% if cierre.diferencia_usd == 0 %}text-success{% elif cierre.diferencia_usd > 0 %}text-primary{% else %}text-danger{% endif %}">
+        Ref {% if cierre.diferencia_usd > 0 %}+{% endif %}{{ cierre.diferencia_usd|formato_venezolano }}
+    </div>
+</td>
                         </td>
                         <td style="text-align: center;">
                             {% if cierre.Notas %}

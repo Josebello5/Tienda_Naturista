@@ -85,6 +85,42 @@ class CierreCaja(models.Model):
             'punto_venta': self.Real_Punto_Venta - self.Sistema_Punto_Venta,
         }
     
+    @property
+    def total_sistema_bs(self):
+        return (
+            self.Sistema_Efectivo_Bs + 
+            self.Sistema_Transferencia + 
+            self.Sistema_Pago_Movil + 
+            self.Sistema_Tarjeta + 
+            self.Sistema_Punto_Venta
+        )
+    
+    @property
+    def total_sistema_usd(self):
+        return self.Sistema_Efectivo_USD or Decimal('0')
+    
+    @property
+    def total_real_bs(self):
+        return (
+            self.Real_Efectivo_Bs + 
+            self.Real_Transferencia + 
+            self.Real_Pago_Movil + 
+            self.Real_Tarjeta + 
+            self.Real_Punto_Venta
+        )
+    
+    @property
+    def total_real_usd(self):
+        return self.Real_Efectivo_USD or Decimal('0')
+    
+    @property
+    def diferencia_bs(self):
+        return self.total_real_bs - self.total_sistema_bs
+    
+    @property
+    def diferencia_usd(self):
+        return self.total_real_usd - self.total_sistema_usd
+    
     def get_html_context(self):
         """Genera el contexto para el template HTML del recibo"""
         # Ya no necesitamos la función interna, usamos la utilidad central
@@ -123,10 +159,22 @@ class CierreCaja(models.Model):
             'dif_tarjeta_formatted': format_venezuelan_money(diferencias['tarjeta']),
             'dif_punto_venta_formatted': format_venezuelan_money(diferencias['punto_venta']),
             
-            # Totales formateados
+            # Totales formateados (globales)
             'total_sistema_formatted': format_venezuelan_money(self.Total_Sistema),
             'total_real_formatted': format_venezuelan_money(self.Total_Real),
             'diferencia_total_formatted': format_venezuelan_money(self.Diferencia_Total),
+
+            # Totales por moneda
+            'total_sistema_bs_formatted': format_venezuelan_money(self.total_sistema_bs),
+            'total_sistema_usd_formatted': format_venezuelan_money(self.total_sistema_usd),
+            'total_real_bs_formatted': format_venezuelan_money(self.total_real_bs),
+            'total_real_usd_formatted': format_venezuelan_money(self.total_real_usd),
+            'diferencia_bs_formatted': format_venezuelan_money(self.diferencia_bs),
+            'diferencia_usd_formatted': format_venezuelan_money(self.diferencia_usd),
+            
+            # Diferencias absolutas para mostrar "Falta/Sobra X"
+            'diferencia_bs_abs_formatted': format_venezuelan_money(abs(self.diferencia_bs)),
+            'diferencia_usd_abs_formatted': format_venezuelan_money(abs(self.diferencia_usd)),
             
             # Diferencias sin formatear para condicionales
             'diferencias': diferencias,

@@ -147,31 +147,39 @@
     <div class="summary-box">
         <table style="width: 100%; margin: 0;">
             <tr>
-                <td width="50%"><strong>Total Sistema (Ref):</strong></td>
-                <td width="50%" class="text-right">{{ total_sistema_formatted }}</td>
+                <td width="40%"></td>
+                <td width="30%" class="text-right" style="font-weight: bold; border-bottom: 2px solid #ddd;">Bolívares
+                    (Bs)</td>
+                <td width="30%" class="text-right" style="font-weight: bold; border-bottom: 2px solid #ddd;">Divisa ($)
+                </td>
             </tr>
             <tr>
-        <td><strong>Total Real (Ref):</strong></td>
-        <td class="text-right">{{ total_real_formatted }}</td>
-    </tr>
-    
-
-
-    <tr>
-        <td><strong>Diferencia Total (Ref):</strong></td>
-        <td class="text-right bold 
-            {% if cierre.Diferencia_Total > 0 %}diff-positive
-            {% elif cierre.Diferencia_Total < 0 %}diff-negative
-            {% endif %}">
-            
-            {{ diferencia_total_formatted }}
-        </td>
-    </tr>
-    
-
-
-    </table>
-</div>
+                <td><strong>Total Sistema:</strong></td>
+                <td class="text-right">Bs {{ total_sistema_bs_formatted }}</td>
+                <td class="text-right">$ {{ total_sistema_usd_formatted }}</td>
+            </tr>
+            <tr>
+                <td><strong>Total Real (Caja):</strong></td>
+                <td class="text-right">Bs {{ total_real_bs_formatted }}</td>
+                <td class="text-right">$ {{ total_real_usd_formatted }}</td>
+            </tr>
+            <tr>
+                <td><strong>Diferencia:</strong></td>
+                <td class="text-right bold 
+                    {% if cierre.diferencia_bs > 0 %}diff-positive
+                    {% elif cierre.diferencia_bs < 0 %}diff-negative
+                    {% endif %}">
+                    Bs {{ diferencia_bs_formatted }}
+                </td>
+                <td class="text-right bold 
+                    {% if cierre.diferencia_usd > 0 %}diff-positive
+                    {% elif cierre.diferencia_usd < 0 %}diff-negative
+                    {% endif %}">
+                    $ {{ diferencia_usd_formatted }}
+                </td>
+            </tr>
+        </table>
+    </div>
 
     <div class="section-title">DETALLE COMPARATIVO POR MÉTODO DE PAGO</div>
 
