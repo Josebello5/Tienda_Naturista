@@ -109,6 +109,14 @@
           </a>
           <span class="nav-tooltip">Estadísticas</span>
         </li>
+
+        <li class="nav-item">
+          <a href="{% url 'usuarios:menu_configuracion' %}" class="nav-link {% if 'configuracion' in request.path %}active{% endif %}">
+            <span class="nav-icon material-symbols-rounded">settings</span>
+            <span class="nav-label">Configuración</span>
+          </a>
+          <span class="nav-tooltip">Configuración</span>
+        </li>
       </ul>
 
 

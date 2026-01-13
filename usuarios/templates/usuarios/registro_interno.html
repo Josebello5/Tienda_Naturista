@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Registro de Usuario</title>
+  <title>Registrar Nuevo Usuario | Tienda Naturista</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -45,6 +45,7 @@
       padding: 2rem;
       color: white;
       text-align: center;
+      position: relative;
     }
 
     .register-header h2 {
@@ -102,6 +103,8 @@
       width: 100%;
       transition: all 0.3s ease;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      text-decoration: none;
+      text-align: center;
     }
 
     .btn-primary {
@@ -113,6 +116,7 @@
     .btn-primary:hover {
       transform: translateY(-3px);
       box-shadow: 0 6px 16px rgba(58, 140, 110, 0.3);
+      color: white;
     }
 
     .btn-secondary {
@@ -124,120 +128,7 @@
     .btn-secondary:hover {
       background: var(--dark-gray);
       transform: translateY(-2px);
-    }
-
-    /* ===== ESTILOS DEL MODAL DE ÉXITO ===== */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.6);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-    }
-
-    .modal-overlay.active {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .modal-success {
-      background: white;
-      border-radius: 15px;
-      padding: 30px;
-      text-align: center;
-      max-width: 400px;
-      width: 90%;
-      transform: scale(0.7);
-      opacity: 0;
-      transition: all 0.4s ease;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .modal-overlay.active .modal-success {
-      transform: scale(1);
-      opacity: 1;
-    }
-
-    .modal-success-icon {
-      font-size: 70px;
-      color: #4CAF50;
-      margin-bottom: 20px;
-      animation: bounce 0.8s ease;
-    }
-
-    .modal-success h2 {
-      color: #2e7d32;
-      margin-bottom: 15px;
-      font-size: 24px;
-    }
-
-    .modal-success p {
-      color: #388e3c;
-      margin-bottom: 25px;
-      line-height: 1.5;
-    }
-
-    .modal-success button {
-      background: linear-gradient(to right, var(--primary-green), var(--primary-blue));
       color: white;
-      border: none;
-      padding: 12px 25px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      max-width: 200px;
-      width: 100%;
-    }
-
-    .modal-success button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
-    }
-
-    .leaf {
-      position: absolute;
-      width: 30px;
-      height: 30px;
-      background-color: #4CAF50;
-      border-radius: 50% 0;
-      opacity: 0;
-      z-index: -1;
-    }
-
-    /* Animaciones para la modal de éxito */
-    @keyframes bounce {
-      0%, 20%, 50%, 80%, 100% {
-          transform: translateY(0);
-      }
-      40% {
-          transform: translateY(-20px);
-      }
-      60% {
-          transform: translateY(-10px);
-      }
-    }
-
-    @keyframes float {
-      0% {
-          transform: translateY(0) rotate(0deg);
-          opacity: 1;
-      }
-      100% {
-          transform: translateY(-100px) rotate(360deg);
-          opacity: 0;
-      }
     }
 
     .password-hint {
@@ -271,24 +162,24 @@
     }
 
     .password-container {
-      position: relative;
+        position: relative;
     }
-
+    
     .password-toggle {
-      position: absolute;
-      right: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--natural-gray);
-      cursor: pointer;
-      z-index: 10;
-      user-select: none;
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--natural-gray);
+        cursor: pointer;
+        z-index: 20; /* Higher than input */
+        user-select: none;
     }
-
+    
     .password-toggle:hover {
-      color: var(--primary-green);
+        color: var(--primary-green);
     }
-
+    
     @media (max-width: 576px) {
       .register-body {
         padding: 1.5rem;
@@ -303,8 +194,8 @@
 <body>
 <div class="register-container">
   <div class="register-header">
-    <h2>Registro de Usuario</h2>
-    <p>Completa el formulario para crear tu cuenta</p>
+    <h2>Registrar Nuevo Usuario</h2>
+    <p>Agrega un nuevo miembro al sistema</p>
   </div>
 
   <div class="register-body">
@@ -321,10 +212,11 @@
 
     <form id="registroForm" method="POST" novalidate>
       {% csrf_token %}
-      <div class="row g-3">
+      <div class="row g-4">
+        <!-- Cédula y Fecha -->
         <div class="col-md-6">
           <label for="cedula" class="form-label">Cédula</label>
-          <input type="text" id="cedula" name="cedula" class="form-control" value="{{ form.cedula.value|default_if_none:'' }}" required>
+          <input type="text" id="cedula" name="cedula" class="form-control" value="{{ form.cedula.value|default_if_none:'' }}" required placeholder="Ej: 12345678">
           <div id="error-cedula" class="error-msg">{% for error in form.cedula.errors %}{{ error }}{% endfor %}</div>
         </div>
 
@@ -334,30 +226,42 @@
           <div id="error-fecha" class="error-msg">{% for error in form.fecha_nacimiento.errors %}{{ error }}{% endfor %}</div>
         </div>
 
+        <!-- Nombre y Apellido -->
         <div class="col-md-6">
           <label for="nombre" class="form-label">Nombre</label>
-          <input type="text" id="nombre" name="first_name" class="form-control uppercase-input" value="{{ form.first_name.value|default_if_none:'' }}" required style="text-transform: uppercase;" maxlength="10">
+          <input type="text" id="nombre" name="first_name" class="form-control uppercase-input" value="{{ form.first_name.value|default_if_none:'' }}" required style="text-transform: uppercase;" maxlength="10" placeholder="NOMBRE">
           <div id="error-nombre" class="error-msg">{% for error in form.first_name.errors %}{{ error }}{% endfor %}</div>
         </div>
 
         <div class="col-md-6">
           <label for="apellido" class="form-label">Apellido</label>
-          <input type="text" id="apellido" name="last_name" class="form-control uppercase-input" value="{{ form.last_name.value|default_if_none:'' }}" required style="text-transform: uppercase;" maxlength="10">
+          <input type="text" id="apellido" name="last_name" class="form-control uppercase-input" value="{{ form.last_name.value|default_if_none:'' }}" required style="text-transform: uppercase;" maxlength="10" placeholder="APELLIDO">
           <div id="error-apellido" class="error-msg">{% for error in form.last_name.errors %}{{ error }}{% endfor %}</div>
         </div>
 
-        <div class="col-md-12">
+        <!-- Email y Rol -->
+        <div class="col-md-6">
           <label for="email" class="form-label">Correo electrónico</label>
-          <input type="email" id="email" name="email" class="form-control" value="{{ form.email.value|default_if_none:'' }}" required>
+          <input type="email" id="email" name="email" class="form-control" value="{{ form.email.value|default_if_none:'' }}" required placeholder="correo@ejemplo.com">
           <div id="error-email" class="error-msg">{% for error in form.email.errors %}{{ error }}{% endfor %}</div>
         </div>
 
-        <!-- Campos de contraseña juntos en la misma fila -->
+        <div class="col-md-6">
+          <label for="rol" class="form-label">Rol de Usuario</label>
+          <select id="rol" name="rol" class="form-select" required>
+            <option value="" disabled selected>Seleccione un rol</option>
+            <option value="Administrador">Administrador</option>
+            <option value="Cajero">Cajero</option>
+            <!-- <option value="Bodeguero">Bodeguero</option> -->
+          </select>
+        </div>
+
+        <!-- Contraseñas -->
         <div class="col-md-6">
           <label for="password1" class="form-label">Contraseña</label>
           <div class="password-container">
-            <input type="password" id="password1" name="password1" class="form-control" required>
-            <span class="password-toggle material-symbols-rounded" id="togglePassword1">visibility</span>
+              <input type="password" id="password1" name="password1" class="form-control" required placeholder="Contraseña segura">
+              <span class="password-toggle material-symbols-rounded" id="togglePassword1">visibility</span>
           </div>
           <div class="password-hint">Ejemplo: MiContraseña123!</div>
           <div id="password-requirements" class="password-requirements"></div>
@@ -367,8 +271,8 @@
         <div class="col-md-6">
           <label for="password2" class="form-label">Confirmar Contraseña</label>
           <div class="password-container">
-            <input type="password" id="password2" name="password2" class="form-control" required>
-            <span class="password-toggle material-symbols-rounded" id="togglePassword2">visibility</span>
+              <input type="password" id="password2" name="password2" class="form-control" required placeholder="Repite la contraseña">
+              <span class="password-toggle material-symbols-rounded" id="togglePassword2">visibility</span>
           </div>
           <div id="password-match" class="password-hint"></div>
           <div id="error-password2" class="error-msg">{% for error in form.password2.errors %}{{ error }}{% endfor %}</div>
@@ -376,24 +280,18 @@
       </div>
 
       {% if form.non_field_errors %}
-        <div class="error-msg mt-3">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+        <div class="error-msg mt-3 text-center">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
       {% endif %}
 
-      <button type="submit" class="btn btn-primary">Registrar</button>
-      <a href="{% url 'usuarios:login' %}" class="btn btn-secondary">Iniciar Sesión</a>
+      <div class="mt-5 d-flex gap-3 justify-content-center">
+          <a href="{% url 'usuarios:menu_configuracion' %}" class="btn btn-secondary px-4 py-2">
+            <i class="fas fa-arrow-left me-2"></i> Volver
+          </a>
+          <button type="submit" class="btn btn-primary px-5 py-2">
+             <i class="fas fa-save me-2"></i> Registrar Usuario
+          </button>
+      </div>
     </form>
-  </div>
-</div>
-
-<!-- ===== MODAL DE ÉXITO ===== -->
-<div id="successModal" class="modal-overlay">
-  <div class="modal-success">
-    <div class="modal-success-icon">
-      <i class="fas fa-leaf"></i>
-    </div>
-    <h2 id="successModalTitle">¡Registro Exitoso!</h2>
-    <p id="successModalMessage">El usuario ha sido registrado correctamente en el sistema.</p>
-    <button id="closeSuccessModal">Continuar</button>
   </div>
 </div>
 
@@ -405,11 +303,11 @@
     const apellido = document.getElementById('apellido');
     const fechaNacimiento = document.getElementById('fecha_nacimiento');
     const email = document.getElementById('email');
-    const password1 = document.getElementById('password1');
-    const password2 = document.getElementById('password2');
+    const password1Input = document.getElementById('password1');
+    const password2Input = document.getElementById('password2');
     const passwordMatch = document.getElementById('password-match');
     const passwordRequirements = document.getElementById('password-requirements');
-
+    
     // Toggle Password Visibility
     const togglePass1 = document.getElementById('togglePassword1');
     const togglePass2 = document.getElementById('togglePassword2');
@@ -424,8 +322,8 @@
         }
     }
     
-    setupToggle(togglePass1, password1);
-    setupToggle(togglePass2, password2);
+    setupToggle(togglePass1, password1Input);
+    setupToggle(togglePass2, password2Input);
 
     const errorCedula = document.getElementById('error-cedula');
     const errorNombre = document.getElementById('error-nombre');
@@ -433,70 +331,10 @@
     const errorFecha = document.getElementById('error-fecha');
     const errorEmail = document.getElementById('error-email');
 
-    // Elementos del modal de éxito
-    const successModal = document.getElementById('successModal');
-    const closeSuccessModalBtn = document.getElementById('closeSuccessModal');
-    const successModalTitle = document.getElementById('successModalTitle');
-    const successModalMessage = document.getElementById('successModalMessage');
-
     // Variables para controlar validación en tiempo real
     let emailTouched = false;
     let password1Touched = false;
     let password2Touched = false;
-
-    // ===== MODAL DE ÉXITO =====
-    function inicializarModalExito() {
-        // Función para mostrar el modal con mensajes personalizados
-        function showSuccessModal(title, message) {
-            successModalTitle.textContent = title;
-            successModalMessage.textContent = message;
-            successModal.classList.add('active');
-            createFloatingLeaves();
-        }
-        
-        // Función para cerrar el modal
-        function closeSuccessModal() {
-            successModal.classList.remove('active');
-            // Limpiar hojas flotantes
-            document.querySelectorAll('.leaf').forEach(el => el.remove());
-        }
-        
-        // Cerrar modal al hacer clic en el botón
-        closeSuccessModalBtn.addEventListener('click', closeSuccessModal);
-        
-        // Cerrar modal al hacer clic fuera del contenido
-        successModal.addEventListener('click', function(e) {
-            if (e.target === successModal) {
-                closeSuccessModal();
-            }
-        });
-        
-        // Función para crear el efecto de hojas flotantes
-        function createFloatingLeaves() {
-            const modal = document.querySelector('.modal-success');
-            const colors = ['#4caf50', '#81c784', '#a5d6a7', '#66bb6a'];
-            
-            for (let i = 0; i < 15; i++) {
-                const leaf = document.createElement('div');
-                leaf.className = 'leaf';
-                leaf.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                leaf.style.left = Math.random() * 100 + '%';
-                leaf.style.top = Math.random() * 100 + '%';
-                leaf.style.width = Math.random() * 20 + 15 + 'px';
-                leaf.style.height = Math.random() * 20 + 15 + 'px';
-                leaf.style.animation = `float ${Math.random() * 3 + 2}s ease-in-out forwards`;
-                leaf.style.animationDelay = Math.random() * 1 + 's';
-                
-                modal.appendChild(leaf);
-            }
-        }
-        
-        // Mostrar modal si hay registro exitoso
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('registro_exitoso') === '1') {
-            setTimeout(() => showSuccessModal('¡Registro Exitoso!', 'El usuario ha sido registrado correctamente en el sistema.'), 500);
-        }
-    }
 
     // ===== CONVERSIÓN AUTOMÁTICA A MAYÚSCULAS =====
     function convertirAMayusculas(input) {
@@ -508,26 +346,27 @@
     // ===== VALIDACIONES EN TIEMPO REAL =====
 
     // Validación de cédula
-    cedula.addEventListener('keypress', function (e) {
-      if (!/[0-9]/.test(e.key) || cedula.value.length >= 8) e.preventDefault();
+    cedula.addEventListener('input', function (e) {
+      this.value = this.value.replace(/[^0-9]/g, '').substring(0, 8);
+      validarCedula();
     });
 
     // Convertir nombre y apellido a mayúsculas automáticamente
     convertirAMayusculas(nombre);
     convertirAMayusculas(apellido);
 
-    // Validación de nombre (solo letras) y longitud
+    // Validación de nombre (solo letras)
     nombre.addEventListener('input', function (e) {
       this.value = this.value.toUpperCase().slice(0, 10);
       this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
       validarNombre();
     });
 
-    // Validación de apellido (solo letras) y longitud
+    // Validación de apellido (solo letras)
     apellido.addEventListener('input', function (e) {
       this.value = this.value.toUpperCase().slice(0, 10);
       this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
-       validarApellido();
+      validarApellido();
     });
 
     // Validación de email en tiempo real
@@ -537,23 +376,26 @@
     });
 
     // Validación de contraseñas en tiempo real
-    password1.addEventListener('input', function() {
+    password1Input.addEventListener('input', function() {
       password1Touched = true;
       validarFortalezaPassword();
       validarCoincidenciaPassword();
     });
 
-    password2.addEventListener('input', function() {
+    password2Input.addEventListener('input', function() {
       password2Touched = true;
       validarCoincidenciaPassword();
     });
+    
+    // Validación de fecha edad
+    fechaNacimiento.addEventListener('change', validarEdad);
 
     function validarCedula() {
       const valor = cedula.value.trim();
       const soloNumeros = /^\d{7,8}$/;
       if (valor === '') {
-        errorCedula.textContent = "Este campo es obligatorio.";
-        return false;
+        // No mostrar error si está vacío mientras escribe, solo al final
+        return false; 
       }
       if (!soloNumeros.test(valor)) {
         errorCedula.textContent = "La cédula debe tener entre 7 y 8 dígitos numéricos.";
@@ -567,18 +409,17 @@
       const valor = nombre.value.trim();
       const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
       
-      if (valor === '') {
-        errorNombre.textContent = "Este campo es obligatorio.";
-        return false;
-      }
+      if (valor === '') return false;
+      
       if (valor.length < 3) {
           errorNombre.textContent = "El nombre debe tener al menos 3 letras.";
           return false;
       }
       if (!soloLetras.test(valor)) {
-        errorNombre.textContent = "El nombre solo debe contener letras.";
-        return false;
+          errorNombre.textContent = "El nombre solo puede contener letras.";
+          return false;
       }
+      
       errorNombre.textContent = "";
       return true;
     }
@@ -587,18 +428,17 @@
       const valor = apellido.value.trim();
       const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
       
-      if (valor === '') {
-        errorApellido.textContent = "Este campo es obligatorio.";
-        return false;
-      }
+      if (valor === '') return false;
+      
       if (valor.length < 3) {
           errorApellido.textContent = "El apellido debe tener al menos 3 letras.";
           return false;
       }
-      if (!soloLetras.test(valor)) {
-        errorApellido.textContent = "El apellido solo debe contener letras.";
-        return false;
+       if (!soloLetras.test(valor)) {
+          errorApellido.textContent = "El apellido solo puede contener letras.";
+          return false;
       }
+      
       errorApellido.textContent = "";
       return true;
     }
@@ -608,9 +448,7 @@
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       
       if (valor === '') {
-        if (emailTouched) {
-          errorEmail.textContent = "Este campo es obligatorio.";
-        }
+        if (emailTouched) errorEmail.textContent = "Este campo es obligatorio.";
         return false;
       }
       
@@ -624,7 +462,7 @@
     }
 
     function validarFortalezaPassword() {
-      const valor = password1.value;
+      const valor = password1Input.value;
       const requirements = {
         length: valor.length >= 8,
         uppercase: /[A-Z]/.test(valor),
@@ -643,11 +481,9 @@
       
       passwordRequirements.innerHTML = requirementsHtml;
       
-      // Validar si cumple todos los requisitos
       const allValid = Object.values(requirements).every(req => req);
       
       if (valor && !allValid) {
-        // Mostrar error de fortaleza si el usuario ya empezó a escribir
         if (password1Touched) {
           document.getElementById('error-password1').textContent = "La contraseña no cumple con todos los requisitos.";
         }
@@ -659,8 +495,8 @@
     }
 
     function validarCoincidenciaPassword() {
-      const pass1 = password1.value;
-      const pass2 = password2.value;
+      const pass1 = password1Input.value;
+      const pass2 = password2Input.value;
       
       if (pass2 === '') {
         passwordMatch.textContent = "";
@@ -679,19 +515,19 @@
     }
 
     function validarEdad() {
+      if (!fechaNacimiento.value) return false;
+
       const fecha = new Date(fechaNacimiento.value);
       const hoy = new Date();
-      const edad = hoy.getFullYear() - fecha.getFullYear();
+      let edad = hoy.getFullYear() - fecha.getFullYear();
       const mes = hoy.getMonth() - fecha.getMonth();
       const dia = hoy.getDate() - fecha.getDate();
-      const esMayorEdad = edad > 18 || (edad === 18 && (mes > 0 || (mes === 0 && dia >= 0)));
       
-      if (!fechaNacimiento.value) {
-        errorFecha.textContent = "Este campo es obligatorio.";
-        return false;
+      if (mes < 0 || (mes === 0 && dia < 0)) {
+          edad--;
       }
       
-      if (!esMayorEdad) {
+      if (edad < 18) {
         errorFecha.textContent = "Debes ser mayor de 18 años.";
         return false;
       }
@@ -700,15 +536,49 @@
       return true;
     }
 
-    // Event listeners para validación en tiempo real
-    cedula.addEventListener('input', validarCedula);
-    nombre.addEventListener('input', validarNombre);
-    apellido.addEventListener('input', validarApellido);
-    fechaNacimiento.addEventListener('change', validarEdad);
+    // Validación de Rol en tiempo real
+    const rolSelect = document.getElementById('rol');
+    if (rolSelect) {
+        rolSelect.addEventListener('change', function() {
+            if (this.value === "") {
+                this.classList.add('is-invalid');
+                // Ensure error msg exists
+                let errorSpan = this.nextElementSibling;
+                if (!errorSpan || !errorSpan.classList.contains('error-msg')) {
+                     errorSpan = document.createElement('div');
+                     errorSpan.className = 'error-msg';
+                     this.parentNode.insertBefore(errorSpan, this.nextSibling);
+                }
+                errorSpan.textContent = "Este campo es obligatorio.";
+            } else {
+                this.classList.remove('is-invalid');
+                 let errorSpan = this.nextElementSibling;
+                if (errorSpan && errorSpan.classList.contains('error-msg')) {
+                     errorSpan.textContent = "";
+                }
+            }
+        });
+    }
+
+    function validarRol() {
+        if (!rolSelect) return true;
+        if (rolSelect.value === "") {
+             rolSelect.classList.add('is-invalid');
+             let errorSpan = rolSelect.nextElementSibling;
+            if (!errorSpan || !errorSpan.classList.contains('error-msg')) {
+                    errorSpan = document.createElement('div');
+                    errorSpan.className = 'error-msg';
+                    rolSelect.parentNode.insertBefore(errorSpan, rolSelect.nextSibling);
+            }
+            errorSpan.textContent = "Este campo es obligatorio.";
+            return false;
+        }
+        rolSelect.classList.remove('is-invalid');
+        return true;
+    }
 
     // Validación completa al enviar el formulario
     form.addEventListener('submit', function (e) {
-      // Forzar validación de todos los campos
       emailTouched = true;
       password1Touched = true;
       password2Touched = true;
@@ -719,16 +589,16 @@
         validarApellido() &&
         validarEdad() &&
         validarEmail() &&
+        validarRol() && 
         validarFortalezaPassword() &&
         validarCoincidenciaPassword();
 
       if (!esValido) {
         e.preventDefault();
-        // Enfocar el primer campo con error
         const firstError = document.querySelector('.error-msg:not(:empty)');
         if (firstError) {
-          const inputId = firstError.id.replace('error-', '');
-          const inputElement = document.getElementById(inputId);
+          const inputId = firstError.id ? firstError.id.replace('error-', '') : 'rol'; 
+          const inputElement = document.getElementById(inputId === 'password' ? 'password1' : inputId);
           if (inputElement) {
             inputElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             inputElement.focus();
@@ -736,9 +606,6 @@
         }
       }
     });
-
-    // Inicializar modal de éxito
-    inicializarModalExito();
   });
 </script>
 </body>

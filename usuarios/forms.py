@@ -34,15 +34,19 @@ class UsuarioForm(UserCreationForm):
         nombre = self.cleaned_data['first_name']
         if not nombre.replace(" ", "").isalpha():
             raise ValidationError("El nombre solo debe contener letras.")
-        # Convertir a mayúsculas
-        return nombre.strip().upper()
+        nombre = nombre.strip().upper()[:10]
+        if len(nombre) < 3:
+            raise ValidationError("El nombre debe tener al menos 3 caracteres.")
+        return nombre
 
     def clean_last_name(self):
         apellido = self.cleaned_data['last_name']
         if not apellido.replace(" ", "").isalpha():
             raise ValidationError("El apellido solo debe contener letras.")
-        # Convertir a mayúsculas
-        return apellido.strip().upper()
+        apellido = apellido.strip().upper()[:10]
+        if len(apellido) < 3:
+            raise ValidationError("El apellido debe tener al menos 3 caracteres.")
+        return apellido
 
     def clean_email(self):
         email = self.cleaned_data['email']
@@ -53,9 +57,8 @@ class UsuarioForm(UserCreationForm):
     def save(self, commit=True):
         user = super().save(commit=False)
         user.username = self.cleaned_data['cedula']  # Autoasigna el username como la cédula
-        # Asegurar que nombre y apellido estén en mayúsculas
-        user.first_name = self.cleaned_data['first_name'].upper()
-        user.last_name = self.cleaned_data['last_name'].upper()
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
         if commit:
             user.save()
         return user
@@ -75,8 +78,12 @@ class CedulaLoginForm(forms.Form):
             except Usuario.DoesNotExist:
                 raise forms.ValidationError("La cédula no está registrada.")
             
-            user = authenticate(username=user.username, password=password)
-            if user is None:
+            auth_user = authenticate(username=user.username, password=password)
+            if auth_user is None:
+                if user.check_password(password):
+                    if not user.is_active:
+                        raise forms.ValidationError("No se puede iniciar sesión porque el usuario está inactivo.")
                 raise forms.ValidationError("Contraseña incorrecta.")
-            cleaned_data['user'] = user
+            
+            cleaned_data['user'] = auth_user
         return cleaned_data

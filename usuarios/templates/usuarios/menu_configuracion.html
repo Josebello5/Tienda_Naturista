@@ -1,0 +1,333 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Configuración - Tienda Naturista{% endblock %}
+
+{% block content %}
+<!-- ===== TARJETA DE BIENVENIDA ===== -->
+<div class="welcome-card" style="background: linear-gradient(135deg, #2c3e50, #4ca1af);">
+  <h2>Panel de Configuración</h2>
+  <p>Gestión de usuarios y sistema</p>
+</div>
+
+<!-- ===== MENSAJES ===== -->
+{% if messages %}
+<div class="messages-container">
+  {% for message in messages %}
+  <div class="alert alert-{{ message.tags }}">
+    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+    {{ message }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ===== CONTENEDOR PRINCIPAL ===== -->
+<div class="productos-container">
+  <div class="productos-main">
+
+    <!-- ===== BARRA DE HERRAMIENTAS ===== -->
+    <div class="productos-toolbar">
+      <div class="filtros-container">
+        <!-- Búsqueda -->
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Buscar usuario...">
+        </div>
+        
+        <!-- Filtro de Rol -->
+        <div class="filtro-select ms-3">
+            <select id="roleFilter">
+                <option value="">Todos los Roles</option>
+                <option value="Dueño">Dueño</option>
+                <option value="Administrador">Administrador</option>
+                <option value="Cajero">Cajero</option>
+            </select>
+        </div>
+
+        <!-- Filtro de Estado -->
+        <div class="filtro-select ms-3">
+            <select id="statusFilter">
+                <option value="">Todos los Estados</option>
+                <option value="True">Activo</option>
+                <option value="False">Inactivo</option>
+            </select>
+        </div>
+      </div>
+
+      <div class="toolbar-actions">
+        <!-- Grupo de acciones -->
+        <div class="action-group">
+          <button class="btn btn-secondary" id="btnImprimirUsuarios">
+            <i class="fas fa-print"></i> Imprimir
+          </button>
+          
+          <!-- TODO: Implementar registro de usuarios aquí o usar el existente -->
+          <a href="{% url 'usuarios:crear_usuario_interno' %}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Agregar Usuario
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TABLA DE USUARIOS ===== -->
+    <div class="table-container">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Cédula</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Fecha de Nacimiento</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% for usuario in usuarios %}
+          <tr data-rol="{{ usuario.groups.all.0.name|default:'Sin Asignar' }}">
+            <td>{{ usuario.cedula }}</td>
+            <td>{{ usuario.first_name }}</td>
+            <td>{{ usuario.last_name }}</td>
+            <td>{{ usuario.fecha_nacimiento|date:"d/m/Y" }}</td>
+            <td>{{ usuario.email }}</td>
+            <td>
+                {% with rol=usuario.groups.all.0.name %}
+                    {% if rol == 'Dueño' %}
+                        <span class="badge bg-danger">Dueño</span>
+                    {% elif rol == 'Administrador' %}
+                        <span class="badge bg-primary">Administrador</span>
+                    {% elif rol == 'Cajero' %}
+                        <span class="badge bg-info text-dark">Cajero</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ rol|default:"Sin Asignar" }}</span>
+                    {% endif %}
+                {% endwith %}
+            </td>
+            <td>
+                {% if usuario.is_active %}
+                    <span class="badge bg-success">Activo</span>
+                {% else %}
+                    <span class="badge bg-secondary">Inactivo</span>
+                {% endif %}
+            </td>
+            <td class="actions">
+                <button class="btn-action btn-edit" title="Editar Usuario" 
+                        data-id="{{ usuario.id }}" 
+                        data-firstname="{{ usuario.first_name }}"
+                        data-lastname="{{ usuario.last_name }}"
+                        data-email="{{ usuario.email }}"
+                        data-rol="{{ usuario.groups.all.0.name|default:'' }}"
+                        {% if not usuario.is_active or usuario.groups.all.0.name == 'Dueño' %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-action btn-toggle-status" title="{% if usuario.is_active %}Desactivar{% else %}Activar{% endif %}"
+                        data-id="{{ usuario.id }}" 
+                        data-estado="{{ usuario.is_active }}"
+                        data-nombre="{{ usuario.first_name }} {{ usuario.last_name }}"
+                        {% if usuario.groups.all.0.name == 'Dueño' %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}>
+                    <i class="fas {% if usuario.is_active %}fa-toggle-on text-success{% else %}fa-toggle-off text-muted{% endif %}"></i>
+                </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination controls -->
+    <div class="pagination-wrapper" id="paginationUsuarios"></div>
+    
+  </div>
+</div>
+
+
+
+<!-- ===== MODAL DE ÉXITO ===== -->
+<div id="successModal" class="modal-overlay">
+  <div class="modal-success">
+    <div class="modal-success-icon">
+      <i class="fas fa-leaf"></i>
+    </div>
+    <h2 id="successModalTitle">¡Éxito!</h2>
+    <p id="successModalMessage">Operación completada correctamente.</p>
+    <button id="closeSuccessModal">Continuar</button>
+  </div>
+</div>
+
+<!-- ===== MODAL EDITAR USUARIO ===== -->
+<div id="modalEditarUsuario" class="modal-filtro">
+  <div class="modal-contenido">
+    <div class="modal-header">
+      <h3>Editar Usuario</h3>
+      <button class="btn-cerrar" id="btnCerrarModalEditar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="formEditarUsuario">
+        <input type="hidden" id="editUserId">
+        
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="editFirstName" class="form-label">Nombre:</label>
+                <input type="text" id="editFirstName" class="form-control" required style="text-transform: uppercase;">
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="editLastName" class="form-label">Apellido:</label>
+                <input type="text" id="editLastName" class="form-control" required style="text-transform: uppercase;">
+            </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="editEmail" class="form-label">Correo Electrónico:</label>
+          <input type="email" id="editEmail" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="editRol" class="form-label">Rol:</label>
+            <select id="editRol" class="form-select" required>
+                <option value="Administrador">Administrador</option>
+                <option value="Cajero">Cajero</option>
+                <!-- Bodeguero removido según requerimiento -->
+            </select>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelarEditar">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarEditar">Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL CONFIRMACIÓN ===== -->
+<div id="confirmStatusModal" class="modal-overlay">
+  <div class="modal-confirm" style="background: white; padding: 2rem; border-radius: 15px; text-align: center; max-width: 400px; width: 90%;">
+    <div class="modal-confirm-icon" style="font-size: 3rem; color: #f39c12; margin-bottom: 1rem;">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h2>Confirmar Acción</h2>
+    <p id="confirmStatusMessage">¿Está seguro de cambiar el estado de este usuario?</p>
+    <div class="modal-confirm-actions" style="display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem;">
+      <button id="cancelStatusBtn" class="btn btn-secondary">Cancelar</button>
+      <button id="confirmStatusBtn" class="btn btn-primary">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<!-- Reutilizamos estilos de productos para consistencia -->
+<link rel="stylesheet" href="{% static 'productos/css/productos.css' %}">
+<style>
+    /* Ajustes específicos para configuración si es necesario */
+    .welcome-card {
+        margin-bottom: 2rem;
+        padding: 2rem;
+        border-radius: 15px;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .badge {
+        padding: 0.5em 0.8em;
+        border-radius: 0.25rem;
+        font-size: 0.85em;
+        color: white;
+    }
+    .bg-danger { background-color: #e74c3c !important; }
+    .bg-primary { background-color: #3498db !important; }
+    .bg-secondary { background-color: #95a5a6 !important; }
+
+    /* ===== ESTILOS MODAL DE ÉXITO (Copiados de Clientes) ===== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .modal-success {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      transform: scale(0.7);
+      opacity: 0;
+      transition: all 0.4s ease;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .modal-overlay.active .modal-success {
+      transform: scale(1);
+      opacity: 1;
+    }
+    
+    .modal-success-icon {
+      font-size: 70px;
+      color: #4CAF50;
+      margin-bottom: 20px;
+      animation: bounce 0.8s ease;
+    }
+    
+    .modal-success h2 {
+      color: #2e7d32;
+      margin-bottom: 15px;
+      font-size: 24px;
+    }
+    
+    .modal-success p {
+      color: #388e3c;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+    
+    .modal-success button {
+      background: linear-gradient(to right, var(--primary-green), var(--primary-blue));
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      max-width: 200px;
+      width: 100%;
+    }
+    
+    .modal-success button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+    }
+    
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-20px); }
+      60% { transform: translateY(-10px); }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'usuarios/js/menu_configuracion.js' %}"></script>
+{% endblock %}

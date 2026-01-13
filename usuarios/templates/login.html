@@ -316,6 +316,7 @@
       <div class="input-group">
         <span class="input-icon material-symbols-rounded">lock</span>
         <input type="password" id="password" name="password" class="form-control" required placeholder="Contraseña">
+        <span class="password-toggle material-symbols-rounded" id="togglePassword">visibility</span>
       </div>
       <div class="error-msg {% if form.password.errors %}has-error{% endif %}">
         {% for error in form.password.errors %}
@@ -330,11 +331,40 @@
   </div>
 </div>
 
+<style>
+  .password-toggle {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--natural-gray);
+    cursor: pointer;
+    z-index: 10;
+    user-select: none;
+    font-size: 1.2rem;
+  }
+  .password-toggle:hover {
+    color: var(--primary-green);
+  }
+</style>
+
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     const cedulaInput = document.getElementById('cedula');
     const errorCedula = document.getElementById('error-cedula');
     
+    // Password Toggle Logic
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', function () {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.textContent = type === 'password' ? 'visibility' : 'visibility_off';
+        });
+    }
+
     cedulaInput.addEventListener('keypress', function (e) {
       if (!/[0-9]/.test(e.key) || cedulaInput.value.length >= 8) {
         e.preventDefault();

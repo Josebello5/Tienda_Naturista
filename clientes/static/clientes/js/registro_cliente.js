@@ -199,8 +199,8 @@ document.addEventListener('DOMContentLoaded', function () {
       return false;
     }
     
-    if (valor.length < 2) {
-      setInvalid(nombre, errorNombre, "El nombre debe tener al menos 2 caracteres.");
+    if (valor.length < 3) {
+      setInvalid(nombre, errorNombre, "El nombre debe tener al menos 3 caracteres.");
       return false;
     }
     
@@ -225,8 +225,8 @@ document.addEventListener('DOMContentLoaded', function () {
       return false;
     }
     
-    if (valor.length < 2) {
-      setInvalid(apellido, errorApellido, "El apellido debe tener al menos 2 caracteres.");
+    if (valor.length < 3) {
+      setInvalid(apellido, errorApellido, "El apellido debe tener al menos 3 caracteres.");
       return false;
     }
     

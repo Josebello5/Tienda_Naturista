@@ -65,8 +65,8 @@ class ClienteForm(forms.ModelForm):
                 raise forms.ValidationError('El nombre solo debe contener letras y espacios.')
             # Convertir a MAYÚSCULAS y limitar longitud
             nombre = nombre.strip().upper()[:10]
-            if len(nombre) < 2:
-                raise forms.ValidationError('El nombre debe tener al menos 2 caracteres.')
+            if len(nombre) < 3:
+                raise forms.ValidationError('El nombre debe tener al menos 3 caracteres.')
         return nombre
 
     def clean_apellido(self):
@@ -76,8 +76,8 @@ class ClienteForm(forms.ModelForm):
                 raise forms.ValidationError('El apellido solo debe contener letras y espacios.')
             # Convertir a MAYÚSCULAS y limitar longitud
             apellido = apellido.strip().upper()[:10]
-            if len(apellido) < 2:
-                raise forms.ValidationError('El apellido debe tener al menos 2 caracteres.')
+            if len(apellido) < 3:
+                raise forms.ValidationError('El apellido debe tener al menos 3 caracteres.')
         return apellido
 
     def clean_telefono_numero(self):
