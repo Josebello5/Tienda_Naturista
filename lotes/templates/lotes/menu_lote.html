@@ -468,34 +468,7 @@
   const IMPRIMIR_PROVEEDORES_URL = "{% url 'lotes:imprimir_proveedores' %}";
 
   // Detectar si se debe mostrar modal de éxito al cargar la página
-  const urlParams = new URLSearchParams(window.location.search);
-  const registroExitoso = urlParams.get('registro_exitoso');
-  const edicionExitosa = urlParams.get('edicion_exitosa');
-  const codigoLote = urlParams.get('codigo_lote');
-
-  if (registroExitoso === 'true' && codigoLote) {
-    // Mostrar modal de éxito después de cargar la página
-    document.addEventListener('DOMContentLoaded', function () {
-      setTimeout(function () {
-        mostrarModalExito(
-          '¡Lote Registrado!',
-          `El lote "${codigoLote}" ha sido registrado exitosamente.`
-        );
-      }, 500);
-    });
-  }
-
-  if (edicionExitosa === 'true' && codigoLote) {
-    // Mostrar modal de éxito después de cargar la página
-    document.addEventListener('DOMContentLoaded', function () {
-      setTimeout(function () {
-        mostrarModalExito(
-          '¡Lote Actualizado!',
-          `El lote "${codigoLote}" ha sido actualizado exitosamente.`
-        );
-      }, 500);
-    });
-  }
+  // La lógica se ha movido a menu_lote.js para acceder a mostrarModalExito
 </script>
 <script src="{% static 'lotes/js/menu_lote.js' %}?v=2.2"></script>
 <script src="{% static 'lotes/js/gestion_proveedores.js' %}"></script>

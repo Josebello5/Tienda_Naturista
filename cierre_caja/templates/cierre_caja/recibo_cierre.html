@@ -44,31 +44,35 @@
             </div>
         </div>
 
-        <div class="summary-card" style="border-left: 4px solid {% if cierre.Diferencia_Total == 0 %}var(--success-green){% else %}var(--error-red){% endif %};">
+        <div class="summary-card"
+            style="border-left: 4px solid {% if cierre.Diferencia_Total == 0 %}var(--success-green){% else %}var(--error-red){% endif %};">
             <span class="summary-label">Estado General</span>
-            <div class="summary-value" style="color: {% if cierre.Diferencia_Total == 0 %}var(--success-green){% else %}var(--error-red){% endif %};">
+            <div class="summary-value"
+                style="color: {% if cierre.Diferencia_Total == 0 %}var(--success-green){% else %}var(--error-red){% endif %};">
                 {% if cierre.Diferencia_Total == 0 %}
-                    <i class="fas fa-check-circle"></i> Cuadrado
+                <i class="fas fa-check-circle"></i> Cuadrado
                 {% else %}
-                    <i class="fas fa-exclamation-triangle"></i> Descuadre
+                <i class="fas fa-exclamation-triangle"></i> Descuadre
                 {% endif %}
             </div>
-            
+
             <div style="font-size: 0.9rem; margin-top: 5px; display: flex; flex-direction: column; gap: 2px;">
                 {% if cierre.diferencia_bs != 0 %}
-                    <span style="color: {% if cierre.diferencia_bs > 0 %}var(--success-green){% else %}var(--error-red){% endif %}; font-weight: bold;">
-                        {% if cierre.diferencia_bs > 0 %}Sobra:{% else %}Falta:{% endif %} Bs {{ diferencia_bs_abs_formatted }}
-                    </span>
+                <span
+                    style="color: {% if cierre.diferencia_bs > 0 %}var(--success-green){% else %}var(--error-red){% endif %}; font-weight: bold;">
+                    {% if cierre.diferencia_bs > 0 %}Sobra:{% else %}Falta:{% endif %} Bs {{ diferencia_bs_abs_formatted }}
+                </span>
                 {% endif %}
 
                 {% if cierre.diferencia_usd != 0 %}
-                    <span style="color: {% if cierre.diferencia_usd > 0 %}var(--success-green){% else %}var(--error-red){% endif %}; font-weight: bold;">
-                        {% if cierre.diferencia_usd > 0 %}Sobra:{% else %}Falta:{% endif %} $ {{ diferencia_usd_abs_formatted }}
-                    </span>
+                <span
+                    style="color: {% if cierre.diferencia_usd > 0 %}var(--success-green){% else %}var(--error-red){% endif %}; font-weight: bold;">
+                    {% if cierre.diferencia_usd > 0 %}Sobra:{% else %}Falta:{% endif %} $ {{ diferencia_usd_abs_formatted }}
+                </span>
                 {% endif %}
 
                 {% if cierre.Diferencia_Total == 0 %}
-                    <span style="color: var(--natural-gray);">Todo en orden</span>
+                <span style="color: var(--natural-gray);">Todo en orden</span>
                 {% endif %}
             </div>
         </div>
@@ -92,7 +96,8 @@
                         <td style="text-align: right;">Bs {{ sistema_efectivo_bs_formatted }}</td>
                         <td style="text-align: right;">Bs {{ real_efectivo_bs_formatted }}</td>
                         <td style="text-align: right;">
-                            <span class="difference-display {% if diferencias.efectivo_bs < 0 %}diff-negative{% elif diferencias.efectivo_bs > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
+                            <span
+                                class="difference-display {% if diferencias.efectivo_bs < 0 %}diff-negative{% elif diferencias.efectivo_bs > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
                                 {{ dif_efectivo_bs_formatted }}
                             </span>
                         </td>
@@ -103,7 +108,8 @@
                         <td style="text-align: right;">$ {{ sistema_efectivo_usd_formatted }}</td>
                         <td style="text-align: right;">$ {{ real_efectivo_usd_formatted }}</td>
                         <td style="text-align: right;">
-                            <span class="difference-display {% if diferencias.efectivo_usd < 0 %}diff-negative{% elif diferencias.efectivo_usd > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
+                            <span
+                                class="difference-display {% if diferencias.efectivo_usd < 0 %}diff-negative{% elif diferencias.efectivo_usd > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
                                 {{ dif_efectivo_usd_formatted }}
                             </span>
                         </td>
@@ -114,7 +120,8 @@
                         <td style="text-align: right;">Bs {{ sistema_punto_venta_formatted }}</td>
                         <td style="text-align: right;">Bs {{ real_punto_venta_formatted }}</td>
                         <td style="text-align: right;">
-                            <span class="difference-display {% if diferencias.punto_venta < 0 %}diff-negative{% elif diferencias.punto_venta > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
+                            <span
+                                class="difference-display {% if diferencias.punto_venta < 0 %}diff-negative{% elif diferencias.punto_venta > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
                                 {{ dif_punto_venta_formatted }}
                             </span>
                         </td>
@@ -125,7 +132,8 @@
                         <td style="text-align: right;">Bs {{ sistema_pago_movil_formatted }}</td>
                         <td style="text-align: right;">Bs {{ real_pago_movil_formatted }}</td>
                         <td style="text-align: right;">
-                            <span class="difference-display {% if diferencias.pago_movil < 0 %}diff-negative{% elif diferencias.pago_movil > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
+                            <span
+                                class="difference-display {% if diferencias.pago_movil < 0 %}diff-negative{% elif diferencias.pago_movil > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
                                 {{ dif_pago_movil_formatted }}
                             </span>
                         </td>
@@ -136,7 +144,8 @@
                         <td style="text-align: right;">Bs {{ sistema_transferencia_formatted }}</td>
                         <td style="text-align: right;">Bs {{ real_transferencia_formatted }}</td>
                         <td style="text-align: right;">
-                            <span class="difference-display {% if diferencias.transferencia < 0 %}diff-negative{% elif diferencias.transferencia > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
+                            <span
+                                class="difference-display {% if diferencias.transferencia < 0 %}diff-negative{% elif diferencias.transferencia > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
                                 {{ dif_transferencia_formatted }}
                             </span>
                         </td>
@@ -147,7 +156,8 @@
                         <td style="text-align: right;">Bs {{ sistema_tarjeta_formatted }}</td>
                         <td style="text-align: right;">Bs {{ real_tarjeta_formatted }}</td>
                         <td style="text-align: right;">
-                            <span class="difference-display {% if diferencias.tarjeta < 0 %}diff-negative{% elif diferencias.tarjeta > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
+                            <span
+                                class="difference-display {% if diferencias.tarjeta < 0 %}diff-negative{% elif diferencias.tarjeta > 0 %}diff-positive{% else %}diff-neutral{% endif %}">
                                 {{ dif_tarjeta_formatted }}
                             </span>
                         </td>
@@ -168,10 +178,12 @@
     {% endif %}
 
     <div class="form-actions print-hide" style="justify-content: center;">
+        {% if es_admin_o_dueno %}
         <a href="{% url 'cierre_caja:menu_cierre_caja' %}?fecha={{ cierre.Fecha_Cierre|date:'Y-m-d' }}"
             class="btn-print" style="background: var(--primary-blue);">
             <i class="fas fa-edit"></i> Editar
         </a>
+        {% endif %}
 
         <a href="{% url 'cierre_caja:descargar_recibo_cierre' cierre.ID_Cierre %}" class="btn-save">
             <i class="fas fa-file-pdf"></i> Descargar PDF

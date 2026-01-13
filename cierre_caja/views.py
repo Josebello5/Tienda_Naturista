@@ -30,9 +30,12 @@ def menu_cierre_caja(request):
         try:
             fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
         except ValueError:
-            fecha = timezone.now().date()
+            tz = pytz.timezone('America/Caracas')
+            fecha = timezone.now().astimezone(tz).date()
     else:
-        fecha = timezone.now().date()
+        # Usar hora de Venezuela para definir "hoy"
+        tz = pytz.timezone('America/Caracas')
+        fecha = timezone.now().astimezone(tz).date()
     
     # Verificar si ya existe un cierre para esta fecha
     cierre_existente = CierreCaja.objects.filter(Fecha_Cierre=fecha).first()
@@ -40,9 +43,17 @@ def menu_cierre_caja(request):
     # Calcular montos del sistema desde las ventas
     montos_sistema = calcular_montos_sistema(fecha)
     
+    # Verificar si es admin o dueño
+    es_admin_o_dueno = request.user.groups.filter(name__in=['Dueño', 'Administrador']).exists() or request.user.is_superuser
+
     if request.method == 'POST':
         # Procesar el formulario de cierre
         try:
+            # Validar si el cierre está bloqueado y el usuario no tiene permisos
+            if cierre_existente and cierre_existente.Cerrado and not es_admin_o_dueno:
+                messages.error(request, 'El cierre de caja ya ha sido finalizado. Solo administradores y dueños pueden modificarlo.')
+                return redirect(f"{request.path}?fecha={fecha.strftime('%Y-%m-%d')}")
+
             # Si existe, actualizar; si no, crear nuevo
             if cierre_existente:
                 cierre = cierre_existente
@@ -70,6 +81,9 @@ def menu_cierre_caja(request):
             # Guardar notas
             cierre.Notas = request.POST.get('notas', '')
             
+            # Marcar como cerrado/bloqueado una vez guardado
+            cierre.Cerrado = True
+            
             # Guardar y calcular totales
             cierre.save()
             cierre.calcular_totales()
@@ -80,13 +94,21 @@ def menu_cierre_caja(request):
         except Exception as e:
             messages.error(request, f'Error al guardar el cierre de caja: {str(e)}')
     
+    # Determinar si la vista debe estar bloqueada
+    bloqueado = False
+    if cierre_existente and cierre_existente.Cerrado:
+        if not es_admin_o_dueno:
+            bloqueado = True
+
     # Preparar contexto para el template
     context = {
         'fecha': fecha,
         'fecha_str': fecha.strftime('%Y-%m-%d'),
         'montos_sistema': montos_sistema,
         'cierre_existente': cierre_existente,
-        'es_hoy': fecha == timezone.now().date(),
+        'es_hoy': fecha == timezone.now().astimezone(pytz.timezone('America/Caracas')).date(),
+        'bloqueado': bloqueado,
+        'es_admin_o_dueno': es_admin_o_dueno,
     }
     
     # Si hay cierre existente, agregar sus datos
@@ -100,7 +122,13 @@ def menu_cierre_caja(request):
 def ver_recibo_cierre(request, cierre_id):
     """Vista para ver el recibo de un cierre de caja"""
     cierre = get_object_or_404(CierreCaja, ID_Cierre=cierre_id)
+    
+    # Verificar permisos
+    es_admin_o_dueno = request.user.groups.filter(name__in=['Dueño', 'Administrador']).exists() or request.user.is_superuser
+    
     context = cierre.get_html_context()
+    context['es_admin_o_dueno'] = es_admin_o_dueno
+    
     return render(request, 'cierre_caja/recibo_cierre.html', context)
 
 

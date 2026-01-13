@@ -210,7 +210,8 @@ function initCalculations() {
     const inputs = document.querySelectorAll('.amount-input');
     inputs.forEach(input => {
         input.addEventListener('input', calculateRowDiff); // Calcular diferencia al escribir
-        input.addEventListener('blur', calculateTotals);   // Calcular totales al salir
+        input.addEventListener('input', calculateTotals);  // Calcular totales al escribir (Real-time)
+        input.addEventListener('blur', calculateTotals);   // Calcular totales al salir (asegurar format)
     });
 
     // Cálculo inicial
@@ -255,52 +256,71 @@ function calculateRowDiff(event) {
 
 // Calcular totales generales
 function calculateTotals() {
-    let totalReal = 0;
-    let totalSystem = 0;
+    let totalRealBs = 0;
+    let totalRealUsd = 0;
+    let totalSystemBs = 0;
+    let totalSystemUsd = 0;
 
     document.querySelectorAll('tbody tr:not(.total-row)').forEach(row => {
         const systemElem = row.querySelector('.amount-system');
         const inputElem = row.querySelector('.amount-input');
 
         if (systemElem && inputElem) {
-            const sysVal = parseFloat(systemElem.dataset.raw);
-            const realVal = parseNumber(inputElem.value);
+            // Asegurar que el formato crudo 1234,56 se parsee bien a 1234.56 para JS
+            let rawStr = systemElem.dataset.raw || '0';
+            rawStr = rawStr.replace(',', '.');
+            const sysVal = parseFloat(rawStr);
 
-            // Suma directa (mezcla monedas tal como lo hace el backend)
-            totalSystem += sysVal;
-            totalReal += realVal;
+            const realVal = parseNumber(inputElem.value);
+            const isUsd = inputElem.name === 'real_efectivo_usd';
+
+            if (isUsd) {
+                totalSystemUsd += sysVal;
+                totalRealUsd += realVal;
+            } else {
+                totalSystemBs += sysVal;
+                totalRealBs += realVal;
+            }
         }
     });
 
-    // Actualizar fila de totales
-    const totalRealElem = document.getElementById('totalRealDisplay');
-    const totalDiffElem = document.getElementById('totalDiffDisplay');
+    // Actualizar Totales del Sistema
+    const sysBsElem = document.getElementById('totalSystemBs');
+    const sysUsdElem = document.getElementById('totalSystemUsd');
+    if (sysBsElem) sysBsElem.textContent = 'Bs ' + formatNumber(totalSystemBs);
+    if (sysUsdElem) sysUsdElem.textContent = '$ ' + formatNumber(totalSystemUsd);
 
-    // Actualizar display del Total Real (Ref)
-    if (totalRealElem) {
-        totalRealElem.textContent = formatNumber(totalReal);
+    // Actualizar Totales Reales
+    const realBsElem = document.getElementById('totalRealBs');
+    const realUsdElem = document.getElementById('totalRealUsd');
+    if (realBsElem) realBsElem.textContent = 'Bs ' + formatNumber(totalRealBs);
+    if (realUsdElem) realUsdElem.textContent = '$ ' + formatNumber(totalRealUsd);
+
+    // Actualizar Diferencias
+    updateDifferenceDisplay('totalDiffBs', totalRealBs - totalSystemBs, 'Bs');
+    updateDifferenceDisplay('totalDiffUsd', totalRealUsd - totalSystemUsd, '$');
+}
+
+function updateDifferenceDisplay(elementId, diff, currencySymbol) {
+    const elem = document.getElementById(elementId);
+    if (!elem) return;
+
+    let className = 'difference-display';
+    let content = '';
+
+    if (diff > 0.01) {
+        className += ' diff-positive';
+        content = `${currencySymbol} ${formatNumber(diff)} <small>(Sobra)</small>`;
+    } else if (diff < -0.01) {
+        className += ' diff-negative';
+        content = `${currencySymbol} ${formatNumber(diff)} <small>(Falta)</small>`;
+    } else {
+        className += ' diff-neutral';
+        content = `${currencySymbol} ${formatNumber(diff)} <small>(Cuadre)</small>`;
     }
 
-    if (totalDiffElem) {
-        const diff = totalReal - totalSystem;
-        let html = '';
-        let className = 'difference-display';
-
-        // Determinar estado (Sobrante/Faltante)
-        if (diff > 0.01) {
-            className += ' diff-positive';
-            html = `<i class="fas fa-arrow-up"></i> ${formatNumber(diff)} <small>(Sobrante)</small>`;
-        } else if (diff < -0.01) {
-            className += ' diff-negative';
-            html = `<i class="fas fa-arrow-down"></i> ${formatNumber(diff)} <small>(Faltante)</small>`;
-        } else {
-            className += ' diff-neutral';
-            html = `<i class="fas fa-check"></i> ${formatNumber(diff)} <small>(Cuadre)</small>`;
-        }
-
-        totalDiffElem.innerHTML = html;
-        totalDiffElem.className = className;
-    }
+    elem.className = className;
+    elem.innerHTML = content;
 }
 
 // Navegación de fechas

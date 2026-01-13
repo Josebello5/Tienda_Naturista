@@ -302,7 +302,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                location.reload();
+                                mostrarModalExito(
+                                    '¡Estado Actualizado!',
+                                    data.message || `El estado del lote ha sido actualizado correctamente.`,
+                                    function () {
+                                        location.reload();
+                                    }
+                                );
                             } else {
                                 mostrarModalError('Error', data.error);
                             }
@@ -341,6 +347,32 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ===== FUNCIONES DE MODALES =====
+    function mostrarModalExito(titulo, mensaje, callbackCierre) {
+        const modal = document.getElementById('successModal');
+        const tituloElement = document.getElementById('successModalTitle');
+        const mensajeElement = document.getElementById('successModalMessage');
+        const btnContinuar = document.getElementById('closeSuccessModal');
+
+        if (!modal || !tituloElement || !mensajeElement) {
+            alert(`¡ÉXITO!: ${titulo}\n${mensaje}`);
+            if (callbackCierre) callbackCierre();
+            return;
+        }
+
+        tituloElement.textContent = titulo;
+        mensajeElement.textContent = mensaje;
+        modal.classList.add('active');
+
+        // Configurar el botón de continuar
+        const onContinuar = () => {
+            modal.classList.remove('active');
+            btnContinuar.removeEventListener('click', onContinuar);
+            if (callbackCierre) callbackCierre();
+        };
+
+        btnContinuar.addEventListener('click', onContinuar);
+    }
+
     function mostrarModalConfirmacion(mensaje, callback) {
         const modal = document.getElementById('confirmModal');
         const mensajeElement = document.getElementById('confirmModalMessage');
@@ -406,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!modal || !inputCosto) {
             const nuevoCosto = prompt('Ingrese el nuevo costo unitario:', costoActual);
             if (nuevoCosto !== null && nuevoCosto.trim() !== '') {
-                actualizarCosto(loteId, parseFloat(nuevoCosto));
+                actualizarCosto(loteId, parseFloat(nuevoCosto).toFixed(2));
             }
             return;
         }
@@ -448,7 +480,13 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    location.reload();
+                    mostrarModalExito(
+                        '¡Costo Actualizado!',
+                        `El costo unitario se ha actualizado correctamente.`,
+                        function () {
+                            location.reload();
+                        }
+                    );
                 } else {
                     mostrarModalError('Error', data.error);
                 }
@@ -598,6 +636,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
             window.location.search = params.toString();
         });
+    }
+
+    // ===== DETECTAR REGISTRO/EDICIÓN EXITOSA (DESDE URL) =====
+    const urlParams = new URLSearchParams(window.location.search);
+    const registroExitoso = urlParams.get('registro_exitoso');
+    const edicionExitosa = urlParams.get('edicion_exitosa');
+    const codigoLote = urlParams.get('codigo_lote');
+
+    if (registroExitoso === 'true' && codigoLote) {
+        setTimeout(function () {
+            mostrarModalExito(
+                '¡Lote Registrado!',
+                `El lote "${codigoLote}" ha sido registrado exitosamente.`
+            );
+            // Limpiar URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }, 500);
+    }
+
+    if (edicionExitosa === 'true' && codigoLote) {
+        setTimeout(function () {
+            mostrarModalExito(
+                '¡Lote Actualizado!',
+                `El lote "${codigoLote}" ha sido actualizado exitosamente.`
+            );
+            // Limpiar URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }, 500);
     }
 
     // Opciones rápidas
