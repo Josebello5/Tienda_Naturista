@@ -395,7 +395,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Actualizar encabezados de moneda
         const totalMoneda = document.getElementById('totalMoneda');
-        totalMoneda.textContent = monedaActual === 'bs' ? 'Bs' : '$';
+        if (totalMoneda) {
+            totalMoneda.textContent = monedaActual === 'bs' ? 'Bs' : '$';
+        }
 
         // Actualizar resumen de totales
         actualizarResumenTotales();
@@ -915,9 +917,13 @@ document.addEventListener('DOMContentLoaded', function () {
             if (coincideId && coincideCliente && coincideFechaVenta &&
                 coincideEstadoPago && coincideTipoVenta && coincideMetodoPago && coincideAnulada) {
                 row.style.display = '';
+                // Agregar atributo para marcar como visible por filtros
+                row.setAttribute('data-filtro-visible', 'true');
                 visibleRows++;
             } else {
                 row.style.display = 'none';
+                // Marcar como oculta por filtros
+                row.setAttribute('data-filtro-visible', 'false');
             }
         });
 
@@ -943,6 +949,12 @@ document.addEventListener('DOMContentLoaded', function () {
         actualizarResumenTotales();
         // Actualizar moneda en tabla
         actualizarMonedaEnTabla();
+        
+        // NUEVO: Actualizar paginación después de filtrar
+        if (typeof window.actualizarPaginacionVentas === 'function') {
+            window.paginaActualVentas = 1; // Resetear a página 1
+            window.actualizarPaginacionVentas();
+        }
     }
 
     function fechaEnRango(fechaTexto, fechaInicio, fechaFin) {
@@ -1061,23 +1073,11 @@ document.addEventListener('DOMContentLoaded', function () {
             if (fechaDesde) fechaDesde.value = hoy;
             if (fechaHasta) fechaHasta.value = hoy;
 
-            // 3. Ejecutar filtro inmediatamente
+            // 3. IMPORTANTE: Ejecutar filtro para ocultar filas que no son de hoy
             filtrarVentas();
 
-            // 4. Forzar actualización visual explícita
+            // 4. Actualizar indicadores visuales
             actualizarIndicadoresFiltro();
-
-            // Refuerzo final con timer para asegurar que prevalezca
-            setTimeout(() => {
-                if (btnFiltroFechaVenta) {
-                    btnFiltroFechaVenta.classList.add('filtro-activo');
-                    // Recalcular el texto para asegurar que coincida con la fecha de hoy
-                    const hoyParts = hoy.split('-');
-                    const fechaFmt = `${hoyParts[2]}/${hoyParts[1]}`;
-                    btnFiltroFechaVenta.innerHTML = `<i class="fas fa-calendar-day"></i> Fecha: ${fechaFmt} - ${fechaFmt}`;
-                    console.log('Clase filtro-activo forzada visualmente');
-                }
-            }, 50);
         } else {
             console.log('Se detectaron filtros en la URL, respetando configuración externa.');
             // Si hay fechas en URL, establecerlas en visuales y en el estado
@@ -1163,4 +1163,227 @@ document.addEventListener('DOMContentLoaded', function () {
     // Ejecutar al cargar la página
     console.log('Iniciando cálculo de saldos pendientes...');
     actualizarSaldosPendientesBs();
+
+    // ===== PAGINACIÓN DEL LADO DEL CLIENTE =====
+    
+    const REGISTROS_POR_PAGINA = 10;
+    window.paginaActualVentas = 1;
+    let totalPaginasVentas = 1;
+    
+    const paginationContainer = document.getElementById('paginationContainer');
+    const paginationInfo = document.getElementById('paginationInfo');
+    const paginationNumbers = document.getElementById('paginationNumbers');
+    const btnPrimeraP = document.getElementById('btnPrimeraP');
+    const btnAnteriorP = document.getElementById('btnAnteriorP');
+    const btnSiguienteP = document.getElementById('btnSiguienteP');
+    const btnUltimaP = document.getElementById('btnUltimaP');
+    
+    /**
+     * Actualiza la paginación basándose en las filas visibles POR FILTROS
+     */
+    window.actualizarPaginacionVentas = function() {
+        // Obtener solo filas que pasaron los filtros (data-filtro-visible="true")
+        const todasLasFilas = tableBody.querySelectorAll('tr:not(.empty-row):not(.no-resultados)');
+        const filasVisibles = Array.from(todasLasFilas).filter(fila => {
+            return fila.getAttribute('data-filtro-visible') === 'true';
+        });
+        
+        const totalRegistros = filasVisibles.length;
+        
+        console.log(`Paginación: ${totalRegistros} registros visibles después de filtrar`);
+        
+        // Calcular total de páginas
+        totalPaginasVentas = Math.ceil(totalRegistros / REGISTROS_POR_PAGINA);
+        
+        // Si solo hay una página o menos, ocultar paginación
+        if (totalPaginasVentas <= 1) {
+            if (paginationContainer) {
+                paginationContainer.style.display = 'none';
+            }
+            // Mostrar todas las filas visibles por filtros
+            filasVisibles.forEach(fila => {
+                fila.style.display = '';
+            });
+            return;
+        }
+        
+        // Mostrar contenedor de paginación
+        if (paginationContainer) {
+            paginationContainer.style.display = 'block';
+        }
+        
+        // Asegurarse de que la página actual esté en rango
+        if (window.paginaActualVentas > totalPaginasVentas) {
+            window.paginaActualVentas = totalPaginasVentas;
+        }
+        if (window.paginaActualVentas < 1) {
+            window.paginaActualVentas = 1;
+        }
+        
+        // Actualizar información de página
+        if (paginationInfo) {
+            paginationInfo.textContent = `Mostrando página ${window.paginaActualVentas} de ${totalPaginasVentas} (Total: ${totalRegistros} registros)`;
+        }
+        
+        // Mostrar solo las filas de la página actual
+        const inicio = (window.paginaActualVentas - 1) * REGISTROS_POR_PAGINA;
+        const fin = inicio + REGISTROS_POR_PAGINA;
+        
+        filasVisibles.forEach((fila, index) => {
+            if (index >= inicio && index < fin) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+        
+        // Actualizar botones de navegación
+        actualizarBotonesPaginacion();
+    };
+    
+    /**
+     * Actualiza el estado de los botones de navegación
+     */
+    function actualizarBotonesPaginacion() {
+        // Botones primera/anterior
+        if (btnPrimeraP && btnAnteriorP) {
+            if (window.paginaActualVentas <= 1) {
+                btnPrimeraP.style.display = 'none';
+                btnAnteriorP.style.display = 'none';
+            } else {
+                btnPrimeraP.style.display = 'inline-flex';
+                btnAnteriorP.style.display = 'inline-flex';
+            }
+        }
+        
+        // Botones siguiente/última
+        if (btnSiguienteP && btnUltimaP) {
+            if (window.paginaActualVentas >= totalPaginasVentas) {
+                btnSiguienteP.style.display = 'none';
+                btnUltimaP.style.display = 'none';
+            } else {
+                btnSiguienteP.style.display = 'inline-flex';
+                btnUltimaP.style.display = 'inline-flex';
+            }
+        }
+        
+        // Actualizar números de página
+        if (paginationNumbers) {
+            paginationNumbers.innerHTML = '';
+            
+            // Mostrar números de página (página actual ± 2)
+            let inicio = Math.max(1, window.paginaActualVentas - 2);
+            let fin = Math.min(totalPaginasVentas, window.paginaActualVentas + 2);
+            
+            // Ajustar si estamos al principio o al final
+            if (window.paginaActualVentas <= 3) {
+                fin = Math.min(5, totalPaginasVentas);
+            }
+            if (window.paginaActualVentas >= totalPaginasVentas - 2) {
+                inicio = Math.max(1, totalPaginasVentas - 4);
+            }
+            
+            for (let i = inicio; i <= fin; i++) {
+                if (i === window.paginaActualVentas) {
+                    const span = document.createElement('span');
+                    span.className = 'pagination-current';
+                    span.textContent = i;
+                    paginationNumbers.appendChild(span);
+                } else {
+                    const a = document.createElement('a');
+                    a.href = '#';
+                    a.className = 'pagination-btn';
+                    a.textContent = i;
+                    a.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        irAPaginaVentas(i);
+                    });
+                    paginationNumbers.appendChild(a);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Navega a una página específica
+     */
+    function irAPaginaVentas(numeroPagina) {
+        window.paginaActualVentas = numeroPagina;
+        window.actualizarPaginacionVentas();
+        
+        // Hacer scroll suave a la parte superior de la tabla
+        const tabla = document.getElementById('dataTable');
+        if (tabla) {
+            tabla.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+    
+    // Event listeners para botones de navegación
+    if (btnPrimeraP) {
+        btnPrimeraP.addEventListener('click', (e) => {
+            e.preventDefault();
+            irAPaginaVentas(1);
+        });
+    }
+    
+    if (btnAnteriorP) {
+        btnAnteriorP.addEventListener('click', (e) => {
+            e.preventDefault();
+            irAPaginaVentas(Math.max(1, window.paginaActualVentas - 1));
+        });
+    }
+    
+    if (btnSiguienteP) {
+        btnSiguienteP.addEventListener('click', (e) => {
+            e.preventDefault();
+            irAPaginaVentas(Math.min(totalPaginasVentas, window.paginaActualVentas + 1));
+        });
+    }
+    
+    if (btnUltimaP) {
+        btnUltimaP.addEventListener('click', (e) => {
+            e.preventDefault();
+            irAPaginaVentas(totalPaginasVentas);
+        });
+    }
+    
+    // Inicializar todas las filas como visibles por defecto (solo si no tienen el atributo ya)
+    setTimeout(() => {
+        console.log('=== INICIALIZANDO PAGINACIÓN ===');
+        console.log('tableBody existe:', !!tableBody);
+        console.log('paginationContainer existe:', !!paginationContainer);
+        
+        if (!tableBody) {
+            console.error('ERROR: tableBody no encontrado. La paginación no puede inicializarse.');
+            return;
+        }
+        
+        if (!paginationContainer) {
+            console.error('ERROR: paginationContainer no encontrado. La paginación no puede inicializarse.');
+            return;
+        }
+        
+        const todasLasFilas = tableBody.querySelectorAll('tr:not(.empty-row):not(.no-resultados)');
+        console.log('Número total de filas encontradas:', todasLasFilas.length);
+        
+        // CRÍTICO: No sobrescribir atributos ya establecidos por el filtro
+        let filasConAtributo = 0;
+        let filasSinAtributo = 0;
+        
+        todasLasFilas.forEach(fila => {
+            if (!fila.hasAttribute('data-filtro-visible')) {
+                // Solo marcar como visible si NO tiene el atributo
+                fila.setAttribute('data-filtro-visible', 'true');
+                filasSinAtributo++;
+            } else {
+                filasConAtributo++;
+            }
+        });
+        
+        console.log(`Filas con atributo ya establecido: ${filasConAtributo}, sin atributo: ${filasSinAtributo}`);
+        
+        console.log('Llamando a actualizarPaginacionVentas...');
+        window.actualizarPaginacionVentas();
+        console.log('Sistema de paginación de ventas inicializado - 10 registros por página');
+    }, 300);
 });
