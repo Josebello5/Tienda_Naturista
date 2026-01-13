@@ -676,14 +676,21 @@ def datos_ventas_categoria(request):
 # ===== VISTAS PARA GENERAR REPORTES PDF DE GRÁFICOS =====
 @login_required
 def reporte_ventas_tiempo(request):
-    """Genera PDF del gráfico de Ventas en el Tiempo (mismos filtros)"""
+    """Genera PDF del gráfico de Ventas en el Tiempo con imagen del gráfico"""
     try:
-        from django.db.models.functions import TruncDate, TruncWeek, TruncMonth
-        
-        periodo = request.GET.get('periodo', 'mes')
-        moneda = request.GET.get('moneda', 'bs')
-        fecha_ini = request.GET.get('fecha_ini')
-        fecha_fin = request.GET.get('fecha_fin')
+        # Soportar tanto GET (legacy) como POST (con imagen)
+        if request.method == 'POST':
+            periodo = request.POST.get('periodo', 'mes')
+            moneda = request.POST.get('moneda', 'bs')
+            fecha_ini = request.POST.get('fecha_ini')
+            fecha_fin = request.POST.get('fecha_fin')
+            chart_image = request.POST.get('chart_image', '')
+        else:
+            periodo = request.GET.get('periodo', 'mes')
+            moneda = request.GET.get('moneda', 'bs')
+            fecha_ini = request.GET.get('fecha_ini')
+            fecha_fin = request.GET.get('fecha_fin')
+            chart_image = None
         
         if fecha_ini and fecha_fin:
             fecha_inicio = datetime.strptime(fecha_ini, '%Y-%m-%d').date()
@@ -691,51 +698,40 @@ def reporte_ventas_tiempo(request):
         else:
             fecha_final = timezone.now().date()
             fecha_inicio = fecha_final - timedelta(days=30)
-            
-        # Determinar truncado
-        if periodo == 'dia': trunc_func = TruncDate
-        elif periodo == 'semana': trunc_func = TruncWeek
-        else: trunc_func = TruncMonth
-        
-        campo_total = 'Total_USD' if moneda == 'usd' else 'Total'
-        
-        ventas = (
-            Venta.objects
-            .filter(
-                Fecha_Venta__date__gte=fecha_inicio,
-                Fecha_Venta__date__lte=fecha_final,
-                anulada=False
-            )
-            .annotate(fecha=trunc_func('Fecha_Venta'))
-            .values('fecha')
-            .annotate(total=Sum(campo_total))
-            .order_by('fecha')
-        )
         
         context = {
-            'titulo': f'Reporte de Ventas por {periodo.capitalize()}',
+            'titulo': f'Ventas por {periodo.capitalize()}',
             'fecha_ini': fecha_inicio,
             'fecha_fin': fecha_final,
-            'datos': ventas,
-            'tipo_reporte': 'ventas_tiempo',
             'moneda': moneda,
             'periodo': periodo,
-            'fecha_generacion': timezone.now()
+            'fecha_generacion': timezone.now(),
+            'chart_image': chart_image
         }
         
+        # Usar template apropiado según si hay imagen o no
+        template = 'estadisticas/reporte_chart_pdf.html' if chart_image else 'estadisticas/reporte_pdf.html'
         filename = f"ventas_{periodo}_{fecha_inicio}_{fecha_final}.pdf"
-        return generar_pdf_generico('estadisticas/reporte_pdf.html', context, filename)
+        return generar_pdf_generico(template, context, filename)
         
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=500)
 
 @login_required
 def reporte_top_productos(request):
-    """Genera PDF similar al gráfico de Top Productos"""
+    """Genera PDF del gráfico de Top Productos con imagen del gráfico"""
     try:
-        limit = int(request.GET.get('limit', 10))
-        fecha_ini = request.GET.get('fecha_ini')
-        fecha_fin = request.GET.get('fecha_fin')
+        # Soportar tanto GET (legacy) como POST (con imagen)
+        if request.method == 'POST':
+            limit = int(request.POST.get('limit', 10))
+            fecha_ini = request.POST.get('fecha_ini')
+            fecha_fin = request.POST.get('fecha_fin')
+            chart_image = request.POST.get('chart_image', '')
+        else:
+            limit = int(request.GET.get('limit', 10))
+            fecha_ini = request.GET.get('fecha_ini')
+            fecha_fin = request.GET.get('fecha_fin')
+            chart_image = None
         
         if fecha_ini and fecha_fin:
             fecha_inicio = datetime.strptime(fecha_ini, '%Y-%m-%d').date()
@@ -743,106 +739,112 @@ def reporte_top_productos(request):
         else:
             fecha_final = timezone.now().date()
             fecha_inicio = fecha_final - timedelta(days=30)
-            
-        top_productos = (
-            DetalleVenta.objects
-            .filter(
-                ID_Ventas__Fecha_Venta__date__range=[fecha_inicio, fecha_final],
-                ID_Ventas__anulada=False
-            )
-            .values('ID_lote__id_producto__nombre_pro')
-            .annotate(total_cantidad=Sum('Cantidad'))
-            .order_by('-total_cantidad')[:limit]
-        )
         
         context = {
-            'titulo': 'Top Productos (Gráfico)',
+            'titulo': 'Top Productos',
             'fecha_ini': fecha_inicio,
             'fecha_fin': fecha_final,
-            'datos': top_productos,
-            'tipo_reporte': 'top_productos_chart',
-            'fecha_generacion': timezone.now()
+            'fecha_generacion': timezone.now(),
+            'chart_image': chart_image
         }
         
+        # Usar template apropiado según si hay imagen o no
+        template = 'estadisticas/reporte_chart_pdf.html' if chart_image else 'estadisticas/reporte_pdf.html'
         filename = f"top_productos_{fecha_inicio}_{fecha_final}.pdf"
-        return generar_pdf_generico('estadisticas/reporte_pdf.html', context, filename)
+        return generar_pdf_generico(template, context, filename)
 
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=500)
 
 @login_required
 def reporte_ventas_categoria(request):
-    """Genera PDF del gráfico/panel de Categorías"""
+    """Genera PDF del gráfico/panel de Categorías con imagen del gráfico"""
     try:
-        fecha_ini = request.GET.get('fecha_ini')
-        fecha_fin = request.GET.get('fecha_fin')
-        moneda = request.GET.get('moneda', 'bs')
-        search_cat = request.GET.get('search_cat', '').strip()
-        modo = request.GET.get('modo', '') # 'panel' o 'chart'
-
-        # Usamos variables globales si venimos del panel y no hay params?
-        # Mejor confiar en query params que insertó el JS
+        # Soportar tanto GET (legacy/panel) como POST (con imagen de gráfico)
+        if request.method == 'POST':
+            fecha_ini = request.POST.get('fecha_ini')
+            fecha_fin = request.POST.get('fecha_fin')
+            moneda = request.POST.get('moneda', 'bs')
+            chart_image = request.POST.get('chart_image', '')
+            search_cat = ''
+            modo = 'chart'
+        else:
+            fecha_ini = request.GET.get('fecha_ini')
+            fecha_fin = request.GET.get('fecha_fin')
+            moneda = request.GET.get('moneda', 'bs')
+            search_cat = request.GET.get('search_cat', '').strip()
+            modo = request.GET.get('modo', '')
+            chart_image = None
         
         if fecha_ini and fecha_fin:
             try:
                 fecha_inicio = datetime.strptime(fecha_ini, '%Y-%m-%d').date()
                 fecha_final = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
             except ValueError:
-                # Fallback format or error
-                 fecha_final = timezone.now().date()
-                 fecha_inicio = fecha_final - timedelta(days=30)
+                fecha_final = timezone.now().date()
+                fecha_inicio = fecha_final - timedelta(days=30)
         else:
             fecha_final = timezone.now().date()
             fecha_inicio = fecha_final - timedelta(days=30)
-            
-        if moneda == 'bs':
-            campo_precio = F('Precio_Unitario')
-        else:
-            campo_precio = F('Precio_Unitario') / F('ID_Tasa__valor')
-            
-        query = (
-            DetalleVenta.objects
-            .filter(
-                ID_Ventas__Fecha_Venta__date__range=[fecha_inicio, fecha_final],
-                ID_Ventas__anulada=False
-            )
-        )
         
-        # Filtro de búsqueda para categorías
-        if search_cat:
-            query = query.filter(ID_lote__id_producto__categoria__nombre__icontains=search_cat)
-            
-        ventas_categoria = (
-            query
-            .values('ID_lote__id_producto__categoria__nombre')
-            .annotate(
-                total=Sum(
-                    ExpressionWrapper(
-                        F('Cantidad') * campo_precio,
-                        output_field=DecimalField(max_digits=15, decimal_places=2)
-                    )
-                ),
-                total_cantidad=Sum('Cantidad') # Agregamos cantidad también
+        # Si es modo panel (legacy), generar datos tabulares
+        if modo == 'panel':
+            if moneda == 'bs':
+                campo_precio = F('Precio_Unitario')
+            else:
+                campo_precio = F('Precio_Unitario') / F('ID_Tasa__valor')
+                
+            query = (
+                DetalleVenta.objects
+                .filter(
+                    ID_Ventas__Fecha_Venta__date__range=[fecha_inicio, fecha_final],
+                    ID_Ventas__anulada=False
+                )
             )
-            .order_by('-total')
-        )
-        # Limit? El panel muestra top 5, el chart top 10.
-        # Si es reporte impreso, mostramos más? Digamos top 20
-        ventas_categoria = ventas_categoria[:20]
+            
+            if search_cat:
+                query = query.filter(ID_lote__id_producto__categoria__nombre__icontains=search_cat)
+                
+            ventas_categoria = (
+                query
+                .values('ID_lote__id_producto__categoria__nombre')
+                .annotate(
+                    total=Sum(
+                        ExpressionWrapper(
+                            F('Cantidad') * campo_precio,
+                            output_field=DecimalField(max_digits=15, decimal_places=2)
+                        )
+                    ),
+                    total_cantidad=Sum('Cantidad')
+                )
+                .order_by('-total')[:20]
+            )
 
-        context = {
-            'titulo': 'Reporte de Ventas por Categoría',
-            'fecha_ini': fecha_inicio,
-            'fecha_fin': fecha_final,
-            'datos': ventas_categoria,
-            'tipo_reporte': 'categorias', # Reutilizamos lógica de template si existe, o nueva
-            'moneda': moneda,
-            'fecha_generacion': timezone.now(),
-            'filtro_busqueda': search_cat
-        }
+            context = {
+                'titulo': 'Reporte de Ventas por Categoría',
+                'fecha_ini': fecha_inicio,
+                'fecha_fin': fecha_final,
+                'datos': ventas_categoria,
+                'tipo_reporte': 'categorias',
+                'moneda': moneda,
+                'fecha_generacion': timezone.now(),
+                'filtro_busqueda': search_cat
+            }
+            template = 'estadisticas/reporte_pdf.html'
+        else:
+            # Modo gráfico - usar imagen
+            context = {
+                'titulo': 'Ventas por Categoría',
+                'fecha_ini': fecha_inicio,
+                'fecha_fin': fecha_final,
+                'moneda': moneda,
+                'fecha_generacion': timezone.now(),
+                'chart_image': chart_image
+            }
+            template = 'estadisticas/reporte_chart_pdf.html' if chart_image else 'estadisticas/reporte_pdf.html'
         
         filename = f"categorias_{fecha_inicio}_{fecha_final}.pdf"
-        return generar_pdf_generico('estadisticas/reporte_pdf.html', context, filename)
+        return generar_pdf_generico(template, context, filename)
 
     except Exception as e:
         return HttpResponse(f"Error: {str(e)}", status=500)

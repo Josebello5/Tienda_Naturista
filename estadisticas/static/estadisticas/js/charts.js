@@ -523,43 +523,10 @@ function renderChartCategorias(data) {
 
 // ===== ACTUALIZAR URLs DE IMPRESIÓN =====
 function updatePrintUrls() {
-    // Ventas
-    const btnPrintVentas = document.getElementById('btn-print-ventas');
-    if (btnPrintVentas) {
-        const periodo = document.getElementById('periodo-ventas').value;
-        const moneda = document.getElementById('toggle-moneda-ventas').dataset.moneda;
-        const fechaIni = document.getElementById('fecha-ini-ventas').value;
-        const fechaFin = document.getElementById('fecha-fin-ventas').value;
-        
-        let url = `/estadisticas/reporte/ventas-tiempo/?periodo=${periodo}&moneda=${moneda}`;
-        if (fechaIni && fechaFin) url += `&fecha_ini=${fechaIni}&fecha_fin=${fechaFin}`;
-        btnPrintVentas.href = url;
-    }
+    // Configurar event listeners para generar PDFs con gráficos
+    setupChartPdfButtons();
     
-    // Productos
-    const btnPrintProd = document.getElementById('btn-print-productos');
-    if (btnPrintProd) {
-        const fechaIni = document.getElementById('fecha-ini-productos').value;
-        const fechaFin = document.getElementById('fecha-fin-productos').value;
-        
-        let url = `/estadisticas/reporte/top-productos/?limit=10`;
-        if (fechaIni && fechaFin) url += `&fecha_ini=${fechaIni}&fecha_fin=${fechaFin}`;
-        btnPrintProd.href = url;
-    }
-    
-    // Categorías (Chart)
-    const btnPrintCat = document.getElementById('btn-print-categorias');
-    if (btnPrintCat) {
-        const fechaIni = document.getElementById('fecha-ini-categorias').value;
-        const fechaFin = document.getElementById('fecha-fin-categorias').value;
-        const moneda = document.getElementById('toggle-moneda-categorias').dataset.moneda;
-        
-        let url = `/estadisticas/reporte/ventas-categoria/?moneda=${moneda}`;
-        if (fechaIni && fechaFin) url += `&fecha_ini=${fechaIni}&fecha_fin=${fechaFin}`;
-        btnPrintCat.href = url;
-    }
-
-    // Panel Top Categorías - Integración con filtros globales
+    // Panel Top Categorías - Integración con filtros globales (mantiene lógica tabular)
     const btnPrintCatPanel = document.getElementById('btn-print-categorias-panel');
     if (btnPrintCatPanel) {
         // Leer filtros desde el DOM (input de búsqueda y botón de filtro de fecha)
@@ -578,4 +545,168 @@ function updatePrintUrls() {
         
         btnPrintCatPanel.href = url;
     }
+}
+
+// ===== CONFIGURAR BOTONES DE PDF CON GRÁFICOS =====
+function setupChartPdfButtons() {
+    // Botón de Ventas en el Tiempo
+    const btnPrintVentas = document.getElementById('btn-print-ventas');
+    if (btnPrintVentas) {
+        // Remover listeners anteriores
+        const newBtn = btnPrintVentas.cloneNode(true);
+        btnPrintVentas.parentNode.replaceChild(newBtn, btnPrintVentas);
+        
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            generateChartPdf('ventas', chartVentas);
+        });
+    }
+    
+    // Botón de Top Productos
+    const btnPrintProd = document.getElementById('btn-print-productos');
+    if (btnPrintProd) {
+        const newBtn = btnPrintProd.cloneNode(true);
+        btnPrintProd.parentNode.replaceChild(newBtn, btnPrintProd);
+        
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            generateChartPdf('productos', chartProductos);
+        });
+    }
+    
+    // Botón de Categorías
+    const btnPrintCat = document.getElementById('btn-print-categorias');
+    if (btnPrintCat) {
+        const newBtn = btnPrintCat.cloneNode(true);
+        btnPrintCat.parentNode.replaceChild(newBtn, btnPrintCat);
+        
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            generateChartPdf('categorias', chartCategorias);
+        });
+    }
+}
+
+// ===== GENERAR PDF CON GRÁFICO =====
+function generateChartPdf(chartType, chartInstance) {
+    if (!chartInstance) {
+        alert('Por favor, genera el gráfico primero antes de imprimir.');
+        return;
+    }
+    
+    // Crear un canvas temporal para asegurar fondo blanco
+    // (Chart.js usa fondo transparente por defecto, que puede verse negro en PDF)
+    const originalCanvas = chartInstance.canvas;
+    const width = originalCanvas.width;
+    const height = originalCanvas.height;
+    
+    const newCanvas = document.createElement('canvas');
+    newCanvas.width = width;
+    newCanvas.height = height;
+    const ctx = newCanvas.getContext('2d');
+    
+    // Rellenar fondo blanco
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, width, height);
+    
+    // Dibujar el gráfico original sobre el fondo blanco
+    ctx.drawImage(originalCanvas, 0, 0);
+    
+    // Convertir a imagen base64
+    const chartImage = newCanvas.toDataURL('image/png');
+    
+    // Obtener parámetros según el tipo de gráfico
+    let params = {};
+    
+    if (chartType === 'ventas') {
+        params = {
+            periodo: document.getElementById('periodo-ventas').value,
+            moneda: document.getElementById('toggle-moneda-ventas').dataset.moneda,
+            fecha_ini: document.getElementById('fecha-ini-ventas').value,
+            fecha_fin: document.getElementById('fecha-fin-ventas').value
+        };
+    } else if (chartType === 'productos') {
+        params = {
+            fecha_ini: document.getElementById('fecha-ini-productos').value,
+            fecha_fin: document.getElementById('fecha-fin-productos').value,
+            limit: 10
+        };
+    } else if (chartType === 'categorias') {
+        params = {
+            fecha_ini: document.getElementById('fecha-ini-categorias').value,
+            fecha_fin: document.getElementById('fecha-fin-categorias').value,
+            moneda: document.getElementById('toggle-moneda-categorias').dataset.moneda
+        };
+    }
+    
+    // Agregar la imagen al FormData
+    params.chart_image = chartImage;
+    
+    // Crear FormData y agregar CSRF token
+    const formData = new FormData();
+    for (let key in params) {
+        formData.append(key, params[key]);
+    }
+    
+    // Obtener CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                      getCookie('csrftoken');
+    
+    // URL del endpoint según el tipo
+    let url = '';
+    if (chartType === 'ventas') {
+        url = '/estadisticas/reporte/ventas-tiempo/';
+    } else if (chartType === 'productos') {
+        url = '/estadisticas/reporte/top-productos/';
+    } else if (chartType === 'categorias') {
+        url = '/estadisticas/reporte/ventas-categoria/';
+    }
+    
+    // Enviar petición POST
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error(text || 'Error en el servidor');
+            });
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        // Crear URL temporal y descargar el PDF
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `grafico_${chartType}_${new Date().getTime()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al generar el PDF: ' + error.message);
+    });
+}
+
+// ===== FUNCIÓN AUXILIAR PARA OBTENER COOKIE =====
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }

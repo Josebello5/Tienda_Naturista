@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>{{ titulo }}</title>
+    <style>
+        @page {
+            size: letter landscape;
+            margin: 1.5cm;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #27ae60;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            color: #27ae60;
+            font-size: 18pt;
+            margin: 0 0 5px 0;
+            text-transform: uppercase;
+        }
+
+        .header h2 {
+            color: #555;
+            font-size: 12pt;
+            margin: 0;
+            font-weight: normal;
+        }
+
+        .meta-info {
+            width: 100%;
+            margin-bottom: 15px;
+            font-size: 9pt;
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .meta-info table {
+            width: 100%;
+            border: none;
+        }
+
+        .meta-info td {
+            padding: 3px 5px;
+            border: none;
+        }
+
+        .chart-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .chart-container img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+            background: white;
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 8pt;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 8px;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .filter-badge {
+            display: inline-block;
+            background-color: #e8f5e9;
+            color: #27ae60;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 9pt;
+            margin: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Tienda Naturista</h1>
+        <h2>{{ titulo }}</h2>
+    </div>
+
+    <div class="meta-info">
+        <table>
+            <tr>
+                <td><strong>Período:</strong> {{ fecha_ini|date:"d/m/Y" }} - {{ fecha_fin|date:"d/m/Y" }}</td>
+                <td class="text-right"><strong>Generado el:</strong> {{ fecha_generacion|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% if moneda %}
+            <tr>
+                <td><strong>Moneda:</strong> 
+                    <span class="filter-badge">{% if moneda == 'usd' %}USD ($){% else %}Bolívares (Bs){% endif %}</span>
+                </td>
+                <td class="text-right"></td>
+            </tr>
+            {% endif %}
+            {% if periodo %}
+            <tr>
+                <td><strong>Agrupación:</strong> 
+                    <span class="filter-badge">
+                        {% if periodo == 'dia' %}Por Día
+                        {% elif periodo == 'semana' %}Por Semana
+                        {% else %}Por Mes{% endif %}
+                    </span>
+                </td>
+                <td class="text-right"></td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+
+    {% if chart_image %}
+    <div class="chart-container">
+        <img src="{{ chart_image }}" alt="Gráfico de {{ titulo }}" />
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 40px; color: #999;">
+        <p>No se pudo generar el gráfico</p>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        Reporte generado por Sistema de Gestión - Tienda Naturista
+    </div>
+</body>
+
+</html>
