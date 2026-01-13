@@ -177,6 +177,7 @@ def generar_reporte_cuentas_pendientes(request):
         # Obtener parámetros de filtro
         query = request.GET.get('q', '').strip()
         estado = request.GET.get('estado', '')
+        tipo_cliente = request.GET.get('tipo_cliente', '')  # Nuevo filtro
         
         hoy = timezone.now()
         
@@ -204,6 +205,10 @@ def generar_reporte_cuentas_pendientes(request):
                 cedula = cliente.cedula.lower()
                 if query.lower() not in nombre_completo and query.lower() not in cedula:
                     continue
+            
+            # Aplicar filtro de tipo de cliente
+            if tipo_cliente and cliente.tipo_cliente != tipo_cliente:
+                continue
             
             # Obtener ventas a crédito del cliente
             ventas_cliente_credito = Venta.objects.filter(
@@ -310,6 +315,8 @@ def generar_reporte_cuentas_pendientes(request):
             filename_parts.append(clean_query[:20])
         if estado:
             filename_parts.append(f"deuda_{estado}")
+        if tipo_cliente:
+            filename_parts.append(f"tipo_{tipo_cliente}")
         
         filename = "_".join(filename_parts) + ".pdf"
         response['Content-Disposition'] = f'inline; filename="{filename}"'
@@ -332,7 +339,7 @@ def generar_reporte_cuentas_pendientes(request):
         
         # Información de filtros aplicados
         filtros_info = "Reporte General de Cuentas Pendientes"
-        if query or estado:
+        if query or estado or tipo_cliente:
             filtros_info = "Cuentas Pendientes Filtradas - "
             filtros = []
             if query:
@@ -344,6 +351,12 @@ def generar_reporte_cuentas_pendientes(request):
                     'baja': 'Deuda Baja (< 15 días)'
                 }
                 filtros.append(f"Estado: {estado_dict.get(estado, estado)}")
+            if tipo_cliente:
+                tipo_dict = {
+                    'particular': 'Particular',
+                    'mayorista': 'Mayorista'
+                }
+                filtros.append(f"Tipo: {tipo_dict.get(tipo_cliente, tipo_cliente)}")
             filtros_info += ", ".join(filtros)
         
         p.drawString(1*inch, height-1.6*inch, f"{filtros_info} - {fecha_actual}")
@@ -466,6 +479,7 @@ def filtrar_cuentas_ajax(request):
     # Obtener parámetros de filtro
     query = request.GET.get('q', '').strip().lower()
     estado = request.GET.get('estado', '')
+    tipo_cliente = request.GET.get('tipo_cliente', '')  # Nuevo filtro
     
     hoy = timezone.now()
     
@@ -493,6 +507,10 @@ def filtrar_cuentas_ajax(request):
             cedula = cliente.cedula.lower()
             if query not in nombre_completo and query not in cedula:
                 continue
+        
+        # Aplicar filtro de tipo de cliente
+        if tipo_cliente and cliente.tipo_cliente != tipo_cliente:
+            continue
         
         # Obtener todas las ventas a crédito
         ventas_cliente_credito = Venta.objects.filter(

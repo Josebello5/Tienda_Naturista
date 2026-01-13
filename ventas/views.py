@@ -25,6 +25,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib.units import mm, inch
 from usuarios.utils import can_void_sales, can_print_reports
+from usuarios.decorators import role_required
 
 
 def menu_ventas(request):
@@ -548,6 +549,7 @@ def procesar_venta(request):
 
 @csrf_exempt
 @transaction.atomic
+@role_required('Dueño')
 def devolver_venta(request, venta_id):
     if request.method == 'POST':
         try:
@@ -569,7 +571,7 @@ def devolver_venta(request, venta_id):
             venta.anulada = True
             venta.save()
             
-            messages.success(request, f'Venta #{venta_id} anulada exitosamente. Productos reintegrados al stock.')
+            # messages.success eliminated to use modal only
             
             return JsonResponse({
                 'success': True,

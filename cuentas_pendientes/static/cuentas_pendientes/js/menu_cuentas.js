@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Elementos del DOM
     const searchInput = document.getElementById('searchInput');
     const estadoPagoSelect = document.getElementById('estadoPagoSelect');
+    const tipoClienteSelect = document.getElementById('tipoClienteSelect');
     const btnGenerarReporte = document.getElementById('btnGenerarReporte');
     const tableBody = document.getElementById('tableBody');
     
@@ -12,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function filtrarTabla() {
         const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
         const estado = estadoPagoSelect ? estadoPagoSelect.value : '';
+        const tipoCliente = tipoClienteSelect ? tipoClienteSelect.value : '';
         
         const filas = tableBody.querySelectorAll('tr');
         let filasVisibles = 0;
@@ -26,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Obtener datos de la fila
             const clienteNombre = fila.cells[0].textContent.toLowerCase();
             const dias = parseInt(fila.getAttribute('data-dias') || 0);
+            const tipoClienteFila = fila.getAttribute('data-tipo-cliente') || '';
             
             // Verificar filtros
             const coincideBusqueda = !query || 
@@ -40,8 +43,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 coincideEstado = dias < 15;
             }
             
+            const coincideTipoCliente = !tipoCliente || tipoClienteFila === tipoCliente;
+            
             // Aplicar filtros
-            if (coincideBusqueda && coincideEstado) {
+            if (coincideBusqueda && coincideEstado && coincideTipoCliente) {
                 // fila.style.display = ''; // DELEGADO A PAGINACIÓN
                 fila.classList.remove('filtro-oculto');
                 filasVisibles++;
@@ -55,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Mostrar mensaje si no hay resultados en la tabla
         const emptyRow = tableBody.querySelector('.empty-row');
         const emptyRowFilter = tableBody.querySelector('.empty-row-filter');
-        const hayFiltros = query || estado;
+        const hayFiltros = query || estado || tipoCliente;
         
         // Ocultar siempre la fila empty original del template
         if (emptyRow) {
@@ -80,17 +85,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         
         // Llamar AJAX para actualizar paneles
-        actualizarPanelesAjax(query, estado);
+        actualizarPanelesAjax(query, estado, tipoCliente);
         
         // Actualizar indicadores de filtro
         actualizarIndicadoresFiltro();
     }
     
     // Función para actualizar paneles mediante AJAX
-    function actualizarPanelesAjax(query, estado) {
+    function actualizarPanelesAjax(query, estado, tipoCliente) {
         const params = new URLSearchParams();
         if (query) params.set('q', query);
         if (estado) params.set('estado', estado);
+        if (tipoCliente) params.set('tipo_cliente', tipoCliente);
         
         fetch(`/cuentas_pendientes/api/filtrar/?${params.toString()}`, {
             headers: {
@@ -174,6 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Función para actualizar indicadores visuales de filtro
     function actualizarIndicadoresFiltro() {
         const estado = estadoPagoSelect ? estadoPagoSelect.value : '';
+        const tipoCliente = tipoClienteSelect ? tipoClienteSelect.value : '';
         
         // Indicador de filtro de estado
         if (estadoPagoSelect && estadoPagoSelect.parentElement) {
@@ -181,6 +188,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 estadoPagoSelect.parentElement.classList.add('filtro-activo');
             } else {
                 estadoPagoSelect.parentElement.classList.remove('filtro-activo');
+            }
+        }
+        
+        // Indicador de filtro de tipo de cliente
+        if (tipoClienteSelect && tipoClienteSelect.parentElement) {
+            if (tipoCliente) {
+                tipoClienteSelect.parentElement.classList.add('filtro-activo');
+            } else {
+                tipoClienteSelect.parentElement.classList.remove('filtro-activo');
             }
         }
     }
@@ -197,16 +213,22 @@ document.addEventListener('DOMContentLoaded', function() {
         estadoPagoSelect.addEventListener('change', filtrarTabla);
     }
     
+    if (tipoClienteSelect) {
+        tipoClienteSelect.addEventListener('change', filtrarTabla);
+    }
+    
     if (btnGenerarReporte) {
         btnGenerarReporte.addEventListener('click', function() {
             // Capturar filtros actuales
             const query = searchInput ? searchInput.value.trim() : '';
             const estado = estadoPagoSelect ? estadoPagoSelect.value : '';
+            const tipoCliente = tipoClienteSelect ? tipoClienteSelect.value : '';
             
             // Construir URL con parámetros
             const params = new URLSearchParams();
             if (query) params.append('q', query);
             if (estado) params.append('estado', estado);
+            if (tipoCliente) params.append('tipo_cliente', tipoCliente);
             
             // Abrir PDF en nueva pestaña
             const pdfUrl = `/cuentas_pendientes/generar-reporte/?${params.toString()}`;
@@ -218,6 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.limpiarFiltros = function() {
         if (searchInput) searchInput.value = '';
         if (estadoPagoSelect) estadoPagoSelect.value = '';
+        if (tipoClienteSelect) tipoClienteSelect.value = '';
         filtrarTabla();
     }
 

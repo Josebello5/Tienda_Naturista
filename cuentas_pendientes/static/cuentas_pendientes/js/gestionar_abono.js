@@ -216,6 +216,34 @@ document.addEventListener('DOMContentLoaded', function () {
     // ===== FUNCIONES DE MENSAJES =====
 
     function mostrarMensaje(mensaje, tipo) {
+        // Si es mensaje de éxito, usar el modal
+        if (tipo === 'success') {
+            const successModal = document.getElementById('successModal');
+            const successModalTitle = document.getElementById('successModalTitle');
+            const successModalMessage = document.getElementById('successModalMessage');
+            const closeSuccessModal = document.getElementById('closeSuccessModal');
+            
+            if (successModal) {
+                if (successModalTitle) successModalTitle.textContent = '¡Éxito!';
+                if (successModalMessage) successModalMessage.textContent = mensaje;
+                
+                successModal.classList.add('active');
+                
+                // Configurar botón cerrar
+                closeSuccessModal.onclick = function() {
+                    successModal.classList.remove('active');
+                };
+                
+                // Cerrar al hacer click fuera
+                successModal.onclick = function(e) {
+                    if (e.target === successModal) {
+                        successModal.classList.remove('active');
+                    }
+                };
+                return;
+            }
+        }
+
         const messagesContainer = document.getElementById('messagesContainer');
 
         // Limpiar mensajes anteriores después de 5 segundos

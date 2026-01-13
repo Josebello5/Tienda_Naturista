@@ -535,31 +535,55 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Función para mostrar mensajes de éxito
+    // Función para mostrar mensajes de éxito con MODAL
     function mostrarMensajeExito(mensaje) {
-        // Crear contenedor de mensajes si no existe
-        let mensajesContainer = document.querySelector('.messages-container');
-        if (!mensajesContainer) {
-            mensajesContainer = document.createElement('div');
-            mensajesContainer.className = 'messages-container';
-            document.querySelector('.welcome-card').after(mensajesContainer);
-        }
-
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-success';
-        alertDiv.innerHTML = `
-            <i class="fas fa-check-circle"></i>
-            ${mensaje}
-        `;
-
-        mensajesContainer.appendChild(alertDiv);
-
-        // Auto-eliminar después de 5 segundos
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.remove();
+        const successModal = document.getElementById('successModal');
+        const successModalTitle = document.getElementById('successModalTitle');
+        const successModalMessage = document.getElementById('successModalMessage');
+        const closeSuccessModal = document.getElementById('closeSuccessModal');
+        
+        if (successModal) {
+            if (successModalMessage) successModalMessage.textContent = mensaje;
+            
+            successModal.classList.add('active');
+            
+            const closeModal = function() {
+                successModal.classList.remove('active');
+            };
+            
+            // Configurar botón cerrar
+            closeSuccessModal.onclick = closeModal;
+            
+            // Cerrar al hacer click fuera
+            successModal.onclick = function(e) {
+                if (e.target === successModal) {
+                    closeModal();
+                }
+            };
+        } else {
+             // Fallback si no existe el modal
+            let mensajesContainer = document.querySelector('.messages-container');
+            if (!mensajesContainer) {
+                mensajesContainer = document.createElement('div');
+                mensajesContainer.className = 'messages-container';
+                document.querySelector('.welcome-card').after(mensajesContainer);
             }
-        }, 5000);
+    
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success';
+            alertDiv.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                ${mensaje}
+            `;
+    
+            mensajesContainer.appendChild(alertDiv);
+    
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
     }
 
     // Función para mostrar mensajes de error

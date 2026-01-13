@@ -237,7 +237,7 @@
                   <i class="fas fa-eye"></i>
                 </a>
 
-                {% if puede_devolver_ventas %}
+                {% if is_dueno %}
                 <!-- Devolución (solo si no está anulada y tiene permiso) -->
                 {% if not venta.anulada %}
                 <button class="btn-action btn-devolucion" title="Devolver Venta" data-venta-id="{{ venta.ID_Ventas }}"
@@ -339,6 +339,21 @@
     </div>
   </div>
 </div>
+  </div>
+</div>
+
+<!-- ===== MODAL DE ÉXITO PARA VENTAS ===== -->
+<div id="successModal" class="modal-overlay">
+  <div class="modal-success">
+    <div class="modal-success-icon">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <h2 id="successModalTitle">¡Éxito!</h2>
+    <p id="successModalMessage">La venta ha sido anulada correctamente.</p>
+    <button id="closeSuccessModal">Continuar</button>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_css %}

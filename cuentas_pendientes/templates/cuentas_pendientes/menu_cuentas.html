@@ -99,6 +99,15 @@
           </select>
         </div>
 
+        <!-- Filtro por tipo de cliente -->
+        <div class="filtro-select">
+          <select id="tipoClienteSelect">
+            <option value="">Todos los tipos</option>
+            <option value="particular">Particular</option>
+            <option value="mayorista">Mayorista</option>
+          </select>
+        </div>
+
         {% if puede_imprimir %}
         <button class="btn btn-secondary" id="btnGenerarReporte">
           <i class="fas fa-print"></i> Imprimir Reporte
@@ -110,6 +119,7 @@
         <!-- Removed Registrar Abono button as requested -->
       </div>
     </div>
+
 
     <!-- ===== TABLA DE CLIENTES CON DEUDA ===== -->
     <div class="table-container">
@@ -126,11 +136,15 @@
         <tbody id="tableBody">
           {% for cliente_data in clientes_deuda_detallada %}
           <tr data-cliente-id="{{ cliente_data.cliente.cedula }}"
-            data-deuda="{{ cliente_data.deuda_total|formato_venezolano }}" data-dias="{{ cliente_data.dias_transcurridos }}">
+            data-deuda="{{ cliente_data.deuda_total|formato_venezolano }}" data-dias="{{ cliente_data.dias_transcurridos }}"
+            data-tipo-cliente="{{ cliente_data.cliente.tipo_cliente }}">
             <td>
               <strong>{{ cliente_data.cliente.nombre }} {{ cliente_data.cliente.apellido }}</strong>
               <br><small>{{ cliente_data.cliente.cedula }}</small>
               <br><small>{{ cliente_data.cliente.telefono|default:"Sin teléfono" }}</small>
+              <br><small class="badge {% if cliente_data.cliente.tipo_cliente == 'mayorista' %}badge-mayorista{% else %}badge-particular{% endif %}" style="font-size: 0.75rem; padding: 2px 6px;">
+                {{ cliente_data.cliente.get_tipo_cliente_display }}
+              </small>
             </td>
             <td class="text-center">
               <span class="badge-dias">{{ cliente_data.ventas_pendientes }}</span>
