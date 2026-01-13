@@ -8,6 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
+from .decorators import owner_required
 
 def registrar_usuario(request):
     if request.method == 'POST':
@@ -72,7 +73,7 @@ from reportlab.lib.units import inch
 from datetime import datetime
 from django.http import HttpResponse
 
-@login_required
+@owner_required
 def menu_configuracion(request):
     from .models import Usuario
     usuarios = Usuario.objects.all()

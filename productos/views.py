@@ -20,6 +20,7 @@ from django.shortcuts import get_object_or_404
 import re  
 import logging
 from django.urls import reverse
+from usuarios.utils import can_manage_products, can_print_reports
 
 # Helper function to generate proper Content-Disposition header
 def get_pdf_content_disposition(filename):
@@ -30,7 +31,6 @@ def get_pdf_content_disposition(filename):
     from urllib.parse import quote
     # Usar tanto filename como filename* para máxima compatibilidad
     return f'inline; filename="{filename}"; filename*=UTF-8\'\'{quote(filename)}'
-
 
 
 
@@ -47,6 +47,10 @@ def menu_productos(request):
     estado = request.GET.get('estado', '')
     sujeto_iva = request.GET.get('sujeto_iva', '')
     serial = request.GET.get('serial', '')  # Nuevo filtro por serial
+    
+    # Verificar permisos del usuario
+    puede_gestionar = can_manage_products(request.user)
+    puede_imprimir = can_print_reports(request.user)
     
     # Obtener productos con stock actual calculado (suma de cantidad_disponible de lotes activos)
     productos_con_stock = Producto.objects.annotate(
@@ -124,6 +128,8 @@ def menu_productos(request):
         'registro_exitoso': registro_exitoso,
         'edicion_exitosa': edicion_exitosa,
         'nombre_producto': nombre_producto,
+        'puede_gestionar': puede_gestionar,
+        'puede_imprimir': puede_imprimir,
     })
 
 def registrar_producto(request):

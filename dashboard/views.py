@@ -8,6 +8,7 @@ from django.utils import timezone
 from datetime import datetime, date
 from .models import TasaCambiaria
 from .forms import TasaCambiariaForm
+from usuarios.utils import is_cashier, can_add_exchange_rate
 import json
 
 @login_required(login_url='usuarios:login')
@@ -19,6 +20,10 @@ def dashboard(request):
     ahora_venezuela = timezone.now().astimezone(tz_venezuela)
     hoy = ahora_venezuela.date()
     
+    # Verificar si el usuario es cajero
+    is_cajero = is_cashier(request.user)
+    puede_agregar_tasa = can_add_exchange_rate(request.user)
+    
     # Filtrar tasas solo del día de hoy (en hora de Venezuela)
     tasas = TasaCambiaria.objects.filter(
         fecha_creacion__date=hoy
@@ -27,7 +32,8 @@ def dashboard(request):
     # OBTENER SIEMPRE LA ÚLTIMA TASA REGISTRADA (sin importar el día)
     ultima_tasa = TasaCambiaria.objects.all().order_by('-fecha_creacion').first()
     
-    if request.method == 'POST':
+    # Solo procesar POST si el usuario tiene permiso
+    if request.method == 'POST' and puede_agregar_tasa:
         form = TasaCambiariaForm(request.POST)
         if form.is_valid():
             nueva_tasa = form.save(commit=False)
@@ -66,13 +72,15 @@ def dashboard(request):
                     'errors': form.errors.get_json_data()
                 })
     else:
-        form = TasaCambiariaForm()
+        form = TasaCambiariaForm() if puede_agregar_tasa else None
     
     context = {
         'tasas': tasas,
-        'form': form,
-        'ultima_tasa': ultima_tasa,  # Usamos la última tasa sin filtrar por día
-        'hoy': hoy
+        'form': form,  # None para cajeros
+        'ultima_tasa': ultima_tasa,
+        'hoy': hoy,
+        'is_cajero': is_cajero,
+        'puede_agregar_tasa': puede_agregar_tasa,
     }
     
     return render(request, 'dashboard/dashboard.html', context)

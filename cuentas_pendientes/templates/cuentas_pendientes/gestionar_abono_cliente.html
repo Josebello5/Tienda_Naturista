@@ -133,9 +133,11 @@
         <button id="btnPagarSeleccionadas" class="btn btn-success" disabled>
           <i class="fas fa-money-bill-wave"></i> Pagar Seleccionadas
         </button>
+        {% if puede_imprimir %}
         <button class="btn btn-secondary" id="btnImprimirReporte">
           <i class="fas fa-print"></i> Imprimir Reporte
         </button>
+        {% endif %}
         <a href="{% url 'cuentas_pendientes:menu_cuentas' %}" class="btn btn-secondary">
           <i class="fas fa-arrow-left"></i> Volver al Menú
         </a>

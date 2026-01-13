@@ -16,11 +16,15 @@ from ventas.models import Venta, Pago
 from clientes.models import Cliente
 from .models import Abono
 from django.utils import timezone
+from usuarios.utils import can_print_reports
 
 @login_required
 def menu_cuentas_pendientes(request):
     """Vista principal para gestionar cuentas pendientes"""
     hoy = timezone.now()
+    
+    # Verificar permisos del usuario
+    puede_imprimir = can_print_reports(request.user)
     
     # Obtener todos los clientes que tienen o han tenido ventas a crédito
     clientes_credito = Cliente.objects.filter(
@@ -157,6 +161,7 @@ def menu_cuentas_pendientes(request):
         'clientes_top_5': clientes_top_5,
         'abonos_recientes': abonos_recientes_lista,
         'tasa_actual': tasa_actual,
+        'puede_imprimir': puede_imprimir,
     }
     
     return render(request, 'cuentas_pendientes/menu_cuentas.html', context)
@@ -636,6 +641,9 @@ def gestionar_abono_cliente(request, cliente_cedula):
     """Página para gestionar abonos de un cliente específico"""
     cliente = get_object_or_404(Cliente, cedula=cliente_cedula)
     
+    # Verificar permisos del usuario
+    puede_imprimir = can_print_reports(request.user)
+    
     # Obtener filtro de estado de pago desde los parámetros GET
     estado_pago_filtro = request.GET.get('estado_pago', '')
     
@@ -727,6 +735,7 @@ def gestionar_abono_cliente(request, cliente_cedula):
         'ventas_atrasadas': ventas_atrasadas,
         'dias_ultima_compra': dias_ultima_compra,
         'estado_pago_filtro': estado_pago_filtro,  # Pasar el filtro actual al template
+        'puede_imprimir': puede_imprimir,
     }
     
     return render(request, 'cuentas_pendientes/gestionar_abono_cliente.html', context)

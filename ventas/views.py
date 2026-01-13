@@ -24,11 +24,16 @@ import os
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib.units import mm, inch
+from usuarios.utils import can_void_sales, can_print_reports
 
 
 def menu_ventas(request):
     # Obtener todas las ventas para permitir filtrado en tiempo real en el cliente
     ventas = Venta.objects.select_related('Cedula').prefetch_related('pagos', 'detalles').all().order_by('-Fecha_Venta')
+    
+    # Verificar permisos del usuario
+    puede_devolver_ventas = can_void_sales(request.user)
+    puede_imprimir = can_print_reports(request.user)
     
     # Obtener tasa actual usando zona horaria de Venezuela
     import pytz
@@ -91,6 +96,8 @@ def menu_ventas(request):
         'iva_usd': iva_usd,
         'total_pagos_bs': total_pagos_bs,
         'total_pagos_ref': total_pagos_ref,
+        'puede_devolver_ventas': puede_devolver_ventas,
+        'puede_imprimir': puede_imprimir,
     })
 
 

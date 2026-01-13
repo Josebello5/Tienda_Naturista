@@ -18,10 +18,12 @@ from django.urls import reverse
 import json
 import re
 import logging
+from usuarios.decorators import role_required
 
 # Configurar logger
 logger = logging.getLogger(__name__)
 
+@role_required('Dueño', 'Administrador')
 def menu_lote(request):
     """
     Vista para mostrar el listado de lotes con búsqueda, filtros y paginación
@@ -158,6 +160,7 @@ def menu_lote(request):
     }
     return render(request, 'lotes/menu_lote.html', context)
 
+@role_required('Dueño', 'Administrador')
 def registrar_lote(request):
     if request.method == 'POST':
         form = LoteForm(request.POST)
@@ -196,6 +199,7 @@ def registrar_lote(request):
     }
     return render(request, 'lotes/registrar_lote.html', context)
 
+@role_required('Dueño', 'Administrador')
 def editar_lote(request, id_lote):
     lote = get_object_or_404(Lote, id_lote=id_lote)
     
@@ -554,6 +558,7 @@ def imprimir_proveedores(request):
         return response
 
 
+@role_required('Dueño', 'Administrador')
 def generar_pdf_lotes(request):
     try:
         # Obtener parámetros de filtro de la URL

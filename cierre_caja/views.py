@@ -12,6 +12,7 @@ import pytz
 from .models import CierreCaja
 from ventas.models import Pago, Venta
 from dashboard.models import TasaCambiaria
+from usuarios.decorators import role_required
 
 from xhtml2pdf import pisa
 import io

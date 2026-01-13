@@ -32,6 +32,7 @@
     </div>
 
     <div class="dashboard-content">
+      {% if puede_agregar_tasa %}
       <!-- ===== FORMULARIO DE TASA ===== -->
       <div class="dashboard-form-section">
         <div class="form-card">
@@ -79,6 +80,22 @@
           </div>
         </div>
       </div>
+      {% else %}
+      <!-- ===== MENSAJE PARA CAJERO ===== -->
+      <div class="dashboard-table-section">
+        <div class="table-card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-info-circle me-2"></i>Información
+            </h5>
+          </div>
+          <div class="card-body text-center">
+            <p class="mb-0">Como cajero, puedes visualizar la última tasa cambiaria registrada en la tarjeta superior.</p>
+            <p class="mb-0 mt-2"><small class="text-muted">Solo administradores y dueños pueden agregar nuevas tasas.</small></p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>

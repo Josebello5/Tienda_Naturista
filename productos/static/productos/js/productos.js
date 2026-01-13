@@ -539,8 +539,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (data.success) {
                         const celdaPrecio = document.querySelector(`.editable-precio[data-producto-id="${productoId}"]`);
                         if (celdaPrecio) {
-                            celdaPrecio.textContent = formatearMonto(data.precio_venta);
-                            celdaPrecio.setAttribute('data-precio-actual', data.precio_venta);
+                            // El servidor ya devuelve el precio formateado, solo agregar el símbolo $
+                            celdaPrecio.textContent = `$ ${data.precio_venta}`;
+                            // Guardar el valor sin formato para futuras ediciones
+                            const precioSinFormato = data.precio_venta.replace(/\./g, '').replace(',', '.');
+                            celdaPrecio.setAttribute('data-precio-actual', precioSinFormato);
                         }
 
                         cerrarModalEditarPrecio();
@@ -750,6 +753,41 @@ document.addEventListener('DOMContentLoaded', function () {
             tr.setAttribute('data-producto-id', producto.id);
             tr.setAttribute('data-estado', producto.estado_valor);
 
+            // Generar botones de acciones según permisos
+            let botonesAcciones = '';
+            
+            // Botón Editar - solo si puede gestionar
+            if (PUEDE_GESTIONAR) {
+                botonesAcciones += `
+                    <a href="/productos/editar/${producto.id}/" class="btn-action btn-editar" title="Editar Producto">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                `;
+            }
+            
+            // Botón Ver Detalles - todos pueden ver
+            botonesAcciones += `
+                <button class="btn-action btn-ver-detalles" title="Ver Detalles" 
+                    data-nombre="${producto.nombre}" 
+                    data-serial="${producto.serial || ''}" 
+                    data-ubicacion="${producto.ubicacion || '-'}"
+                    data-stock-minimo="${producto.stock_minimo}">
+                    <i class="fas fa-eye"></i>
+                </button>
+            `;
+            
+            // Botones de gestión - solo si puede gestionar
+            if (PUEDE_GESTIONAR) {
+                botonesAcciones += `
+                    <button class="btn-action btn-edit-precio" title="Editar Precio" data-producto-id="${producto.id}">
+                        <i class="fas fa-dollar-sign"></i>
+                    </button>
+                    <button class="btn-action btn-cambiar-estado" title="Cambiar Estado" data-producto-id="${producto.id}" data-estado-actual="${producto.estado_valor}">
+                        <i class="fas fa-toggle-${producto.estado_valor === 'activo' ? 'on' : 'off'}"></i>
+                    </button>
+                `;
+            }
+
             tr.innerHTML = `
                 <td>${producto.nombre}</td>
                 <td>${producto.categoria}</td>
@@ -762,22 +800,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td><span class="status ${stockActClass}">${producto.stock_actual} unidades</span></td>
                 <td><span class="status ${estadoClass}">${producto.estado}</span></td>
                 <td class="actions">
-                    <a href="/productos/editar/${producto.id}/" class="btn-action btn-editar" title="Editar Producto">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                    <button class="btn-action btn-ver-detalles" title="Ver Detalles" 
-                        data-nombre="${producto.nombre}" 
-                        data-serial="${producto.serial || ''}" 
-                        data-ubicacion="${producto.ubicacion || '-'}"
-                        data-stock-minimo="${producto.stock_minimo}">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn-action btn-edit-precio" title="Editar Precio" data-producto-id="${producto.id}">
-                        <i class="fas fa-dollar-sign"></i>
-                    </button>
-                    <button class="btn-action btn-cambiar-estado" title="Cambiar Estado" data-producto-id="${producto.id}" data-estado-actual="${producto.estado_valor}">
-                        <i class="fas fa-toggle-${producto.estado_valor === 'activo' ? 'on' : 'off'}"></i>
-                    </button>
+                    ${botonesAcciones}
                 </td>
             `;
 
@@ -993,25 +1016,30 @@ document.addEventListener('DOMContentLoaded', function () {
         paginarTablaProductos();
     }
 
-    printBtn.addEventListener('click', function () {
-        const query = searchInput.value.trim();
-        const ubicacion = ubicacionInput.value.trim();
-        const categoria = categoriaInput.value.trim();
-        const patologia = patologiaInput.value.trim();
-        const estado = estadoSelect.value;
-        const sujetoIva = sujetoIvaSelect.value;
 
-        const params = new URLSearchParams();
-        if (query) params.append('q', query);
-        if (ubicacion) params.append('ubicacion', ubicacion);
-        if (categoria) params.append('categoria', categoria);
-        if (patologia) params.append('patologia', patologia);
-        if (estado) params.append('estado', estado);
-        if (sujetoIva) params.append('sujeto_iva', sujetoIva);
+    // Event listener para botón de imprimir - solo si existe
+    if (printBtn) {
+        printBtn.addEventListener('click', function () {
+            const query = searchInput.value.trim();
+            const ubicacion = ubicacionInput.value.trim();
+            const categoria = categoriaInput.value.trim();
+            const patologia = patologiaInput.value.trim();
+            const estado = estadoSelect.value;
+            const sujetoIva = sujetoIvaSelect.value;
 
-        const pdfUrl = `/productos/generar-pdf/?${params.toString()}`;
-        window.open(pdfUrl, '_blank');
-    });
+            const params = new URLSearchParams();
+            if (query) params.append('q', query);
+            if (ubicacion) params.append('ubicacion', ubicacion);
+            if (categoria) params.append('categoria', categoria);
+            if (patologia) params.append('patologia', patologia);
+            if (estado) params.append('estado', estado);
+            if (sujetoIva) params.append('sujeto_iva', sujetoIva);
+
+            const pdfUrl = `/productos/generar-pdf/?${params.toString()}`;
+            window.open(pdfUrl, '_blank');
+        });
+    }
+
 
     // ===== FUNCIONALIDAD PARA VER DETALLES =====
     function inicializarVerDetalles() {

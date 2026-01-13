@@ -68,6 +68,8 @@
           </a>
           <span class="nav-tooltip">Productos</span>
         </li>
+        <!-- Lotes - Solo Dueño y Administrador -->
+        {% if is_dueno or is_admin %}
         <li class="nav-item">
           <a href="{% url 'lotes:menu_lote' %}" class="nav-link {% if 'lotes' in request.path %}active{% endif %}">
             <span class="nav-icon material-symbols-rounded">pallet</span>
@@ -75,6 +77,7 @@
           </a>
           <span class="nav-tooltip">Lotes</span>
         </li>
+        {% endif %}
         <!-- NUEVO BOTÓN DE VENTAS -->
         <li class="nav-item">
           <a href="{% url 'ventas:menu_ventas' %}" class="nav-link {% if 'ventas' in request.path %}active{% endif %}">
@@ -101,6 +104,9 @@
           </a>
           <span class="nav-tooltip">Cierre de Caja</span>
         </li>
+        
+        <!-- Estadísticas - Solo Dueño y Administrador -->
+        {% if is_dueno or is_admin %}
         <li class="nav-item">
           <a href="{% url 'estadisticas:menu_estadisticas' %}"
             class="nav-link {% if 'estadisticas' in request.path %}active{% endif %}">
@@ -109,7 +115,10 @@
           </a>
           <span class="nav-tooltip">Estadísticas</span>
         </li>
+        {% endif %}
 
+        <!-- Configuración - Solo Dueño -->
+        {% if is_dueno %}
         <li class="nav-item">
           <a href="{% url 'usuarios:menu_configuracion' %}" class="nav-link {% if 'configuracion' in request.path %}active{% endif %}">
             <span class="nav-icon material-symbols-rounded">settings</span>
@@ -117,6 +126,7 @@
           </a>
           <span class="nav-tooltip">Configuración</span>
         </li>
+        {% endif %}
       </ul>
 
 

@@ -147,9 +147,11 @@
         <a href="{% url 'ventas:registrar_venta' %}" class="btn btn-primary">
           <i class="fas fa-plus-circle"></i> Nueva Venta
         </a>
+        {% if puede_imprimir %}
         <button class="btn btn-secondary" id="printBtn">
           <i class="fas fa-print"></i> Imprimir
         </button>
+        {% endif %}
       </div>
     </div>
 
@@ -229,13 +231,14 @@
             </td>
             <td class="actions">
               <div class="acciones-venta">
-                <!-- Ver comprobante -->
+                <!-- Ver comprobante - todos pueden ver -->
                 <a href="{% url 'ventas:ver_comprobante' venta.ID_Ventas %}" target="_blank" class="btn-action btn-ver"
                   title="Ver Comprobante">
                   <i class="fas fa-eye"></i>
                 </a>
 
-                <!-- Devolución (solo si no está anulada) -->
+                {% if puede_devolver_ventas %}
+                <!-- Devolución (solo si no está anulada y tiene permiso) -->
                 {% if not venta.anulada %}
                 <button class="btn-action btn-devolucion" title="Devolver Venta" data-venta-id="{{ venta.ID_Ventas }}"
                   onclick="devolverVenta({{ venta.ID_Ventas }})">
@@ -243,6 +246,12 @@
                 </button>
                 {% else %}
                 <span class="venta-anulada">Anulada</span>
+                {% endif %}
+                {% else %}
+                <!-- Si no tiene permiso, mostrar estado si está anulada -->
+                {% if venta.anulada %}
+                <span class="venta-anulada">Anulada</span>
+                {% endif %}
                 {% endif %}
               </div>
             </td>

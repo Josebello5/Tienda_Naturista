@@ -9,13 +9,14 @@ from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 import io
 import pytz
+from usuarios.decorators import role_required
 
 from ventas.models import Venta, DetalleVenta
 from productos.models import Producto
 from clientes.models import Cliente
 from lotes.models import Lote
 
-@login_required
+@role_required('Dueño', 'Administrador')
 def menu_estadisticas(request):
     """
     Vista principal del dashboard de estadísticas.

@@ -99,9 +99,11 @@
           </select>
         </div>
 
+        {% if puede_imprimir %}
         <button class="btn btn-secondary" id="btnGenerarReporte">
           <i class="fas fa-print"></i> Imprimir Reporte
         </button>
+        {% endif %}
       </div>
 
       <div class="toolbar-actions">
