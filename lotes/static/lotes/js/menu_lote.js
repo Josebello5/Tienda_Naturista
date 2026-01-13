@@ -347,13 +347,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ===== FUNCIONES DE MODALES =====
-    function mostrarModalExito(titulo, mensaje, callbackCierre) {
+    // ===== FUNCIONES DE MODALES (EXPUESAS GLOBALMENTE) =====
+    window.mostrarModalExito = function (titulo, mensaje, callbackCierre) {
         const modal = document.getElementById('successModal');
         const tituloElement = document.getElementById('successModalTitle');
         const mensajeElement = document.getElementById('successModalMessage');
         const btnContinuar = document.getElementById('closeSuccessModal');
 
         if (!modal || !tituloElement || !mensajeElement) {
+            console.warn('Modal de éxito no encontrado, usando alert fallback');
             alert(`¡ÉXITO!: ${titulo}\n${mensaje}`);
             if (callbackCierre) callbackCierre();
             return;
@@ -364,16 +366,17 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.classList.add('active');
 
         // Configurar el botón de continuar
-        const onContinuar = () => {
+        // Remover listeners anteriores para evitar duplicados
+        const newBtn = btnContinuar.cloneNode(true);
+        btnContinuar.parentNode.replaceChild(newBtn, btnContinuar);
+
+        newBtn.addEventListener('click', function () {
             modal.classList.remove('active');
-            btnContinuar.removeEventListener('click', onContinuar);
             if (callbackCierre) callbackCierre();
-        };
+        });
+    };
 
-        btnContinuar.addEventListener('click', onContinuar);
-    }
-
-    function mostrarModalConfirmacion(mensaje, callback) {
+    window.mostrarModalConfirmacion = function (mensaje, callback) {
         const modal = document.getElementById('confirmModal');
         const mensajeElement = document.getElementById('confirmModalMessage');
         const btnConfirmar = document.getElementById('confirmAction');
@@ -387,25 +390,25 @@ document.addEventListener('DOMContentLoaded', function () {
         mensajeElement.textContent = mensaje;
         modal.classList.add('active');
 
-        const onConfirm = () => {
+        // Clonar botones para limpiar listeners anteriores
+        const newBtnConfirmar = btnConfirmar.cloneNode(true);
+        const newBtnCancelar = btnCancelar.cloneNode(true);
+
+        btnConfirmar.parentNode.replaceChild(newBtnConfirmar, btnConfirmar);
+        btnCancelar.parentNode.replaceChild(newBtnCancelar, btnCancelar);
+
+        newBtnConfirmar.addEventListener('click', function () {
             modal.classList.remove('active');
-            btnConfirmar.removeEventListener('click', onConfirm);
-            btnCancelar.removeEventListener('click', onCancel);
             callback(true);
-        };
+        });
 
-        const onCancel = () => {
+        newBtnCancelar.addEventListener('click', function () {
             modal.classList.remove('active');
-            btnConfirmar.removeEventListener('click', onConfirm);
-            btnCancelar.removeEventListener('click', onCancel);
             callback(false);
-        };
+        });
+    };
 
-        btnConfirmar.addEventListener('click', onConfirm);
-        btnCancelar.addEventListener('click', onCancel);
-    }
-
-    function mostrarModalError(titulo, mensaje) {
+    window.mostrarModalError = function (titulo, mensaje) {
         const modal = document.getElementById('errorModal');
         const tituloElement = document.getElementById('errorModalTitle');
         const mensajeElement = document.getElementById('errorModalMessage');
@@ -421,11 +424,21 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.classList.add('active');
 
         if (btnCerrar) {
-            btnCerrar.addEventListener('click', () => modal.classList.remove('active'));
+            // Clonar para limpiar listeners
+            const newBtn = btnCerrar.cloneNode(true);
+            btnCerrar.parentNode.replaceChild(newBtn, btnCerrar);
+            newBtn.addEventListener('click', () => modal.classList.remove('active'));
         }
 
+        // Auto-cierre después de 5 seg
+        // Nota: esto puede ser molesto si hay múltiples errores, pero mantenemos el comportamiento original
         setTimeout(() => modal.classList.remove('active'), 5000);
-    }
+    };
+
+    // Alias para compatibilidad interna si se usa dentro del closure
+    const mostrarModalExito = window.mostrarModalExito;
+    const mostrarModalConfirmacion = window.mostrarModalConfirmacion;
+    const mostrarModalError = window.mostrarModalError;
 
     function mostrarModalEditarCosto(loteId, costoActual) {
         const modal = document.getElementById('modalEditarCosto');

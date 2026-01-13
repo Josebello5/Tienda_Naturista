@@ -1,21 +1,21 @@
 // gestion_proveedores.js - Versión corregida con acciones de editar y eliminar
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('=== INICIANDO GESTIÓN DE PROVEEDORES CORREGIDA ===');
-    
+
     // ===== ELEMENTOS DEL DOM =====
     const proveedoresBtn = document.getElementById('proveedoresBtn');
-    
+
     if (!proveedoresBtn) {
         console.error('❌ Botón de proveedores no encontrado');
         return;
     }
-    
+
     console.log('✅ Botón de proveedores encontrado');
 
     // Modales
     const modalProveedores = document.getElementById('modalProveedores');
     const modalEditarProveedor = document.getElementById('modalEditarProveedor');
-    
+
     // Verificar que las modales existan
     if (!modalProveedores || !modalEditarProveedor) {
         console.error('❌ Modales no encontradas');
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ===== FUNCIONES PRINCIPALES =====
-    
+
     function abrirModalProveedores() {
         console.log('🎯 Abriendo modal de proveedores');
         if (modalProveedores) {
@@ -51,12 +51,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const nombreInput = document.getElementById('nombreProveedor');
             const contactoInput = document.getElementById('contactoProveedor');
             const errorElement = document.getElementById('errorNombreProveedor');
-            
+
             if (titulo) titulo.textContent = id ? 'Editar Proveedor' : 'Agregar Proveedor';
             if (idInput) idInput.value = id || '';
             if (nombreInput) nombreInput.value = nombre || '';
             if (contactoInput) contactoInput.value = contacto || '';
-            
+
             // Limpiar errores
             if (errorElement) {
                 errorElement.textContent = '';
@@ -65,11 +65,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (nombreInput) {
                 nombreInput.classList.remove('is-invalid', 'is-valid');
             }
-            
+
             modalEditarProveedor.style.display = 'flex';
             modalEditarProveedor.offsetHeight;
             modalEditarProveedor.style.opacity = '1';
-            
+
             if (nombreInput) nombreInput.focus();
         }
     }
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('❌ tbodyProveedores no encontrado');
                     return;
                 }
-                
+
                 tbody.innerHTML = '';
 
                 if (data.length === 0) {
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ===== FUNCIONALIDAD PARA GUARDAR PROVEEDOR =====
-    
+
     function guardarProveedor() {
         const id = document.getElementById('proveedorId').value;
         const nombre = document.getElementById('nombreProveedor').value.trim();
@@ -175,33 +175,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCSRFToken()
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 nombre: nombre,
-                contacto: contacto 
+                contacto: contacto
             })
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                cerrarModalEditarProveedor();
-                cargarProveedores();
-                if (typeof mostrarModalExito === 'function') {
-                    mostrarModalExito('¡Éxito!', data.message);
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cerrarModalEditarProveedor();
+                    cargarProveedores();
+                    if (window.mostrarModalExito) {
+                        window.mostrarModalExito('¡Éxito!', data.message);
+                    } else {
+                        alert('¡Éxito!: ' + data.message);
+                    }
+                } else {
+                    const errorElement = document.getElementById('errorNombreProveedor');
+                    mostrarErrorCampo(document.getElementById('nombreProveedor'), errorElement, data.error);
                 }
-            } else {
+            })
+            .catch(error => {
+                console.error('Error:', error);
                 const errorElement = document.getElementById('errorNombreProveedor');
-                mostrarErrorCampo(document.getElementById('nombreProveedor'), errorElement, data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            const errorElement = document.getElementById('errorNombreProveedor');
-            mostrarErrorCampo(document.getElementById('nombreProveedor'), errorElement, 'Error de conexión al guardar el proveedor');
-        });
+                mostrarErrorCampo(document.getElementById('nombreProveedor'), errorElement, 'Error de conexión al guardar el proveedor');
+            });
     }
 
     // ===== FUNCIONES AUXILIARES =====
-    
+
     function getCSRFToken() {
         const name = 'csrftoken';
         let cookieValue = null;
@@ -217,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return cookieValue;
     }
-    
+
     function mostrarErrorCampo(input, errorElement, mensaje) {
         if (input && errorElement) {
             input.classList.add('is-invalid');
@@ -228,8 +230,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function mostrarConfirmacionAccion(mensaje, titulo = 'Confirmar Acción') {
         return new Promise((resolve) => {
-            if (typeof mostrarConfirmacion === 'function') {
-                mostrarConfirmacion(mensaje, titulo).then(resolve);
+            if (window.mostrarModalConfirmacion) {
+                window.mostrarModalConfirmacion(mensaje, resolve);
             } else {
                 resolve(confirm(mensaje));
             }
@@ -237,46 +239,46 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ===== EVENT LISTENERS =====
-    
+
     // Botón principal de proveedores
     proveedoresBtn.addEventListener('click', abrirModalProveedores);
-    
+
     // Cerrar modales
     document.getElementById('btnCerrarModalProveedores')?.addEventListener('click', cerrarModalProveedores);
     document.getElementById('btnCancelarProveedores')?.addEventListener('click', cerrarModalProveedores);
     document.getElementById('btnCerrarModalEditarProveedor')?.addEventListener('click', cerrarModalEditarProveedor);
     document.getElementById('btnCancelarProveedor')?.addEventListener('click', cerrarModalEditarProveedor);
-    
+
     // Agregar proveedor
     document.getElementById('btnAgregarProveedor')?.addEventListener('click', () => abrirModalEditarProveedor());
-    
+
     // Guardar proveedor
     document.getElementById('btnGuardarProveedor')?.addEventListener('click', guardarProveedor);
-    
+
     // Imprimir proveedores
     document.getElementById('btnImprimirProveedores')?.addEventListener('click', () => {
         window.open(IMPRIMIR_PROVEEDORES_URL, '_blank');
     });
-    
+
     // Cerrar modales al hacer clic fuera
-    modalProveedores.addEventListener('click', function(e) {
+    modalProveedores.addEventListener('click', function (e) {
         if (e.target === modalProveedores) {
             cerrarModalProveedores();
         }
     });
-    
-    modalEditarProveedor.addEventListener('click', function(e) {
+
+    modalEditarProveedor.addEventListener('click', function (e) {
         if (e.target === modalEditarProveedor) {
             cerrarModalEditarProveedor();
         }
     });
-    
+
     // Buscador de proveedores
-    document.getElementById('searchProveedores')?.addEventListener('input', function() {
+    document.getElementById('searchProveedores')?.addEventListener('input', function () {
         const filtro = this.value.toLowerCase();
         const tbody = document.getElementById('tbodyProveedores');
         if (!tbody) return;
-        
+
         const filas = tbody.querySelectorAll('tr');
         let visibleRows = 0;
 
@@ -318,9 +320,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ===== FUNCIONALIDAD PARA EDITAR Y ELIMINAR =====
-    
+
     // Editar proveedor
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (e.target.closest('.btn-editar-proveedor')) {
             const button = e.target.closest('.btn-editar-proveedor');
             const id = button.getAttribute('data-id');
@@ -329,19 +331,19 @@ document.addEventListener('DOMContentLoaded', function() {
             abrirModalEditarProveedor(id, nombre, contacto);
         }
     });
-    
+
     // Eliminar proveedor
-    document.addEventListener('click', async function(e) {
+    document.addEventListener('click', async function (e) {
         if (e.target.closest('.btn-eliminar-proveedor')) {
             const button = e.target.closest('.btn-eliminar-proveedor');
             const id = button.getAttribute('data-id');
             const nombre = button.getAttribute('data-nombre');
-            
+
             const confirmado = await mostrarConfirmacionAccion(
                 `¿Está seguro de que desea eliminar el proveedor "${nombre}"? Esta acción no se puede deshacer.`,
                 'Confirmar Eliminación'
             );
-            
+
             if (confirmado) {
                 try {
                     const response = await fetch(`${ELIMINAR_PROVEEDOR_URL}${id}/`, {
@@ -351,9 +353,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             'X-CSRFToken': getCSRFToken()
                         }
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (data.success) {
                         // Eliminar la fila de la tabla
                         const fila = button.closest('tr');
@@ -374,37 +376,37 @@ document.addEventListener('DOMContentLoaded', function() {
                                 `;
                             }
                         }, 300);
-                        
-                        if (typeof mostrarModalExito === 'function') {
-                            mostrarModalExito('¡Éxito!', data.message);
+
+                        if (window.mostrarModalExito) {
+                            window.mostrarModalExito('¡Éxito!', data.message);
                         }
                     } else {
-                        if (typeof mostrarModalError === 'function') {
-                            mostrarModalError('Error', data.error);
-                        }
+                        if (window.mostrarModalError) {
+                            window.mostrarModalError('Error', data.error);
+                        } else { alert('Error: ' + data.error); }
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    if (typeof mostrarModalError === 'function') {
-                        mostrarModalError('Error', 'Error al eliminar el proveedor');
-                    }
+                    if (window.mostrarModalError) {
+                        window.mostrarModalError('Error', 'Error al eliminar el proveedor');
+                    } else { alert('Error al eliminar el proveedor'); }
                 }
             }
         }
     });
 
     // ===== VALIDACIONES EN TIEMPO REAL CORREGIDAS =====
-    
+
     // Validación en tiempo real para el nombre del proveedor
     const nombreProveedorInput = document.getElementById('nombreProveedor');
     const errorNombreProveedor = document.getElementById('errorNombreProveedor');
-    
+
     if (nombreProveedorInput && errorNombreProveedor) {
-        nombreProveedorInput.addEventListener('input', function() {
+        nombreProveedorInput.addEventListener('input', function () {
             // SOLO PERMITE LETRAS, NÚMEROS Y PUNTOS - MÁXIMO 20 CARACTERES
             this.value = this.value.toUpperCase().replace(/[^A-Z0-9.]/g, '').slice(0, 20);
             const valor = this.value.trim();
-            
+
             if (!valor) {
                 mostrarErrorCampo(this, errorNombreProveedor, 'El nombre del proveedor es obligatorio.');
             } else if (!/^[A-Z0-9.]+$/.test(valor)) {
@@ -422,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Validación en tiempo real para el contacto del proveedor - CORREGIDA
     const contactoProveedorInput = document.getElementById('contactoProveedor');
-    
+
     if (contactoProveedorInput) {
         // Crear elemento de error si no existe
         let errorContactoProveedor = document.getElementById('error-contactoProveedor');
@@ -433,11 +435,11 @@ document.addEventListener('DOMContentLoaded', function() {
             contactoProveedorInput.parentNode.appendChild(errorContactoProveedor);
         }
 
-        contactoProveedorInput.addEventListener('input', function() {
+        contactoProveedorInput.addEventListener('input', function () {
             // CONVERTIR A MAYÚSCULAS Y SOLO 25 CARACTERES MÁXIMO - SIN RESTRICCIONES DE TIPO
             this.value = this.value.toUpperCase().slice(0, 25);
             const valor = this.value.trim();
-            
+
             // Campo opcional
             if (valor === '') {
                 this.classList.remove('is-invalid', 'is-valid');

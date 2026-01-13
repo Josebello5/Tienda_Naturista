@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Export function to global scope
-    window.cambiarPaginaUsuarios = function(nuevaPagina) {
+    window.cambiarPaginaUsuarios = function (nuevaPagina) {
         paginacionUsuarios.paginaActual = nuevaPagina;
         paginarTablaUsuarios();
         const tableContainer = document.querySelector('.table-container');
@@ -146,14 +146,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const rowRole = row.getAttribute('data-rol');
             const rowStatus = row.querySelector('.btn-toggle-status') ? row.querySelector('.btn-toggle-status').getAttribute('data-estado') : '';
 
-            const matchQuery = !query || 
-                          cedula.includes(query) || 
-                          nombre.includes(query) || 
-                          apellido.includes(query) || 
-                          email.includes(query);
-            
+            const matchQuery = !query ||
+                cedula.includes(query) ||
+                nombre.includes(query) ||
+                apellido.includes(query) ||
+                email.includes(query);
+
             const matchRole = !roleValue || (rowRole === roleValue);
-            
+
             // Status comparison: "True" vs "True" or "False" vs "False"
             const matchStatus = !statusValue || (rowStatus === statusValue);
 
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function () {
         paginarTablaUsuarios();
     }
 
-    searchInput.addEventListener('input', function() {
+    searchInput.addEventListener('input', function () {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(filtrarUsuarios, 300);
     });
@@ -204,18 +204,18 @@ document.addEventListener('DOMContentLoaded', function () {
     // ===== FUNCIONALIDAD DE IMPRESIÓN =====
     const btnImprimir = document.getElementById('btnImprimirUsuarios');
     if (btnImprimir) {
-        btnImprimir.addEventListener('click', function() {
+        btnImprimir.addEventListener('click', function () {
             const query = searchInput.value.trim();
             const role = roleFilter ? roleFilter.value : '';
             const status = statusFilter ? statusFilter.value : '';
-            
+
             let url = '/usuarios/configuracion/generar-pdf/?';
             const params = new URLSearchParams();
-            
+
             if (query) params.append('q', query);
             if (role) params.append('rol', role);
             if (status) params.append('estado', status);
-            
+
             window.open(url + params.toString(), '_blank');
         });
     }
@@ -225,10 +225,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnCerrarEditar = document.getElementById('btnCerrarModalEditar');
     const btnCancelarEditar = document.getElementById('btnCancelarEditar');
     const btnGuardarEditar = document.getElementById('btnGuardarEditar');
-    
+
     // Abrir modal editar
     document.querySelectorAll('.btn-edit').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             if (this.hasAttribute('disabled')) return;
 
             const id = this.getAttribute('data-id');
@@ -236,13 +236,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const lastName = this.getAttribute('data-lastname');
             const email = this.getAttribute('data-email');
             const rol = this.getAttribute('data-rol');
-            
+
             document.getElementById('editUserId').value = id;
             document.getElementById('editFirstName').value = firstName;
             document.getElementById('editLastName').value = lastName;
             document.getElementById('editEmail').value = email;
             document.getElementById('editRol').value = rol;
-            
+
             if (modalEditar) modalEditar.style.display = 'flex';
         });
     });
@@ -258,28 +258,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Convertir nombre y apellido a mayúsculas automáticamente
     function setupUppercase(input) {
-        if(input) {
-            input.addEventListener('input', function() {
+        if (input) {
+            input.addEventListener('input', function () {
                 this.value = this.value.toUpperCase();
             });
         }
     }
     setupUppercase(editFirstName);
     setupUppercase(editLastName);
-    
+
     // Validar solo letras en Nombre
-    if(editFirstName) {
-        editFirstName.addEventListener('input', function() {
-             this.value = this.value.toUpperCase().slice(0, 10);
-             this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+    if (editFirstName) {
+        editFirstName.addEventListener('input', function () {
+            this.value = this.value.toUpperCase().slice(0, 10);
+            this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
         });
     }
 
     // Validar solo letras en Apellido
-    if(editLastName) {
-        editLastName.addEventListener('input', function() {
-             this.value = this.value.toUpperCase().slice(0, 10);
-             this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+    if (editLastName) {
+        editLastName.addEventListener('input', function () {
+            this.value = this.value.toUpperCase().slice(0, 10);
+            this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
         });
     }
 
@@ -293,25 +293,25 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnCancelarEditar) btnCancelarEditar.addEventListener('click', cerrarModalEditar);
 
     if (btnGuardarEditar) {
-        btnGuardarEditar.addEventListener('click', function() {
+        btnGuardarEditar.addEventListener('click', function () {
             const id = document.getElementById('editUserId').value;
             const firstName = document.getElementById('editFirstName').value.trim();
             const lastName = document.getElementById('editLastName').value.trim();
             const email = document.getElementById('editEmail').value.trim();
             const rol = document.getElementById('editRol').value;
-            
+
             // Validaciones
             if (!firstName || !lastName || !email || !rol) {
                 alert("Todos los campos son obligatorios.");
                 return;
             }
             if (firstName.length < 3) {
-                 alert("El nombre debe tener al menos 3 letras.");
-                 return;
+                alert("El nombre debe tener al menos 3 letras.");
+                return;
             }
             if (lastName.length < 3) {
-                 alert("El apellido debe tener al menos 3 letras.");
-                 return;
+                alert("El apellido debe tener al menos 3 letras.");
+                return;
             }
             if (!validarEmailEditar(email)) {
                 alert("Por favor, introduce un correo electrónico válido.");
@@ -324,25 +324,25 @@ document.addEventListener('DOMContentLoaded', function () {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: JSON.stringify({ 
-                    id: id, 
+                body: JSON.stringify({
+                    id: id,
                     first_name: firstName,
                     last_name: lastName,
                     email: email,
                     rol: rol
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    mostrarExito('Usuario Actualizado', 'La información del usuario ha sido actualizada correctamente.');
-                    cerrarModalEditar();
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            })
-            .catch(error => console.error('Error:', error));
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        mostrarExito('Usuario Actualizado', 'La información del usuario ha sido actualizada correctamente.');
+                        cerrarModalEditar();
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
         });
     }
 
@@ -353,30 +353,30 @@ document.addEventListener('DOMContentLoaded', function () {
     let userIdToToggle = null;
 
     document.querySelectorAll('.btn-toggle-status').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             // Verificar si está deshabilitado
             if (this.hasAttribute('disabled')) return;
-            
+
             userIdToToggle = this.getAttribute('data-id');
             const currentState = this.getAttribute('data-estado') === 'True';
             const userName = this.getAttribute('data-nombre');
-            
-            const message = currentState 
+
+            const message = currentState
                 ? `¿Estás seguro de que deseas DESACTIVAR al usuario ${userName}? No podrá iniciar sesión.`
                 : `¿Estás seguro de que deseas ACTIVAR al usuario ${userName}?`;
-            
+
             document.getElementById('confirmStatusMessage').textContent = message;
-            
+
             if (modalConfirmStatus) {
                 modalConfirmStatus.classList.add('active');
                 modalConfirmStatus.style.visibility = 'visible';
-                modalConfirmStatus.style.opacity = '1'; 
+                modalConfirmStatus.style.opacity = '1';
             }
         });
     });
 
     if (cancelStatusBtn) {
-        cancelStatusBtn.addEventListener('click', function() {
+        cancelStatusBtn.addEventListener('click', function () {
             if (modalConfirmStatus) {
                 modalConfirmStatus.classList.remove('active');
                 modalConfirmStatus.style.visibility = 'hidden';
@@ -387,9 +387,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (confirmStatusBtn) {
-        confirmStatusBtn.addEventListener('click', function() {
+        confirmStatusBtn.addEventListener('click', function () {
             if (!userIdToToggle) return;
-            
+
             fetch('/usuarios/configuracion/cambiar-estado/', {
                 method: 'POST',
                 headers: {
@@ -398,22 +398,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
                 body: JSON.stringify({ id: userIdToToggle })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Update UI locally or reload
-                    mostrarExito('Estado Actualizado', 'El estado del usuario ha sido modificado.');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    alert('Error: ' + data.error);
-                }
-                if (modalConfirmStatus) {
-                    modalConfirmStatus.classList.remove('active');
-                    modalConfirmStatus.style.visibility = 'hidden';
-                    modalConfirmStatus.style.opacity = '0';   
-                }
-            })
-            .catch(error => console.error('Error:', error));
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update UI locally or reload
+                        mostrarExito('Estado Actualizado', 'El estado del usuario ha sido modificado.');
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                    if (modalConfirmStatus) {
+                        modalConfirmStatus.classList.remove('active');
+                        modalConfirmStatus.style.visibility = 'hidden';
+                        modalConfirmStatus.style.opacity = '0';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
         });
     }
 
@@ -448,7 +448,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize close button for success modal
     const closeSuccessBtn = document.getElementById('closeSuccessModal');
     if (closeSuccessBtn) {
-        closeSuccessBtn.addEventListener('click', function() {
+        closeSuccessBtn.addEventListener('click', function () {
             const modal = document.getElementById('successModal');
             if (modal) {
                 modal.classList.remove('active');
