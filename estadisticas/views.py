@@ -160,14 +160,21 @@ def menu_estadisticas(request):
     fecha_fin_cat = timezone.now().date()
     fecha_ini_cat = fecha_fin_cat - timedelta(days=30)
     search_cat = request.GET.get('search_cat', '').strip()
+    moneda_cat = request.GET.get('moneda_cat', 'bs')
     
     # Filtro opcional por URL/AJAX
-    if request.GET.get('filtro_cat') == 'si' or search_cat or request.GET.get('fecha_ini_cat'):
+    if request.GET.get('filtro_cat') == 'si' or search_cat or moneda_cat != 'bs' or request.GET.get('fecha_ini_cat'):
          fecha_ini_str = request.GET.get('fecha_ini_cat')
          fecha_fin_str = request.GET.get('fecha_fin_cat')
          if fecha_ini_str: fecha_ini_cat = datetime.strptime(fecha_ini_str, '%Y-%m-%d').date()
          if fecha_fin_str: fecha_fin_cat = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
     
+    # Seleccionar campo de precio según moneda
+    if moneda_cat == 'bs':
+        campo_precio = F('Precio_Unitario')
+    else:
+        campo_precio = F('Precio_Unitario') / F('ID_Tasa__valor')
+
     top_categorias_query = (
         DetalleVenta.objects
         .filter(
@@ -187,7 +194,7 @@ def menu_estadisticas(request):
         .values('ID_lote__id_producto__categoria__nombre')
         .annotate(
             total_cantidad=Sum('Cantidad'),
-            total_ventas=Sum(ExpressionWrapper(F('Precio_Unitario') * F('Cantidad'), output_field=DecimalField()))
+            total_ventas=Sum(ExpressionWrapper(F('Cantidad') * campo_precio, output_field=DecimalField(max_digits=15, decimal_places=2)))
         )
         .order_by('-total_cantidad')[:10]
     )
@@ -253,7 +260,8 @@ def menu_estadisticas(request):
                 'search_cli': search_cli,
                 'search_venc': search_venc,
                 'search_cat': search_cat,
-                'moneda_cli': moneda_cli
+                'moneda_cli': moneda_cli,
+                'moneda_cat': moneda_cat,
             }
         })
 

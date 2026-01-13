@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initChartTabs();
     initChartControls();
     loadInitialCharts();
+    setupChartPdfButtons();
 });
 
 // ===== TABS DE GRÁFICOS =====
@@ -219,9 +220,7 @@ function loadChartVentas() {
     const fechaIni = document.getElementById('fecha-ini-ventas').value;
     const fechaFin = document.getElementById('fecha-fin-ventas').value;
     
-    // Actualizar URL de impresión
-    updatePrintUrls();
-
+    
     let url = `/estadisticas/api/ventas-tiempo/?periodo=${periodo}&moneda=${moneda}`;
     if (fechaIni && fechaFin) {
         url += `&fecha_ini=${fechaIni}&fecha_fin=${fechaFin}`;
@@ -331,8 +330,6 @@ function loadChartProductos() {
     const fechaIni = document.getElementById('fecha-ini-productos').value;
     const fechaFin = document.getElementById('fecha-fin-productos').value;
     
-    // Actualizar URL de impresión
-    updatePrintUrls();
     
     const url = `/estadisticas/api/top-productos/?fecha_ini=${fechaIni}&fecha_fin=${fechaFin}&limit=10`;
     
@@ -421,9 +418,7 @@ function loadChartCategorias() {
     const fechaFin = document.getElementById('fecha-fin-categorias').value;
     const moneda = document.getElementById('toggle-moneda-categorias').dataset.moneda;
     
-    // Actualizar URL de impresión
-    updatePrintUrls();
-
+    
     const url = `/estadisticas/api/ventas-categoria/?fecha_ini=${fechaIni}&fecha_fin=${fechaFin}&moneda=${moneda}`;
     
     fetch(url)
@@ -519,32 +514,6 @@ function renderChartCategorias(data) {
             }
         }
     });
-}
-
-// ===== ACTUALIZAR URLs DE IMPRESIÓN =====
-function updatePrintUrls() {
-    // Configurar event listeners para generar PDFs con gráficos
-    setupChartPdfButtons();
-    
-    // Panel Top Categorías - Integración con filtros globales (mantiene lógica tabular)
-    const btnPrintCatPanel = document.getElementById('btn-print-categorias-panel');
-    if (btnPrintCatPanel) {
-        // Leer filtros desde el DOM (input de búsqueda y botón de filtro de fecha)
-        const searchInput = document.getElementById('search-cat-panel');
-        const searchTerm = searchInput ? searchInput.value : '';
-        
-        // Las fechas están guardadas en el botón de filtro (estadisticas.js las actualiza ahí)
-        const filterBtn = document.querySelector('.btn-filter-date[data-context="cat"]');
-        const fechaIni = filterBtn ? filterBtn.dataset.ini : '';
-        const fechaFin = filterBtn ? filterBtn.dataset.fin : '';
-        
-        let url = `/estadisticas/reporte/ventas-categoria/?modo=panel`;
-        if (searchTerm) url += `&search_cat=${encodeURIComponent(searchTerm)}`;
-        if (fechaIni) url += `&fecha_ini=${fechaIni}`;
-        if (fechaFin) url += `&fecha_fin=${fechaFin}`;
-        
-        btnPrintCatPanel.href = url;
-    }
 }
 
 // ===== CONFIGURAR BOTONES DE PDF CON GRÁFICOS =====

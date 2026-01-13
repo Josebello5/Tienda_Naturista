@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initModals();
     initSearch();
     initCurrencyToggle();
+    updatePrintUrls();
 });
 
 let currentFilterContext = null; // 'prod', 'cli', 'venc'
@@ -11,6 +12,7 @@ let currentSearchCli = '';
 let currentSearchVenc = '';
 let currentSearchCat = '';
 let currentMonedaCli = 'bs';
+let currentMonedaCat = 'bs';
 let tasa_actual = 1; // Se actualizará desde el contexto
 
 function initModals() {
@@ -296,32 +298,46 @@ function initSearch() {
 
 // === FUNCIONALIDAD DE TOGGLE DE MONEDA ===
 function initCurrencyToggle() {
-    const toggleBtn = document.querySelector('.btn-toggle-moneda');
-    console.log('initCurrencyToggle called, button found:', toggleBtn);
-    if (!toggleBtn) return;
-    
-    currentMonedaCli = toggleBtn.dataset.moneda || 'bs';
-    console.log('Currency initialized to:', currentMonedaCli);
-    
-    toggleBtn.addEventListener('click', function() {
-        // Cambiar moneda
-        currentMonedaCli = currentMonedaCli === 'bs' ? 'usd' : 'bs';
-        this.dataset.moneda = currentMonedaCli;
-        console.log('Currency toggled to:', currentMonedaCli);
+    // Top Clientes Toggle
+    const toggleBtnCli = document.querySelector('.btn-toggle-moneda'); // Selector original para clientes
+    if (toggleBtnCli) {
+        currentMonedaCli = toggleBtnCli.dataset.moneda || 'bs';
         
-        // Actualizar icono
-        const icon = this.querySelector('i');
-        if (currentMonedaCli === 'usd') {
-            icon.className = 'fas fa-dollar-sign';
-            this.style.color = '#27ae60';
-        } else {
-            icon.className = 'fas fa-dollar-sign';
-            this.style.color = '';
-        }
+        toggleBtnCli.addEventListener('click', function() {
+            currentMonedaCli = currentMonedaCli === 'bs' ? 'usd' : 'bs';
+            this.dataset.moneda = currentMonedaCli;
+            updateToggleIcon(this, currentMonedaCli);
+            applyFilters('cli');
+        });
+        // Init inicial
+        updateToggleIcon(toggleBtnCli, currentMonedaCli);
+    }
+
+    // Top Categorías Toggle
+    const toggleBtnCat = document.querySelector('.btn-toggle-moneda-cat');
+    if (toggleBtnCat) {
+        currentMonedaCat = toggleBtnCat.dataset.moneda || 'bs';
         
-        // Aplicar filtros con nueva moneda
-        applyFilters('cli');
-    });
+        toggleBtnCat.addEventListener('click', function() {
+            currentMonedaCat = currentMonedaCat === 'bs' ? 'usd' : 'bs';
+            this.dataset.moneda = currentMonedaCat;
+            updateToggleIcon(this, currentMonedaCat);
+            applyFilters('cat');
+        });
+        // Init inicial
+        updateToggleIcon(toggleBtnCat, currentMonedaCat);
+    }
+}
+
+function updateToggleIcon(btn, moneda) {
+    if (moneda === 'usd') {
+        btn.innerHTML = '<i class="fas fa-dollar-sign"></i>';
+        btn.style.color = '#27ae60';
+    } else {
+        btn.innerHTML = 'Bs';
+        btn.style.color = ''; // Reset
+        btn.style.fontWeight = 'bold';
+    }
 }
 
 // Función para aplicar filtros (búsqueda y moneda)
@@ -331,12 +347,10 @@ function applyFilters(context) {
     
     // Obtener fechas actuales de los botones de filtro
     const filterBtn = document.querySelector(`.btn-filter-date[data-context="${context}"]`);
-    console.log('Filter button found:', filterBtn);
     if (!filterBtn) return;
     
     const fechaIni = filterBtn.dataset.ini;
     const fechaFin = filterBtn.dataset.fin;
-    console.log('Dates:', {fechaIni, fechaFin});
     
     // Configurar parámetros según el contexto
     if (context === 'prod') {
@@ -356,11 +370,11 @@ function applyFilters(context) {
         params.set('fecha_ini_cat', fechaIni);
         params.set('fecha_fin_cat', fechaFin);
         if (currentSearchCat) params.set('search_cat', currentSearchCat);
+        params.set('moneda_cat', currentMonedaCat);
     }
     
     // Realizar petición AJAX
     const requestUrl = `${window.location.pathname}?${params.toString()}`;
-    console.log('Fetching URL:', requestUrl);
     
     fetch(requestUrl, {
         headers: {
@@ -373,7 +387,19 @@ function applyFilters(context) {
         updateList(data.productos, 'list-productos', 'no-prod', renderProductoItem);
         updateList(data.clientes, 'list-clientes', 'no-cli', renderClienteItem);
         updateList(data.vencimiento, 'list-vencimiento', 'no-venc', renderVencimientoItem);
-        updateList(data.categorias, 'list-categorias-panel', 'no-cat', renderCategoriaItem);
+        
+        // Renderizado especial para categorías que ahora dependen de moneda
+        if (data.categorias) {
+             const listEl = document.getElementById('list-categorias-panel');
+             const emptyEl = document.getElementById('no-cat');
+             // Paso explícitamente data.filtros.moneda_cat o currentMonedaCat
+             const monedaRender = data.filtros && data.filtros.moneda_cat ? data.filtros.moneda_cat : currentMonedaCat;
+             
+             // Wrapper para pasar moneda al callback
+             const renderCatWithCurrency = (item, rank) => renderCategoriaItem(item, rank, monedaRender);
+             
+             updateList(data.categorias, 'list-categorias-panel', 'no-cat', renderCatWithCurrency);
+        }
         
         // Actualizar textos de fechas
         if (data.fechas) {
@@ -390,6 +416,7 @@ function applyFilters(context) {
             currentSearchVenc = data.filtros.search_venc || '';
             currentSearchCat = data.filtros.search_cat || '';
             currentMonedaCli = data.filtros.moneda_cli || 'bs';
+            currentMonedaCat = data.filtros.moneda_cat || 'bs';
         }
         
         // Actualizar URLs de PDF
@@ -410,16 +437,13 @@ function updatePrintUrls() {
             const url = new URL(btnPrintProd.href);
             url.searchParams.set('fecha_ini', filterBtnProd.dataset.ini);
             url.searchParams.set('fecha_fin', filterBtnProd.dataset.fin);
-            if (currentSearchProd) {
-                url.searchParams.set('search', currentSearchProd);
-            } else {
-                url.searchParams.delete('search');
-            }
+            if (currentSearchProd) url.searchParams.set('search', currentSearchProd);
+            else url.searchParams.delete('search');
             btnPrintProd.href = url.toString();
         }
     }
     
-    // Clientes
+    // Clientes - AÑADIDO MONEDA
     const btnPrintCli = document.querySelector('.btn-print-cli');
     if (btnPrintCli) {
         const filterBtnCli = document.querySelector('.btn-filter-date[data-context="cli"]');
@@ -427,12 +451,12 @@ function updatePrintUrls() {
             const url = new URL(btnPrintCli.href);
             url.searchParams.set('fecha_ini', filterBtnCli.dataset.ini);
             url.searchParams.set('fecha_fin', filterBtnCli.dataset.fin);
+            // Asegurar que pasamos la moneda actual
             url.searchParams.set('moneda', currentMonedaCli);
-            if (currentSearchCli) {
-                url.searchParams.set('search', currentSearchCli);
-            } else {
-                url.searchParams.delete('search');
-            }
+            
+            if (currentSearchCli) url.searchParams.set('search', currentSearchCli);
+            else url.searchParams.delete('search');
+            
             btnPrintCli.href = url.toString();
         }
     }
@@ -445,12 +469,27 @@ function updatePrintUrls() {
             const url = new URL(btnPrintVenc.href);
             url.searchParams.set('fecha_ini', filterBtnVenc.dataset.ini);
             url.searchParams.set('fecha_fin', filterBtnVenc.dataset.fin);
-            if (currentSearchVenc) {
-                url.searchParams.set('search', currentSearchVenc);
-            } else {
-                url.searchParams.delete('search');
-            }
+            if (currentSearchVenc) url.searchParams.set('search', currentSearchVenc);
+            else url.searchParams.delete('search');
             btnPrintVenc.href = url.toString();
+        }
+    }
+
+    // Panel Top Categorías - AÑADIDO MONEDA
+    const btnPrintCatPanel = document.getElementById('btn-print-categorias-panel');
+    if (btnPrintCatPanel) {
+        const filterBtnCat = document.querySelector('.btn-filter-date[data-context="cat"]');
+        if (filterBtnCat) {
+            // Reconstruimos URL base para asegurar limpieza
+            let url = `/estadisticas/reporte/ventas-categoria/?modo=panel`;
+            
+            url += `&fecha_ini=${filterBtnCat.dataset.ini}`;
+            url += `&fecha_fin=${filterBtnCat.dataset.fin}`;
+            url += `&moneda=${currentMonedaCat}`;
+            
+            if (currentSearchCat) url += `&search_cat=${encodeURIComponent(currentSearchCat)}`;
+            
+            btnPrintCatPanel.href = url;
         }
     }
 }
@@ -460,22 +499,17 @@ function updateList(items, listId, emptyId, renderCallback) {
     const listEl = document.getElementById(listId);
     const emptyEl = document.getElementById(emptyId);
 
-    // Limpiar lista actual (manteniendo solo la estructura)
+    // Limpiar lista actual
     listEl.innerHTML = '';
 
     if (!items || items.length === 0) {
-        // Mostrar estado vacío
-        // Ocultar <li> items (que ya borramos)
-        // Mostrar div de empty
         listEl.style.display = 'none';
         if (emptyEl) {
             emptyEl.style.display = 'block';
-            // Asegurarnos que se limpian los .empty-state que vienen del template original si existían
             const oldEmpty = listEl.parentNode.querySelector('.empty-state');
             if (oldEmpty) oldEmpty.style.display = 'none';
         }
     } else {
-        // Mostrar lista
         listEl.style.display = 'block';
         if (emptyEl) emptyEl.style.display = 'none';
         const oldEmpty = listEl.parentNode.querySelector('.empty-state');
@@ -534,7 +568,8 @@ function renderVencimientoItem(item, rank) {
     </li>`;
 }
 
-function renderCategoriaItem(item, rank) {
+function renderCategoriaItem(item, rank, moneda = 'bs') {
+    const simbolo = moneda === 'usd' ? '$' : 'Bs';
     return `
     <li class="ranking-item">
         <span class="rank-badge">${rank}</span>
@@ -543,7 +578,7 @@ function renderCategoriaItem(item, rank) {
         </div>
         <div class="text-end">
             <div class="item-value" style="font-size: 0.9rem;">${formatNumber(item.cantidad)} un.</div>
-            <span class="item-meta">Bs ${formatCurrency(item.total)}</span>
+            <span class="item-meta">${simbolo} ${formatCurrency(item.total)}</span>
         </div>
     </li>`;
 }
@@ -563,7 +598,7 @@ function formatDate(date) {
     return `${y}-${m}-${d}`;
 }
 
-// Función debounce para optimizar búsquedas
+// Función debounce
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {

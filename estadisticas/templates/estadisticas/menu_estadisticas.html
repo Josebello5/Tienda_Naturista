@@ -195,6 +195,10 @@
                     </span>
                 </div>
                 <div class="card-actions">
+                    <!-- Toggle de moneda -->
+                    <button class="btn-icon-card btn-toggle-moneda-cat" title="Cambiar Moneda" data-moneda="{{ moneda_cat|default:'bs' }}">
+                        <i class="fas fa-dollar-sign"></i>
+                    </button>
                     <button class="btn-icon-card btn-filter-date" title="Filtrar Fechas" data-context="cat"
                         data-ini="{{ fecha_ini_cat|date:'Y-m-d' }}" data-fin="{{ fecha_fin_cat|date:'Y-m-d' }}"
                         data-type="past">
