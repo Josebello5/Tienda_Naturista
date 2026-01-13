@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.http import JsonResponse, HttpResponse
 from django.contrib import messages
 from django.db import transaction
@@ -573,7 +574,7 @@ def filtrar_cuentas_ajax(request):
             'deuda_total_bs': formatear_moneda(item['deuda_total_bs']),
             'deuda_total_usd': formatear_moneda(item['deuda_total_usd']),
             'ventas_pendientes': item['ventas_pendientes'],
-            'url_abono': f"/cuentas_pendientes/gestionar_abono/{cliente.cedula}/"
+            'url_abono': reverse('cuentas_pendientes:gestionar_abono_cliente', args=[cliente.cedula])
         })
     
     return JsonResponse({

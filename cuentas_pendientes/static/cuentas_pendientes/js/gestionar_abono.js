@@ -747,6 +747,102 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // ===== PAGINACIÓN DEL LADO DEL CLIENTE =====
+    const REGISTROS_POR_PAGINA = 6;
+    let paginaActual = 1;
+    let totalPaginas = 1;
+
+    const paginationContainer = document.getElementById('paginationContainer');
+    const paginationInfo = document.getElementById('paginationInfo');
+    const paginationNumbers = document.getElementById('paginationNumbers');
+    const btnPrimeraP = document.getElementById('btnPrimeraP');
+    const btnAnteriorP = document.getElementById('btnAnteriorP');
+    const btnSiguienteP = document.getElementById('btnSiguienteP');
+    const btnUltimaP = document.getElementById('btnUltimaP');
+
+    function actualizarPaginacion() {
+        const todasLasFilas = tableBody.querySelectorAll('tr:not(.empty-row):not(.empty-row-filter)');
+        // Filtrar solo las que son visibles por filtro (marcamos las visibles con data-filtro-visible)
+        const filasVisibles = Array.from(todasLasFilas).filter(fila => !fila.classList.contains('filtro-oculto'));
+        
+        const totalRegistros = filasVisibles.length;
+        totalPaginas = Math.ceil(totalRegistros / REGISTROS_POR_PAGINA);
+        
+        if (totalPaginas <= 1) {
+            if (paginationContainer) paginationContainer.style.display = 'none';
+            // Mostrar todas las filas visibles
+            filasVisibles.forEach(fila => fila.style.display = '');
+            return;
+        }
+        
+        if (paginationContainer) paginationContainer.style.display = 'flex';
+        
+        // Ajustar página actual
+        if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+        if (paginaActual < 1) paginaActual = 1;
+        
+        // Mostrar info
+        if (paginationInfo) {
+            paginationInfo.textContent = `Mostrando página ${paginaActual} de ${totalPaginas} (Total: ${totalRegistros} registros)`;
+        }
+        
+        // Mostrar filas de la página actual
+        const inicio = (paginaActual - 1) * REGISTROS_POR_PAGINA;
+        const fin = inicio + REGISTROS_POR_PAGINA;
+        
+        filasVisibles.forEach((fila, index) => {
+            if (index >= inicio && index < fin) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+        
+        actualizarBotonesPaginacion();
+    }
+
+    function actualizarBotonesPaginacion() {
+        if (btnPrimeraP) btnPrimeraP.style.display = paginaActual > 1 ? 'inline-block' : 'none';
+        if (btnAnteriorP) btnAnteriorP.style.display = paginaActual > 1 ? 'inline-block' : 'none';
+        if (btnSiguienteP) btnSiguienteP.style.display = paginaActual < totalPaginas ? 'inline-block' : 'none';
+        if (btnUltimaP) btnUltimaP.style.display = paginaActual < totalPaginas ? 'inline-block' : 'none';
+        
+        if (paginationNumbers) {
+            paginationNumbers.innerHTML = '';
+            let inicio = Math.max(1, paginaActual - 2);
+            let fin = Math.min(totalPaginas, paginaActual + 2);
+            
+            if (paginaActual <= 3) fin = Math.min(5, totalPaginas);
+            if (paginaActual >= totalPaginas - 2) inicio = Math.max(1, totalPaginas - 4);
+            
+            for (let i = inicio; i <= fin; i++) {
+                const btn = document.createElement('a');
+                btn.href = '#';
+                btn.innerText = i;
+                btn.style.padding = '6px 12px';
+                btn.style.border = '1px solid #dee2e6';
+                btn.style.borderRadius = '4px';
+                btn.style.textDecoration = 'none';
+                btn.style.color = i === paginaActual ? 'white' : '#3A8C6E';
+                btn.style.background = i === paginaActual ? '#3A8C6E' : 'white';
+                
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    paginaActual = i;
+                    actualizarPaginacion();
+                });
+                paginationNumbers.appendChild(btn);
+            }
+        }
+    }
+
+    // Listeners de navegación
+    if (btnPrimeraP) btnPrimeraP.addEventListener('click', (e) => { e.preventDefault(); paginaActual = 1; actualizarPaginacion(); });
+    if (btnAnteriorP) btnAnteriorP.addEventListener('click', (e) => { e.preventDefault(); paginaActual--; actualizarPaginacion(); });
+    if (btnSiguienteP) btnSiguienteP.addEventListener('click', (e) => { e.preventDefault(); paginaActual++; actualizarPaginacion(); });
+    if (btnUltimaP) btnUltimaP.addEventListener('click', (e) => { e.preventDefault(); paginaActual = totalPaginas; actualizarPaginacion(); });
+
+
     // ===== FUNCIONES DE FILTRADO =====
 
     function filtrarVentas() {
@@ -771,7 +867,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const coincideFechaVenta = fechaEnRango(fechaVentaText, filtroFechaVenta.desde, filtroFechaVenta.hasta);
 
             if (coincideId && coincideEstadoPago && coincideFechaVenta) {
-                row.style.display = '';
+                // row.style.display = ''; // DELEGADO A PAGINACIÓN
+                row.classList.remove('filtro-oculto');
                 visibleRows++;
 
                 // Habilitar/deshabilitar checkbox según disponibilidad
@@ -780,7 +877,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     checkbox.disabled = false;
                 }
             } else {
-                row.style.display = 'none';
+                // row.style.display = 'none'; // DELEGADO A PAGINACIÓN
+                row.classList.add('filtro-oculto');
+                row.style.display = 'none'; // Ocultar inmediatamente
 
                 // Deshabilitar checkbox en filas ocultas
                 const checkbox = row.querySelector('.venta-checkbox');
@@ -811,10 +910,15 @@ document.addEventListener('DOMContentLoaded', function () {
             // Hay ventas pero los filtros no devuelven resultados
             if (emptyRow) emptyRow.style.display = 'none';
             if (emptyRowFilter) emptyRowFilter.style.display = '';
+            if (paginationContainer) paginationContainer.style.display = 'none';
         } else {
             // Hay resultados visibles
             if (emptyRow) emptyRow.style.display = 'none';
             if (emptyRowFilter) emptyRowFilter.style.display = 'none';
+            
+            // Actualizar paginación
+            paginaActual = 1;
+            actualizarPaginacion();
         }
 
         // Actualizar selección después de filtrar
@@ -860,7 +964,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function actualizarResumenTotales() {
-        const filasVisibles = tableBody.querySelectorAll('tr:not([style*="display: none"]):not(.empty-row)');
+        // CORREGIDO: Usar filas no ocultas por filtro (independientemente de paginación)
+        const filasVisibles = Array.from(tableBody.querySelectorAll('tr:not(.empty-row):not(.empty-row-filter)'))
+            .filter(row => !row.classList.contains('filtro-oculto'));
 
         let totalVentasPendientes = 0;
         let totalDeudaUsd = 0;

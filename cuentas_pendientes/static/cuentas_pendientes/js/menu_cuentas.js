@@ -42,10 +42,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Aplicar filtros
             if (coincideBusqueda && coincideEstado) {
-                fila.style.display = '';
+                // fila.style.display = ''; // DELEGADO A PAGINACIÓN
+                fila.classList.remove('filtro-oculto');
                 filasVisibles++;
             } else {
-                fila.style.display = 'none';
+                // fila.style.display = 'none'; // DELEGADO A PAGINACIÓN
+                fila.classList.add('filtro-oculto');
+                fila.style.display = 'none'; // Ocultar inmediatamente, paginación re-mostrará si es necesario (pero mejor ocultar aquí para evitar flash)
             }
         });
         
@@ -64,11 +67,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (emptyRowFilter) {
                 emptyRowFilter.style.display = '';
             }
+            if (paginationContainer) paginationContainer.style.display = 'none';
         } else {
             // Ocultar mensaje de filtros
             if (emptyRowFilter) {
                 emptyRowFilter.style.display = 'none';
             }
+            // Actualizar paginación
+            paginaActual = 1; // Resetear a primera página al filtrar
+            actualizarPaginacion();
         }
 
         
@@ -214,8 +221,103 @@ document.addEventListener('DOMContentLoaded', function() {
         filtrarTabla();
     }
 
+    // ===== PAGINACIÓN DEL LADO DEL CLIENTE =====
+    const REGISTROS_POR_PAGINA = 6;
+    let paginaActual = 1;
+    let totalPaginas = 1;
+    
+    const paginationContainer = document.getElementById('paginationContainer');
+    const paginationInfo = document.getElementById('paginationInfo');
+    const paginationNumbers = document.getElementById('paginationNumbers');
+    const btnPrimeraP = document.getElementById('btnPrimeraP');
+    const btnAnteriorP = document.getElementById('btnAnteriorP');
+    const btnSiguienteP = document.getElementById('btnSiguienteP');
+    const btnUltimaP = document.getElementById('btnUltimaP');
+
+    function actualizarPaginacion() {
+        const todasLasFilas = tableBody.querySelectorAll('tr:not(.empty-row):not(.empty-row-filter)');
+        // Filtrar solo las que son visibles por filtro (marcamos las visibles con data-filtro-visible)
+        const filasVisibles = Array.from(todasLasFilas).filter(fila => !fila.classList.contains('filtro-oculto'));
+        
+        const totalRegistros = filasVisibles.length;
+        totalPaginas = Math.ceil(totalRegistros / REGISTROS_POR_PAGINA);
+        
+        if (totalPaginas <= 1) {
+            if (paginationContainer) paginationContainer.style.display = 'none';
+            filasVisibles.forEach(fila => fila.style.display = '');
+            return;
+        }
+        
+        if (paginationContainer) paginationContainer.style.display = 'flex';
+        
+        // Ajustar página actual
+        if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+        if (paginaActual < 1) paginaActual = 1;
+        
+        // Mostrar info
+        if (paginationInfo) {
+            paginationInfo.textContent = `Mostrando página ${paginaActual} de ${totalPaginas} (Total: ${totalRegistros} registros)`;
+        }
+        
+        // Mostrar filas de la página actual
+        const inicio = (paginaActual - 1) * REGISTROS_POR_PAGINA;
+        const fin = inicio + REGISTROS_POR_PAGINA;
+        
+        filasVisibles.forEach((fila, index) => {
+            if (index >= inicio && index < fin) {
+                fila.style.display = '';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+        
+        actualizarBotonesPaginacion();
+    }
+
+    function actualizarBotonesPaginacion() {
+        if (btnPrimeraP) btnPrimeraP.style.display = paginaActual > 1 ? 'inline-block' : 'none';
+        if (btnAnteriorP) btnAnteriorP.style.display = paginaActual > 1 ? 'inline-block' : 'none';
+        if (btnSiguienteP) btnSiguienteP.style.display = paginaActual < totalPaginas ? 'inline-block' : 'none';
+        if (btnUltimaP) btnUltimaP.style.display = paginaActual < totalPaginas ? 'inline-block' : 'none';
+        
+        if (paginationNumbers) {
+            paginationNumbers.innerHTML = '';
+            let inicio = Math.max(1, paginaActual - 2);
+            let fin = Math.min(totalPaginas, paginaActual + 2);
+            
+            if (paginaActual <= 3) fin = Math.min(5, totalPaginas);
+            if (paginaActual >= totalPaginas - 2) inicio = Math.max(1, totalPaginas - 4);
+            
+            for (let i = inicio; i <= fin; i++) {
+                const btn = document.createElement('a');
+                btn.href = '#';
+                btn.innerText = i;
+                btn.style.padding = '6px 12px';
+                btn.style.border = '1px solid #dee2e6';
+                btn.style.borderRadius = '4px';
+                btn.style.textDecoration = 'none';
+                btn.style.color = i === paginaActual ? 'white' : '#3A8C6E';
+                btn.style.background = i === paginaActual ? '#3A8C6E' : 'white';
+                
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    paginaActual = i;
+                    actualizarPaginacion();
+                });
+                paginationNumbers.appendChild(btn);
+            }
+        }
+    }
+
+    // Listeners de navegación
+    if (btnPrimeraP) btnPrimeraP.addEventListener('click', (e) => { e.preventDefault(); paginaActual = 1; actualizarPaginacion(); });
+    if (btnAnteriorP) btnAnteriorP.addEventListener('click', (e) => { e.preventDefault(); paginaActual--; actualizarPaginacion(); });
+    if (btnSiguienteP) btnSiguienteP.addEventListener('click', (e) => { e.preventDefault(); paginaActual++; actualizarPaginacion(); });
+    if (btnUltimaP) btnUltimaP.addEventListener('click', (e) => { e.preventDefault(); paginaActual = totalPaginas; actualizarPaginacion(); });
+
     
     // Inicializar
     actualizarIndicadoresFiltro();
-    console.log('Sistema de cuentas pendientes inicializado');
+    filtrarTabla(); // Esto activará la paginación inicial
+    console.log('Sistema de cuentas pendientes inicializado con paginación');
 });
