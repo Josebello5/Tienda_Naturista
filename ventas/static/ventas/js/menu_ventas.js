@@ -379,16 +379,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 totalMetodoElem.style.display = 'block';
             } else {
-                // Sin filtro por método, mostrar el total de la venta
-                const totalBs = parsearNumeroVenezolano(fila.getAttribute('data-total-bs'));
-                const totalUsd = parsearNumeroVenezolano(fila.getAttribute('data-total-usd'));
+                // Sin filtro por método, mostrar el total PAGADO de la venta (no el total de la venta)
+                const pagadoBs = parsearNumeroVenezolano(fila.getAttribute('data-pagado-bs'));
+                const pagadoUsd = parsearNumeroVenezolano(fila.getAttribute('data-pagado-usd'));
 
                 if (monedaActual === 'bs') {
-                    totalBsElem.innerHTML = `<strong>${formatearMonto(totalBs, 'bs')}</strong>`;
-                    totalUsdElem.innerHTML = `<small>${formatearMonto(totalUsd, 'usd')}</small>`;
+                    totalBsElem.innerHTML = `<strong>${formatearMonto(pagadoBs, 'bs')}</strong>`;
+                    totalUsdElem.innerHTML = `<small>${formatearMonto(pagadoUsd, 'usd')}</small>`;
                 } else {
-                    totalBsElem.innerHTML = `<strong>${formatearMonto(totalUsd, 'usd')}</strong>`;
-                    totalUsdElem.innerHTML = `<small>${formatearMonto(totalBs, 'bs')}</small>`;
+                    totalBsElem.innerHTML = `<strong>${formatearMonto(pagadoUsd, 'usd')}</strong>`;
+                    totalUsdElem.innerHTML = `<small>${formatearMonto(pagadoBs, 'bs')}</small>`;
                 }
             }
         });

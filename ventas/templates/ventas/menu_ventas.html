@@ -180,6 +180,8 @@
             data-tasa="{{ venta.get_tasa_venta|formato_venezolano }}"
             data-total-bs="{{ venta.Total|formato_venezolano }}"
             data-total-usd="{{ venta.get_total_usd|formato_venezolano }}"
+            data-pagado-bs="{{ venta.get_equivalente_total_bs|formato_venezolano }}"
+            data-pagado-usd="{{ venta.get_monto_pagado_usd|formato_venezolano }}"
             data-pagos-metodo='{{ venta.get_pagos_por_metodo_json|safe }}'>
             <td>#{{ venta.ID_Ventas }}</td>
             <td>
@@ -195,7 +197,7 @@
             </td>
             <td class="centered total">
               <div class="total-bs"><strong>Bs {{ venta.get_equivalente_total_bs|formato_venezolano }}</strong></div>
-              <div class="total-usd"><small style="color: #7f8c8d;">≈ $ {{ venta.get_total_usd|formato_venezolano
+              <div class="total-usd"><small style="color: #7f8c8d;">≈ $ {{ venta.get_monto_pagado_usd|formato_venezolano
                   }}</small></div>
               <div class="total-metodo" style="display: none;"></div>
             </td>

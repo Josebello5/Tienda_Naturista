@@ -209,6 +209,11 @@ class Venta(models.Model):
         
         return total_bs
 
+    def get_monto_pagado_usd(self):
+        """Obtiene el monto pagado en USD (Total USD - Saldo Pendiente USD)"""
+        return max(Decimal('0'), self.Total_USD - self.Saldo_Pendiente_USD)
+
+
 
     def get_html_context(self):
         """Genera el contexto para el template HTML del ticket"""
