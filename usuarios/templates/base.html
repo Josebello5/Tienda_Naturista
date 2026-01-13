@@ -141,6 +141,26 @@
   <script src="{% static 'usuarios/js/menu.js' %}"></script>
 
   {% block extra_js %}{% endblock %}
+  <script>
+    // Script global para desactivar autocompletado en todo el sistema
+    document.addEventListener('DOMContentLoaded', function() {
+      const disableAutocomplete = () => {
+        const elements = document.querySelectorAll('form, input');
+        elements.forEach(el => {
+          el.setAttribute('autocomplete', 'off');
+        });
+      };
+      
+      disableAutocomplete();
+      
+      // Observar cambios en el DOM para nuevos elementos (opcional pero recomendado para SPAs o modales dinámicos)
+      const observer = new MutationObserver((mutations) => {
+        disableAutocomplete();
+      });
+      
+      observer.observe(document.body, { childList: true, subtree: true });
+    });
+  </script>
 </body>
 
 </html>
