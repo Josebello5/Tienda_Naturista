@@ -1298,17 +1298,49 @@ document.addEventListener('DOMContentLoaded', function() {
             
             infoPagoModal.className = 'alert alert-info';
             infoPagoModal.style.display = 'block';
+            infoPagoModal.className = 'alert alert-info';
+            infoPagoModal.style.display = 'block';
+            
+            // Cálculos en USD
+            const abonoMinimoUsd = abonoMinimo / tasaActual;
+            const abonoMaximoUsd = abonoMaximo / tasaActual;
+            const abonoActualUsd = abonoActual / tasaActual;
+            const restanteAbonoUsd = restanteAbono / tasaActual;
+
             textoInfoModal.innerHTML = `
-                <strong>Abono Inicial:</strong> Debe estar entre Bs ${formatNumberVenezolano(abonoMinimo.toFixed(2))} (20%) y Bs ${formatNumberVenezolano(abonoMaximo.toFixed(2))} (80%)<br>
-                <strong>Abono Actual:</strong> Bs ${formatNumberVenezolano(abonoActual.toFixed(2))}<br>
-                <strong>Máximo a abonar:</strong> Bs ${formatNumberVenezolano(restanteAbono.toFixed(2))}
+                <div style="margin-bottom: 5px;">
+                    <strong>Abono Inicial (20% - 80%):</strong><br>
+                    <span>Min: Bs ${formatNumberVenezolano(abonoMinimo.toFixed(2))} ($ ${formatNumberVenezolano(abonoMinimoUsd.toFixed(2))})</span><br>
+                    <span>Max: Bs ${formatNumberVenezolano(abonoMaximo.toFixed(2))} ($ ${formatNumberVenezolano(abonoMaximoUsd.toFixed(2))})</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span><strong>Abono Actual:</strong> Bs ${formatNumberVenezolano(abonoActual.toFixed(2))}</span>
+                    <span><strong>($ ${formatNumberVenezolano(abonoActualUsd.toFixed(2))})</strong></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 5px;">
+                    <span><strong>Máximo a abonar:</strong> Bs ${formatNumberVenezolano(restanteAbono.toFixed(2))}</span>
+                    <span><strong>($ ${formatNumberVenezolano(restanteAbonoUsd.toFixed(2))})</strong></span>
+                </div>
             `;
         } else {
             // Para contado: mostrar información normal
             const restante = total - totalPagado;
             infoPagoModal.className = 'alert alert-info';
             infoPagoModal.style.display = 'block';
-            textoInfoModal.textContent = `Restante por pagar: Bs ${formatNumberVenezolano(restante.toFixed(2))}`;
+            textoInfoModal.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span><strong>Total:</strong> Bs ${formatNumberVenezolano(total.toFixed(2))}</span>
+                    <span><strong>($ ${formatNumberVenezolano((total / tasaActual).toFixed(2))})</strong></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span><strong>Pagado:</strong> Bs ${formatNumberVenezolano(totalPagado.toFixed(2))}</span>
+                    <span><strong>($ ${formatNumberVenezolano((totalPagado / tasaActual).toFixed(2))})</strong></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 5px;">
+                    <span><strong>Restante:</strong> Bs ${formatNumberVenezolano(restante.toFixed(2))}</span>
+                    <span><strong>($ ${formatNumberVenezolano((restante / tasaActual).toFixed(2))})</strong></span>
+                </div>
+            `;
         }
     }
 
@@ -1329,11 +1361,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const abonoMinimo = total * 0.20;
             const abonoMaximo = total * 0.80;
             const nuevoAbono = totalPagado + montoBs;
+            
+            // Cálculos en USD
+            const abonoMinimoUsd = abonoMinimo / tasaActual;
+            const abonoMaximoUsd = abonoMaximo / tasaActual;
+            const nuevoAbonoUsd = nuevoAbono / tasaActual;
+            const maximoAbonar = abonoMaximo - totalPagado;
+            const maximoAbonarUsd = maximoAbonar / tasaActual;
 
             let contenidoHTML = `
-                <strong>Abono Inicial:</strong> Debe estar entre Bs ${formatNumberVenezolano(abonoMinimo.toFixed(2))} (20%) y Bs ${formatNumberVenezolano(abonoMaximo.toFixed(2))} (80%)<br>
-                <strong>Abono Actual:</strong> Bs ${formatNumberVenezolano(totalPagado.toFixed(2))}<br>
-                <strong>Máximo a abonar:</strong> Bs ${formatNumberVenezolano((abonoMaximo - totalPagado).toFixed(2))}
+                <div style="margin-bottom: 5px;">
+                    <strong>Abono Inicial (20% - 80%):</strong><br>
+                    <span>Min: Bs ${formatNumberVenezolano(abonoMinimo.toFixed(2))} ($ ${formatNumberVenezolano(abonoMinimoUsd.toFixed(2))})</span><br>
+                    <span>Max: Bs ${formatNumberVenezolano(abonoMaximo.toFixed(2))} ($ ${formatNumberVenezolano(abonoMaximoUsd.toFixed(2))})</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span><strong>Abono Actual (+Nuevo):</strong> Bs ${formatNumberVenezolano(nuevoAbono.toFixed(2))}</span>
+                    <span><strong>($ ${formatNumberVenezolano(nuevoAbonoUsd.toFixed(2))})</strong></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 5px;">
+                    <span><strong>Máximo a abonar:</strong> Bs ${formatNumberVenezolano(Math.max(0, maximoAbonar - montoBs).toFixed(2))}</span>
+                    <span><strong>($ ${formatNumberVenezolano(Math.max(0, maximoAbonarUsd - (montoBs / tasaActual)).toFixed(2))})</strong></span>
+                </div>
             `;
 
             if (metodo === 'efectivo_usd' && monto > 0) {
@@ -1368,11 +1417,40 @@ document.addEventListener('DOMContentLoaded', function() {
             // Validación para CONTADO
             const restante = total - totalPagado;
             
-            let contenidoHTML = `Restante por pagar: Bs ${formatNumberVenezolano(restante.toFixed(2))}`;
+            let nuevoTotalPagadoUsd = totalPagado / tasaActual;
+            if (metodo === 'efectivo_usd') {
+                nuevoTotalPagadoUsd += monto;
+            } else {
+                nuevoTotalPagadoUsd += (monto / tasaActual);
+            }
+            
+            let totalUsd = total / tasaActual;
+            let nuevoRestanteUsd = totalUsd - nuevoTotalPagadoUsd;
+            if (nuevoRestanteUsd < 0) nuevoRestanteUsd = 0;
+
+            let contenidoHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span><strong>Total:</strong> Bs ${formatNumberVenezolano(total.toFixed(2))}</span>
+                    <span><strong>($ ${formatNumberVenezolano(totalUsd.toFixed(2))})</strong></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span><strong>Pagado (+Actual):</strong> Bs ${formatNumberVenezolano((totalPagado + montoBs).toFixed(2))}</span>
+                    <span><strong>($ ${formatNumberVenezolano(nuevoTotalPagadoUsd.toFixed(2))})</strong></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 5px;">
+                    <span><strong>Restante:</strong> Bs ${formatNumberVenezolano(Math.max(0, restante - montoBs).toFixed(2))}</span>
+                    <span><strong>($ ${formatNumberVenezolano(nuevoRestanteUsd.toFixed(2))})</strong></span>
+                </div>
+            `;
 
             if (metodo === 'efectivo_usd' && monto > 0) {
-                const equivalenteBs = monto * tasaActual;
-                contenidoHTML += `<br><strong>Equivalente en Bs:</strong> Bs ${formatNumberVenezolano(equivalenteBs.toFixed(2))}`;
+                 contenidoHTML += `<div style="margin-top: 5px; font-size: 0.9em; color: var(--success);">
+                    <i class="fas fa-exchange-alt"></i> Equivalente: Bs ${formatNumberVenezolano(montoBs.toFixed(2))}
+                </div>`;
+            } else if (monto > 0) {
+                 contenidoHTML += `<div style="margin-top: 5px; font-size: 0.9em; color: var(--info);">
+                    <i class="fas fa-exchange-alt"></i> Equivalente: $ ${formatNumberVenezolano((monto / tasaActual).toFixed(2))}
+                </div>`;
             }
 
             textoInfoModal.innerHTML = contenidoHTML;

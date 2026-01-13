@@ -268,12 +268,16 @@ document.addEventListener('DOMContentLoaded', function () {
     function inicializarSeleccionVentas() {
         // Seleccionar todos
         selectAllCheckbox.addEventListener('change', function () {
+            const isChecked = this.checked;
             const checkboxes = document.querySelectorAll('.venta-checkbox:not(:disabled)');
+            
+            // Actualizar todos los checkboxes primero
             checkboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
-                // CORRECCIÓN: Agregar bubbles: true para que el listener del document lo detecte
-                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                checkbox.checked = isChecked;
             });
+            
+            // Actualizar el estado de selección una sola vez después de cambiar todos
+            actualizarVentasSeleccionadas();
         });
 
         // Selección individual
@@ -423,10 +427,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         infoPagoModal.className = 'alert alert-info';
         infoPagoModal.style.display = 'block';
+        
+        let restanteUsd = totalAPagarUsd - (totalPagado / tasaActual);
+        if (restanteUsd < 0) restanteUsd = 0;
+
         textoInfoModal.innerHTML = `
-            <strong>Total a pagar:</strong> Bs ${formatNumberVenezolano(totalAPagar.toFixed(2))}<br>
-            <strong>Pagado:</strong> Bs ${formatNumberVenezolano(totalPagado.toFixed(2))}<br>
-            <strong>Restante:</strong> Bs ${formatNumberVenezolano(restantePagar.toFixed(2))}
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span><strong>Total:</strong> Bs ${formatNumberVenezolano(totalAPagar.toFixed(2))}</span>
+                <span><strong>($ ${formatNumberVenezolano(totalAPagarUsd.toFixed(2))})</strong></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span><strong>Pagado:</strong> Bs ${formatNumberVenezolano(totalPagado.toFixed(2))}</span>
+                <span><strong>($ ${formatNumberVenezolano((totalPagado / tasaActual).toFixed(2))})</strong></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 5px;">
+                <span><strong>Restante:</strong> Bs ${formatNumberVenezolano(restantePagar.toFixed(2))}</span>
+                <span><strong>($ ${formatNumberVenezolano(restanteUsd.toFixed(2))})</strong></span>
+            </div>
         `;
     }
 
@@ -462,15 +479,42 @@ document.addEventListener('DOMContentLoaded', function () {
             btnAgregarPago.innerHTML = 'Agregar';
             infoPagoModal.className = 'alert alert-info';
 
+            let nuevoTotalPagadoUsd = totalPagado / tasaActual;
+            if (metodo === 'efectivo_usd') {
+                nuevoTotalPagadoUsd += monto;
+            } else {
+                nuevoTotalPagadoUsd += (monto / tasaActual);
+            }
+            
+            let nuevoRestanteUsd = totalAPagarUsd - nuevoTotalPagadoUsd;
+            if (nuevoRestanteUsd < 0) nuevoRestanteUsd = 0;
+
             let contenidoHTML = `
-                <strong>Total a pagar:</strong> Bs ${formatNumberVenezolano(totalAPagar.toFixed(2))}<br>
-                <strong>Pagado:</strong> Bs ${formatNumberVenezolano(totalPagado.toFixed(2))}<br>
-                <strong>Restante:</strong> Bs ${formatNumberVenezolano(restantePagar.toFixed(2))}
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span><strong>Total:</strong> Bs ${formatNumberVenezolano(totalAPagar.toFixed(2))}</span>
+                    <span><strong>($ ${formatNumberVenezolano(totalAPagarUsd.toFixed(2))})</strong></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span><strong>Pagado (+Actual):</strong> Bs ${formatNumberVenezolano((totalPagado + montoBs).toFixed(2))}</span>
+                    <span><strong>($ ${formatNumberVenezolano(nuevoTotalPagadoUsd.toFixed(2))})</strong></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 5px;">
+                    <span><strong>Restante:</strong> Bs ${formatNumberVenezolano(Math.max(0, restantePagar - montoBs).toFixed(2))}</span>
+                    <span><strong>($ ${formatNumberVenezolano(nuevoRestanteUsd.toFixed(2))})</strong></span>
+                </div>
             `;
 
             if (metodo === 'efectivo_usd' && monto > 0) {
-                contenidoHTML += `<br><strong>Equivalente en Bs:</strong> Bs ${formatNumberVenezolano(montoBs.toFixed(2))}`;
+                contenidoHTML += `<div style="margin-top: 5px; font-size: 0.9em; color: var(--success);">
+                    <i class="fas fa-exchange-alt"></i> Equivalente: Bs ${formatNumberVenezolano(montoBs.toFixed(2))}
+                </div>`;
+            } else if (monto > 0) {
+                 contenidoHTML += `<div style="margin-top: 5px; font-size: 0.9em; color: var(--info);">
+                    <i class="fas fa-exchange-alt"></i> Equivalente: $ ${formatNumberVenezolano((monto / tasaActual).toFixed(2))}
+                </div>`;
             }
+
+            textoInfoModal.innerHTML = contenidoHTML;
 
             textoInfoModal.innerHTML = contenidoHTML;
         }
