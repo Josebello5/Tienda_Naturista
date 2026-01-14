@@ -292,6 +292,16 @@
     <form id="loginForm" method="POST" novalidate>
       {% csrf_token %}
 
+      {% if messages %}
+        <div class="messages-container mb-4">
+          {% for message in messages %}
+            <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}" role="alert" style="padding: 10px; border-radius: 10px; margin-bottom: 10px; font-size: 0.9rem; {% if message.tags == 'error' %}background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.2);{% else %}background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.2);{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
       {% if form.non_field_errors %}
         <div class="error-msg-container mb-4" style="background: rgba(231, 76, 60, 0.08); padding: 1rem; border-radius: 10px; border: 1px solid rgba(231, 76, 60, 0.3);">
           <div class="error-msg has-error" style="color: #e74c3c; padding-left: 0;">
@@ -352,6 +362,18 @@
   document.addEventListener('DOMContentLoaded', function () {
     const cedulaInput = document.getElementById('cedula');
     const errorCedula = document.getElementById('error-cedula');
+    
+    // Auto-ocultar mensajes de alerta después de 5 segundos
+    const alerts = document.querySelectorAll('.alert');
+    if (alerts.length > 0) {
+        setTimeout(() => {
+            alerts.forEach(alert => {
+                alert.style.transition = 'opacity 0.5s ease';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+    }
     
     // Password Toggle Logic
     const togglePassword = document.getElementById('togglePassword');

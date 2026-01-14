@@ -524,11 +524,17 @@
     }
     
     // Listeners para cerrar modales
-    closeSuccessModalBtn.addEventListener('click', closeSuccessModal);
+    closeSuccessModalBtn.addEventListener('click', function() {
+        // Al cerrar el modal de éxito, redirigir al login
+        window.location.href = "{% url 'usuarios:login' %}";
+    });
+    
     closeErrorModalBtn.addEventListener('click', closeErrorModal);
     
     successModal.addEventListener('click', function(e) {
-        if (e.target === successModal) closeSuccessModal();
+        if (e.target === successModal) {
+            window.location.href = "{% url 'usuarios:login' %}";
+        }
     });
     
     errorModal.addEventListener('click', function(e) {

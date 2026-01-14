@@ -11,10 +11,32 @@ from django.views.decorators.csrf import csrf_protect
 from .decorators import owner_required
 
 def registrar_usuario(request):
+    from django.contrib.auth.models import Group
+    
+    # Verificar si ya existe un Dueño (EXCEPTO si acabamos de registrarlo exitosamente)
+    # Esto permite mostrar el modal de éxito antes de bloquear el acceso
+    if request.GET.get('registro_exitoso') != '1':
+        try:
+            grupo_dueno = Group.objects.get(name='Dueño')
+            if grupo_dueno.user_set.exists():
+                messages.error(request, 'El sistema ya tiene un dueño registrado. Acceso restringido.')
+                return redirect('usuarios:login')
+        except Group.DoesNotExist:
+            pass
+
     if request.method == 'POST':
         form = UsuarioForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            
+            # Asignar rol de Dueño automáticamente
+            try:
+                grupo_dueno, created = Group.objects.get_or_create(name='Dueño')
+                user.groups.add(grupo_dueno)
+            except Exception as e:
+                # Log error si es necesario
+                pass
+
             # Redirigir correctamente con parámetro de éxito
             url = reverse('usuarios:registro_usuario') + '?registro_exitoso=1'
             return redirect(url)
