@@ -27,6 +27,9 @@ def user_has_role(user, role_name):
     """
     if not user.is_authenticated:
         return False
+    # Superuser has all roles
+    if user.is_superuser:
+        return True
     return user.groups.filter(name=role_name).exists()
 
 
@@ -43,6 +46,9 @@ def user_has_any_role(user, roles):
     """
     if not user.is_authenticated:
         return False
+    # Superuser has all roles
+    if user.is_superuser:
+        return True
     return user.groups.filter(name__in=roles).exists()
 
 
@@ -59,6 +65,10 @@ def user_has_permission(user, permission_codename):
     """
     if not user.is_authenticated:
         return False
+    
+    # Superuser has all permissions
+    if user.is_superuser:
+        return True
     
     # Verificar si alguno de los grupos del usuario tiene el permiso
     user_groups = user.groups.all()
