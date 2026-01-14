@@ -55,6 +55,16 @@ def asignar_dueno():
     if created:
         print("[INFO] Se ha creado el grupo 'Dueño' que no existía.")
 
+    # === NUEVO: ASIGNAR PERMISOS AL GRUPO ===
+    from django.contrib.auth.models import Permission
+    print("[INFO] Asignando todos los permisos al grupo Dueño...")
+    todos_permisos = Permission.objects.all()
+    for perm in todos_permisos:
+        grupo_dueno.permissions.add(perm)
+    grupo_dueno.save()
+    print(f"[OK] Permisos inyectados al grupo Dueño: {todos_permisos.count()}")
+    # ========================================
+
     # 2. Agregar al grupo Dueño
     if not user.groups.filter(name='Dueño').exists():
         user.groups.add(grupo_dueno)

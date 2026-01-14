@@ -992,30 +992,45 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function actualizarResumenTotales() {
-        // CORREGIDO: Usar filas no ocultas por filtro (independientemente de paginación)
-        const filasVisibles = Array.from(tableBody.querySelectorAll('tr:not(.empty-row):not(.empty-row-filter)'))
-            .filter(row => !row.classList.contains('filtro-oculto'));
-
-        let totalVentasPendientes = 0;
+        // CORREGIDO: Usar TODAS las filas para el conteo de parciales, independiente del filtro visible
+        const todasLasFilas = Array.from(tableBody.querySelectorAll('tr:not(.empty-row):not(.empty-row-filter)'));
+        
+        let totalVentasParciales = 0;
         let totalDeudaUsd = 0;
         let diasUltimaCompra = 0;
         let ventasAtrasadas = 0;
 
-        filasVisibles.forEach(fila => {
-            totalVentasPendientes++;
-
-            const saldoUsd = parseNumberVenezolano(fila.getAttribute('data-saldo-usd')) || 0;
-            const dias = parseInt(fila.getAttribute('data-dias')) || 0;
-            const badgeClass = fila.getAttribute('data-badge-class');
-
-            totalDeudaUsd += saldoUsd;
-
-            if (diasUltimaCompra === 0 || dias < diasUltimaCompra) {
-                diasUltimaCompra = dias;
+        todasLasFilas.forEach(fila => {
+            // Conteo específico: solo estado 'parcial'
+            const estadoPago = fila.getAttribute('data-estado-pago');
+            if (estadoPago === 'parcial') {
+                totalVentasParciales++;
             }
 
-            if (badgeClass === 'badge-danger') {
-                ventasAtrasadas++;
+            // Para los otros totales, seguimos usando la lógica de visibles si se desea, 
+            // PERO el usuario pidió corrección específica en "que solo contabilice las ventas que tenga como estado pago parcial indiferentemente de los filtros"
+            // Asumiré que DEUDA y otros datos deben reflejar lo visible (filtrado), pero el CONTEO pidió explícitamente "indiferentemente de los filtros".
+            // Sin embargo, si filtro por FECHA, ¿debo sumar deuda de fechas ocultas? 
+            // La solicitud fue específica: "en el panel que cuenta cuantas ventas pendientes hay que solo contabilice las ventas que tenga como estado pago parcial indiferentemente de los filtros pero solo en ese panel"
+            
+            // Si la fila está oculta por filtro, ¿la incluimos en la deuda total mostrada? 
+            // Normalmente los paneles de resumen reflejan lo que se ve. Pero el usuario pidió una excepción para el conteo.
+            // Mantendré la lógica de deuda basada en VISIBLES (filtro activo), pero el conteo será TOTAL PARCIAL.
+            
+            if (!fila.classList.contains('filtro-oculto')) {
+                const saldoUsd = parseNumberVenezolano(fila.getAttribute('data-saldo-usd')) || 0;
+                const dias = parseInt(fila.getAttribute('data-dias')) || 0;
+                const badgeClass = fila.getAttribute('data-badge-class');
+
+                totalDeudaUsd += saldoUsd;
+
+                if (diasUltimaCompra === 0 || dias < diasUltimaCompra) {
+                    diasUltimaCompra = dias;
+                }
+
+                if (badgeClass === 'badge-danger') {
+                    ventasAtrasadas++;
+                }
             }
         });
 
@@ -1023,7 +1038,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const totalDeudaBs = totalDeudaUsd * tasaActual;
 
         // Actualizar paneles
-        document.getElementById('totalVentasPendientes').textContent = totalVentasPendientes;
+        // NOTA: El ID se llama totalVentasPendientes pero ahora muestra Parciales
+        document.getElementById('totalVentasPendientes').textContent = totalVentasParciales;
         document.getElementById('totalDeudaCliente').textContent = 'Bs ' + formatNumberVenezolano(totalDeudaBs.toFixed(2));
         document.getElementById('totalDeudaClienteUsd').textContent = '$ ' + formatNumberVenezolano(totalDeudaUsd.toFixed(2));
         document.getElementById('diasUltimaCompra').textContent = diasUltimaCompra;

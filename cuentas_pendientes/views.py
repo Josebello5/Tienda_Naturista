@@ -95,13 +95,15 @@ def menu_cuentas_pendientes(request):
     
 
     
+    
     if tasa_actual and tasa_actual.valor:
         total_saldo_pendiente_bs = total_saldo_pendiente_usd * tasa_actual.valor
     else:
         total_saldo_pendiente_bs = Decimal('0')
     
-    # Top 5 clientes con mayor deuda
-    clientes_top_5 = clientes_deuda_detallada[:5]
+    # Top 5 clientes con mayor deuda (SOLO DEUDA ACTIVA > 0)
+    clientes_con_deuda_activa = [c for c in clientes_deuda_detallada if c['deuda_total_usd'] > Decimal('0')]
+    clientes_top_5 = clientes_con_deuda_activa[:5]
     
     # Abonos recientes (últimos 30 días) agrupados jerárquicamente
     fecha_limite = hoy - timedelta(days=30)
@@ -577,7 +579,9 @@ def filtrar_cuentas_ajax(request):
         total_saldo_pendiente_bs = Decimal('0')
     
     # Top 5 clientes con mayor deuda
-    clientes_top_5 = clientes_deuda_detallada[:5]
+    # Top 5 clientes con mayor deuda (SOLO con deuda > 0.01)
+    clientes_con_deuda_activa = [c for c in clientes_deuda_detallada if c['deuda_total_usd'] > Decimal('0.01')]
+    clientes_top_5 = clientes_con_deuda_activa[:5]
     
     # Formatear datos para JSON
     def formatear_moneda(valor):
@@ -742,6 +746,14 @@ def gestionar_abono_cliente(request, cliente_cedula):
     else:
         deuda_total_bs = Decimal('0')
     
+    # Corregido: Contar SOLO ventas con pago parcial para el panel, independiente del filtro
+    conteo_ventas_parciales = Venta.objects.filter(
+        Cedula=cliente,
+        Tipo_Venta='credito',
+        anulada=False,
+        Estado_Pago='parcial'
+    ).count()
+
     context = {
         'cliente': cliente,
         'ventas_pendientes': ventas_pendientes,
@@ -752,8 +764,9 @@ def gestionar_abono_cliente(request, cliente_cedula):
         'total_abono_inicial': total_abono_inicial,
         'ventas_atrasadas': ventas_atrasadas,
         'dias_ultima_compra': dias_ultima_compra,
-        'estado_pago_filtro': estado_pago_filtro,  # Pasar el filtro actual al template
+        'estado_pago_filtro': estado_pago_filtro,
         'puede_imprimir': puede_imprimir,
+        'conteo_ventas_parciales': conteo_ventas_parciales, # Nueva variable para el panel
     }
     
     return render(request, 'cuentas_pendientes/gestionar_abono_cliente.html', context)
