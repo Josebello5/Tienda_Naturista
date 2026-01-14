@@ -216,6 +216,22 @@
   </div>
 </div>
 
+<!-- Modal de Éxito -->
+<div id="modalExito" class="modal-filtro">
+  <div class="modal-contenido" style="max-width: 400px; text-align: center;">
+    <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
+      <i class="fas fa-check-circle" style="font-size: 4rem; color: var(--primary-green); margin-bottom: 10px;"></i>
+    </div>
+    <div class="modal-body">
+      <h3 id="tituloModalExito" style="margin-bottom: 10px;">¡Éxito!</h3>
+      <p id="mensajeModalExito" style="color: var(--natural-gray);">Operación completada correctamente.</p>
+    </div>
+    <div class="modal-footer" style="justify-content: center; border-top: none; padding-top: 0;">
+      <button class="btn btn-primary" id="btnCerrarModalExito" style="min-width: 120px;">Aceptar</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // Pasar datos al JavaScript
   window.productosData = [
@@ -243,6 +259,6 @@
   const PROVEEDORES_JSON_URL = "{% url 'lotes:lista_proveedores_json' %}";
 </script>
 
-<script src="{% static 'lotes/js/registrar_lote.js' %}"></script>
+<script src="{% static 'lotes/js/registrar_lote.js' %}?v=2.0"></script>
 
 {% endblock %}

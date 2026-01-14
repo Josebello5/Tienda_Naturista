@@ -26,6 +26,40 @@ document.addEventListener('DOMContentLoaded', function () {
     const contactoProveedorInput = document.getElementById('contactoProveedor');
     const errorNombreProveedor = document.getElementById('error-nombreProveedor');
 
+    // Elementos del modal de éxito
+    const modalExito = document.getElementById('modalExito');
+    const btnCerrarModalExito = document.getElementById('btnCerrarModalExito');
+    const tituloModalExito = document.getElementById('tituloModalExito');
+    const mensajeModalExito = document.getElementById('mensajeModalExito');
+
+    function mostrarModalExito(titulo, mensaje) {
+        if (modalExito) {
+            tituloModalExito.textContent = titulo;
+            mensajeModalExito.textContent = mensaje;
+            modalExito.style.display = 'flex';
+        } else {
+            alert(titulo + ': ' + mensaje);
+        }
+    }
+
+    function cerrarModalExito() {
+        if (modalExito) {
+            modalExito.style.display = 'none';
+        }
+    }
+
+    if (btnCerrarModalExito) {
+        btnCerrarModalExito.addEventListener('click', cerrarModalExito);
+    }
+
+    if (modalExito) {
+        modalExito.addEventListener('click', function (e) {
+            if (e.target === modalExito) {
+                cerrarModalExito();
+            }
+        });
+    }
+
     // Crear elemento de error para contacto si no existe
     let errorContactoProveedor = document.getElementById('error-contactoProveedor');
     if (!errorContactoProveedor && contactoProveedorInput) {
@@ -436,8 +470,8 @@ document.addEventListener('DOMContentLoaded', function () {
                                 sugerenciasProveedorContainer.style.display = 'none';
                             }
 
-                            // Mostrar mensaje de éxito
-                            alert('✅ ' + data.message);
+                            // Mostrar mensaje de éxito con Modal
+                            mostrarModalExito('¡Éxito!', data.message);
                         } else {
                             console.error('❌ Error del servidor:', data.error);
                             setInvalid(nombreProveedorInput, errorNombreProveedor, data.error);
