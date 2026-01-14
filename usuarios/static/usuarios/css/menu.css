@@ -49,21 +49,22 @@ body {
 }
 
 /* ===== HEADER DEL SIDEBAR ===== */
+/* ===== HEADER DEL SIDEBAR ===== */
 .sidebar .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 25px 20px;
+  padding: 15px 15px; /* Reducido de 25px 20px */
   position: relative;
   background: rgba(0, 0, 0, 0.15);
   border-top-left-radius: 16px;
   border-top-right-radius: 16px;
-  min-height: 96px;
+  min-height: 70px; /* Reducido de 96px */
 }
 
 .sidebar-header .header-logo img {
-  width: 46px;
-  height: 46px;
+  width: 38px; /* Reducido de 46px */
+  height: 38px;
   object-fit: cover;
   border-radius: 50%;
   border: 2px solid var(--accent-green);
@@ -75,8 +76,8 @@ body {
 }
 
 .sidebar-header .toggler {
-  width: 35px;
-  height: 35px;
+  width: 30px; /* Reducido de 35px */
+  height: 30px;
   border: none;
   background: var(--primary-green);
   color: var(--white-base);
@@ -95,7 +96,7 @@ body {
 
 .sidebar-header .sidebar-toggler {
   position: absolute;
-  right: 20px;
+  right: 15px; /* Ajustado */
   top: 50%;
   transform: translateY(-50%);
 }
@@ -106,10 +107,10 @@ body {
 
 /* CORRECCIÓN: Header en estado colapsado */
 .sidebar.collapsed .sidebar-header {
-  padding: 20px 15px;
+  padding: 15px 10px;
   justify-content: center;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 }
 
 .sidebar.collapsed .sidebar-header .sidebar-toggler {
@@ -123,12 +124,12 @@ body {
 }
 
 .sidebar.collapsed .header-logo img {
-  width: 40px;
-  height: 40px;
+  width: 32px; /* Reducido de 40px */
+  height: 32px;
 }
 
 .sidebar-header .toggler span {
-  font-size: 1.75rem;
+  font-size: 1.5rem; /* Reducido de 1.75rem */
   transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
@@ -139,7 +140,7 @@ body {
 /* ===== NAVEGACIÓN DEL SIDEBAR ===== */
 .sidebar-nav {
   flex: 1;
-  padding: 20px 0;
+  padding: 15px 0; /* Reducido de 20px */
   display: flex;
   flex-direction: column;
   transition: all 0.6s ease;
@@ -149,8 +150,8 @@ body {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 0 15px;
+  gap: 4px; /* Reducido de 8px */
+  padding: 0 10px; /* Reducido de 15px */
 }
 
 .nav-item {
@@ -161,9 +162,9 @@ body {
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 15px;
-  border-radius: 10px;
+  gap: 10px; /* Reducido de 12px */
+  padding: 10px 12px; /* Reducido de 14px 15px */
+  border-radius: 8px; /* Reducido de 10px */
   color: var(--white-base);
   background-color: transparent;
   text-decoration: none;
@@ -172,6 +173,7 @@ body {
   font-weight: 500;
   width: 100%;
   box-sizing: border-box;
+  font-size: 0.95rem; /* Ajuste ligero de fuente */
 }
 
 .nav-link.active {
@@ -189,7 +191,7 @@ body {
   align-items: center;
   justify-content: center;
   min-width: 24px;
-  font-size: 24px;
+  font-size: 20px; /* Reducido de 24px */
   transition: transform 0.3s ease;
 }
 
