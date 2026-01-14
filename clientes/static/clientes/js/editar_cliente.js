@@ -16,6 +16,26 @@ document.addEventListener('DOMContentLoaded', function () {
   const telefonoCompleto = document.getElementById('telefono_completo');
   const direccionCounter = document.getElementById('direccion-counter');
 
+  // Detectar tipo de cliente desde el HTML (solo lectura)
+  const cedulaSpan = document.querySelector('.cedula-completa');
+  const esJuridico = cedulaSpan && cedulaSpan.textContent.trim().startsWith('J');
+  
+  // Ajustar interfaz si es Jurídico
+  if (esJuridico) {
+      const apellidoContainer = apellido.closest('.form-col');
+      const labelNombre = document.querySelector('label[for="id_nombre"]');
+      
+      if (apellidoContainer) {
+          apellidoContainer.style.display = 'none';
+          // Asegurar que tenga un valor válido (punto) si está vacío
+          if (!apellido.value) apellido.value = '.';
+      }
+      if (labelNombre) labelNombre.textContent = 'Razón Social';
+      
+      // Ajustar placeholder y maxlength si es necesario
+      nombre.setAttribute('placeholder', 'Razón Social');
+  }
+
   // Variables para controlar si el usuario ha empezado a escribir
   let nombreTouched = false;
   let apellidoTouched = false;
@@ -77,8 +97,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Convertir a mayúsculas y limitar a 10 caracteres
     this.value = this.value.toUpperCase().slice(0, 10);
     
-    // Permitir solo letras y espacios
-    this.value = this.value.replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '');
+    if (esJuridico) {
+        // Permitir números y caracteres especiales (.) y (&) para Razón Social
+        this.value = this.value.replace(/[^A-ZÁÉÍÓÚÑ0-9\s.&-]/g, '');
+    } else {
+        // Permitir solo letras y espacios
+        this.value = this.value.replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '');
+    }
     
     validarNombre();
   });
@@ -135,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
    */
   function validarNombre() {
     const valor = nombre.value.trim();
-    const regex = /^[A-ZÁÉÍÓÚÑ\s]+$/;
+    const regex = esJuridico ? /^[A-ZÁÉÍÓÚÑ0-9\s.&-]+$/ : /^[A-ZÁÉÍÓÚÑ\s]+$/;
     
     if (valor === '') {
       if (nombreTouched) {
@@ -147,13 +172,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     if (!regex.test(valor)) {
-      setInvalid(nombre, "El nombre solo debe contener letras y espacios.");
+      setInvalid(nombre, esJuridico ? "Carácter inválido en Razón Social." : "El nombre solo debe contener letras y espacios.");
       return false;
     }
     
     if (valor.length < 2) {
-      setInvalid(nombre, "El nombre debe tener al menos 2 caracteres.");
-      return false;
+       // Relax validation for J if needed, but 2 chars is reasonable
+       setInvalid(nombre, esJuridico ? "La razón social es muy corta." : "El nombre debe tener al menos 2 caracteres.");
+       return false;
     }
     
     setValid(nombre);
@@ -164,6 +190,11 @@ document.addEventListener('DOMContentLoaded', function () {
    * Valida el campo apellido (solo letras y espacios, máximo 10)
    */
   function validarApellido() {
+    if (esJuridico) {
+        setValid(apellido);
+        return true;
+    }
+
     const valor = apellido.value.trim();
     const regex = /^[A-ZÁÉÍÓÚÑ\s]+$/;
     

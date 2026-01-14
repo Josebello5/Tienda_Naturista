@@ -194,17 +194,33 @@ class EditarClienteForm(forms.ModelForm):
 
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre')
+        # Determinar tipo de cédula desde la instancia
+        is_juridico = self.instance.cedula.startswith('J') if self.instance and self.instance.cedula else False
+        
         if nombre:
-            if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+$', nombre):
-                raise forms.ValidationError('El nombre solo debe contener letras y espacios.')
-            nombre = nombre.strip().upper()[:10]
-            if len(nombre) < 2:
-                raise forms.ValidationError('El nombre debe tener al menos 2 caracteres.')
+            if is_juridico:
+                # Permitir caracteres especiales para Razón Social
+                if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9\s.&-]+$', nombre):
+                     raise forms.ValidationError('La razón social contiene caracteres inválidos.')
+                nombre = nombre.strip().upper()[:10]
+            else:
+                if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+$', nombre):
+                    raise forms.ValidationError('El nombre solo debe contener letras y espacios.')
+                nombre = nombre.strip().upper()[:10]
+                if len(nombre) < 2:
+                    raise forms.ValidationError('El nombre debe tener al menos 2 caracteres.')
         return nombre
 
     def clean_apellido(self):
         apellido = self.cleaned_data.get('apellido')
+        # Determinar tipo de cédula desde la instancia
+        is_juridico = self.instance.cedula.startswith('J') if self.instance and self.instance.cedula else False
+        
         if apellido:
+            if is_juridico:
+                # Si es jurídico, permitimos el punto o lo que venga, ya que está oculto
+                return apellido
+                
             if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+$', apellido):
                 raise forms.ValidationError('El apellido solo debe contener letras y espacios.')
             apellido = apellido.strip().upper()[:10]
