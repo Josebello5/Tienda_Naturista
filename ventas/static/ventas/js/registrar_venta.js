@@ -323,17 +323,42 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function actualizarValidacionCedula() {
         const tipo = cedulaTipo.value;
+        const apellidoContainer = apellido.closest('.form-col');
+        const labelNombre = document.querySelector('label[for="nombre"]');
+
+        // Limpiar campo nombre/razón social al cambiar de tipo
+        nombre.value = '';
+
         if (tipo === 'J') {
             cedulaNumero.setAttribute('maxlength', '9');
             cedulaNumero.setAttribute('placeholder', '9 dígitos');
+            
+            // Ocultar Apellido y renombrar Nombre
+            if (apellidoContainer) apellidoContainer.style.display = 'none';
+            if (labelNombre) labelNombre.textContent = 'Razón Social';
+            
+            // Auto-llenar apellido para validar
+            apellido.value = '.';
+            
         } else {
             cedulaNumero.setAttribute('maxlength', '8');
             cedulaNumero.setAttribute('placeholder', '7-8 dígitos');
+            
+            // Mostrar Apellido y restaurar Nombre
+            if (apellidoContainer) apellidoContainer.style.display = 'block';
+            if (labelNombre) labelNombre.textContent = 'Nombre';
+            
+            // Limpiar apellido si tiene el punto automático
+            if (apellido.value === '.') apellido.value = '';
         }
         // Limpiar campo al cambiar tipo
         cedulaNumero.value = '';
         cedulaTouched = false;
+        
+        // Limpiar validaciones visuales previas
         setValid(cedulaNumero, document.getElementById('error-cedula-numero'));
+        setValid(nombre, document.getElementById('error-nombre'));
+        
         validarCedula();
     }
 
@@ -375,8 +400,11 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function validarNombre() {
         const valor = nombre.value.trim();
-        const regex = /^[A-ZÁÉÍÓÚÑÜ\s]+$/;
+        const tipo = cedulaTipo.value;
         const errorDiv = document.getElementById('error-nombre');
+        
+        // Regex diferenciado
+        const regex = tipo === 'J' ? /^[A-ZÁÉÍÓÚÑÜ0-9\s.&]+$/ : /^[A-ZÁÉÍÓÚÑÜ\s]+$/;
         
         if (valor === '') {
             setInvalid(nombre, errorDiv, "Este campo es obligatorio.");
@@ -384,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (!regex.test(valor)) {
-            setInvalid(nombre, errorDiv, "El nombre solo debe contener letras y espacios.");
+            setInvalid(nombre, errorDiv, tipo === 'J' ? "Carácter inválido." : "El nombre solo debe contener letras y espacios.");
             return false;
         }
         
@@ -401,6 +429,12 @@ document.addEventListener('DOMContentLoaded', function() {
      * Valida el campo apellido (solo letras y espacios, máximo 10)
      */
     function validarApellido() {
+        // Si es Jurídico, asumimos válido (punto automático)
+        if (cedulaTipo.value === 'J') {
+            setValid(apellido, document.getElementById('error-apellido'));
+            return true;
+        }
+
         const valor = apellido.value.trim();
         const regex = /^[A-ZÁÉÍÓÚÑÜ\s]+$/;
         const errorDiv = document.getElementById('error-apellido');
@@ -504,7 +538,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         cedulaNumero.addEventListener('blur', validarCedula);
 
-        // ===== VALIDACIÓN DE NOMBRE (SOLO LETRAS, MAYÚSCULAS, MÁXIMO 10) =====
+        // ===== VALIDACIÓN DE NOMBRE (SOLO LETRAS, MAYÚSCULAS, MÁXIMO 10, O ALFANUMERICO SI J) =====
         nombre.addEventListener('input', function () {
             // Guardar posición del cursor
             const start = this.selectionStart;
@@ -513,8 +547,12 @@ document.addEventListener('DOMContentLoaded', function() {
             // Convertir a mayúsculas y limitar a 10 caracteres
             this.value = this.value.toUpperCase();
             
-            // Permitir solo letras y espacios (incluye acentos españoles)
-            this.value = this.value.replace(/[^A-ZÁÉÍÓÚÑÜ\s]/g, '');
+            // Permitir caracteres según tipo
+            if (cedulaTipo.value === 'J') {
+                 this.value = this.value.replace(/[^A-ZÁÉÍÓÚÑÜ0-9\s.&]/g, '');
+            } else {
+                 this.value = this.value.replace(/[^A-ZÁÉÍÓÚÑÜ\s]/g, '');
+            }
             
             // Limitar a 10 caracteres
             if (this.value.length > 10) {
@@ -529,6 +567,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         nombre.addEventListener('keypress', function (e) {
             // Prevenir entrada de números y caracteres especiales en tiempo real
+            // (Esta validación básica puede bloquearse para J si no la relajamos, 
+            //  así que mejor dependemos del input event sanitizer o la hacemos condicional)
+            if (cedulaTipo.value === 'J') return; // Dejar pasar para J, el input event limpia
+
             const key = e.key;
             const allowedKeys = /[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s]/.test(key) || 
                               key === 'Backspace' || key === 'Delete' || 
@@ -566,7 +608,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         apellido.addEventListener('keypress', function (e) {
-            // Prevenir entrada de números y caracteres especiales en tiempo real
+            if (cedulaTipo.value === 'J') return; // Ignorar validación de teclas para J en apellido oculto
+
             const key = e.key;
             const allowedKeys = /[A-Za-záéíóúÁÉÍÓÚñÑüÜ\s]/.test(key) || 
                               key === 'Backspace' || key === 'Delete' || 
@@ -580,6 +623,70 @@ document.addEventListener('DOMContentLoaded', function() {
 
         apellido.addEventListener('blur', validarApellido);
 
+        // ... (resto codigo)
+
+    /**
+     * Valida el campo nombre (solo letras y espacios, máximo 10)
+     */
+    function validarNombre() {
+        const valor = nombre.value.trim();
+        const tipo = cedulaTipo.value;
+        const errorDiv = document.getElementById('error-nombre');
+        
+        // Regex diferenciado
+        const regex = tipo === 'J' ? /^[A-ZÁÉÍÓÚÑÜ0-9\s.&]+$/ : /^[A-ZÁÉÍÓÚÑÜ\s]+$/;
+        
+        if (valor === '') {
+            setInvalid(nombre, errorDiv, "Este campo es obligatorio.");
+            return false;
+        }
+        
+        if (!regex.test(valor)) {
+            setInvalid(nombre, errorDiv, tipo === 'J' ? "Carácter inválido." : "El nombre solo debe contener letras y espacios.");
+            return false;
+        }
+        
+        if (valor.length < 2) {
+            setInvalid(nombre, errorDiv, "El nombre debe tener al menos 2 caracteres.");
+            return false;
+        }
+        
+        setValid(nombre, errorDiv);
+        return true;
+    }
+
+    /**
+     * Valida el campo apellido (solo letras y espacios, máximo 10)
+     */
+    function validarApellido() {
+        // Si es Jurídico, asumimos válido (punto automático)
+        if (cedulaTipo.value === 'J') {
+            setValid(apellido, document.getElementById('error-apellido'));
+            return true;
+        }
+
+        const valor = apellido.value.trim();
+        const regex = /^[A-ZÁÉÍÓÚÑÜ\s]+$/;
+        const errorDiv = document.getElementById('error-apellido');
+        
+        if (valor === '') {
+            setInvalid(apellido, errorDiv, "Este campo es obligatorio.");
+            return false;
+        }
+        
+        if (!regex.test(valor)) {
+            setInvalid(apellido, errorDiv, "El apellido solo debe contener letras y espacios.");
+            return false;
+        }
+        
+        if (valor.length < 2) {
+            setInvalid(apellido, errorDiv, "El apellido debe tener al menos 2 caracteres.");
+            return false;
+        }
+        
+        setValid(apellido, errorDiv);
+        return true;
+    }
         // ===== VALIDACIÓN DE TELÉFONO (SOLO NÚMEROS, EXACTAMENTE 7 DÍGITOS) =====
         telefonoNumero.addEventListener('keypress', function (e) {
             // Solo permitir números

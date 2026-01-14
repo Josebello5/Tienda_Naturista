@@ -56,17 +56,39 @@ document.addEventListener('DOMContentLoaded', function () {
    */
   function actualizarValidacionCedula() {
     const tipo = cedulaTipo.value;
+    const apellidoContainer = apellido.closest('.form-col');
+    const labelNombre = document.querySelector('label[for="nombre"]');
+
+    // Limpiar campo nombre/razón social al cambiar tipo
+    nombre.value = '';
+    
     if (tipo === 'J') {
       cedulaNumero.setAttribute('maxlength', '9');
       cedulaNumero.setAttribute('placeholder', '9 dígitos');
+      
+      // Ocultar Apellido y renombrar Nombre
+      if (apellidoContainer) apellidoContainer.style.display = 'none';
+      if (labelNombre) labelNombre.textContent = 'Razón Social';
+      
+      // Auto-llenar apellido para validar
+      apellido.value = '.';
+      
     } else {
       cedulaNumero.setAttribute('maxlength', '8');
       cedulaNumero.setAttribute('placeholder', '7-8 dígitos');
+      
+      // Mostrar Apellido y restaurar Nombre
+      if (apellidoContainer) apellidoContainer.style.display = 'block';
+      if (labelNombre) labelNombre.textContent = 'Nombre';
+      
+      // Limpiar apellido si tiene el punto automático
+      if (apellido.value === '.') apellido.value = '';
     }
     // Limpiar campo al cambiar tipo
     cedulaNumero.value = '';
     cedulaTouched = false;
     setValid(cedulaNumero, errorCedula);
+    setValid(nombre, errorNombre); // Limpiar error de nombre previo
     validarCedula();
   }
 
@@ -97,8 +119,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Convertir a mayúsculas y limitar a 10 caracteres
     this.value = this.value.toUpperCase().slice(0, 10);
     
-    // Permitir solo letras y espacios
-    this.value = this.value.replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '');
+    // Si es jurídico, permitir números y caracter especial (.) y (&)
+    if (cedulaTipo.value === 'J') {
+         this.value = this.value.replace(/[^A-ZÁÉÍÓÚÑ0-9\s.&]/g, '');
+    } else {
+         // Permitir solo letras y espacios
+         this.value = this.value.replace(/[^A-ZÁÉÍÓÚÑ\s]/g, '');
+    }
     
     validarNombre();
   });
@@ -116,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Validación y formato de teléfono (solo números, máximo 7 dígitos)
   telefonoNumero.addEventListener('input', function () {
-    telefonoNumero.value = telefonoNumero.value.replace(/\D/g, '').slice(0, 7);
+    this.value = this.value.replace(/\D/g, '').slice(0, 7);
     validarTelefono();
   });
 
@@ -125,6 +152,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!direccionTouched) {
       direccionTouched = true;
     }
+    
+    // Convertir a mayúsculas
+    this.value = this.value.toUpperCase();
     
     const length = this.value.length;
     direccionCounter.textContent = `${length}/20 caracteres`;
@@ -135,16 +165,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     // Actualizar clase del contador
+    direccionCounter.className = 'char-counter'; 
     if (length >= 18) {
       direccionCounter.classList.add('warning');
-    } else {
-      direccionCounter.classList.remove('warning');
     }
-    
-    if (length > 20) {
+    if (length >= 20) {
       direccionCounter.classList.add('error');
-    } else {
-      direccionCounter.classList.remove('error');
     }
     
     validarDireccion();
@@ -183,11 +209,14 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   /**
-   * Valida el campo nombre (solo letras y espacios, máximo 10)
+   * Valida el campo nombre (solo letras y espacios, máximo 10, o alfanumérico si es J)
    */
   function validarNombre() {
     const valor = nombre.value.trim();
-    const regex = /^[A-ZÁÉÍÓÚÑ\s]+$/;
+    const tipo = cedulaTipo.value;
+    
+    // Regex diferenciado
+    const regex = tipo === 'J' ? /^[A-ZÁÉÍÓÚÑ0-9\s.&]+$/ : /^[A-ZÁÉÍÓÚÑ\s]+$/;
     
     if (valor === '') {
       setInvalid(nombre, errorNombre, "Este campo es obligatorio.");
@@ -195,12 +224,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     if (!regex.test(valor)) {
-      setInvalid(nombre, errorNombre, "El nombre solo debe contener letras y espacios.");
+      setInvalid(nombre, errorNombre, tipo === 'J' ? "Carácter inválido en Razón Social." : "El nombre solo debe contener letras y espacios.");
       return false;
     }
     
     if (valor.length < 3) {
-      setInvalid(nombre, errorNombre, "El nombre debe tener al menos 3 caracteres.");
+      setInvalid(nombre, errorNombre, tipo === 'J' ? "La razón social es muy corta" : "El nombre debe tener al menos 3 caracteres.");
       return false;
     }
     
@@ -212,6 +241,12 @@ document.addEventListener('DOMContentLoaded', function () {
    * Valida el campo apellido (solo letras y espacios, máximo 10)
    */
   function validarApellido() {
+    // Si es Jurídico, asumimos válido (se auto-llena con punto)
+    if (cedulaTipo.value === 'J') {
+        setValid(apellido, errorApellido);
+        return true;
+    }
+
     const valor = apellido.value.trim();
     const regex = /^[A-ZÁÉÍÓÚÑ\s]+$/;
     

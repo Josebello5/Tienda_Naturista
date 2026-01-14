@@ -60,18 +60,36 @@ class ClienteForm(forms.ModelForm):
 
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre')
+        # Usar self.data para asegurar acceso antes de que se limpie el campo
+        cedula_tipo = self.data.get('cedula_tipo')
+        
         if nombre:
-            if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+$', nombre):
-                raise forms.ValidationError('El nombre solo debe contener letras y espacios.')
-            # Convertir a MAYÚSCULAS y limitar longitud
-            nombre = nombre.strip().upper()[:10]
-            if len(nombre) < 3:
-                raise forms.ValidationError('El nombre debe tener al menos 3 caracteres.')
+            # Si es jurídico, permitimos números y caracteres especiales
+            if cedula_tipo == 'J':
+                if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúñÑ0-9\s.&-]+$', nombre):
+                    raise forms.ValidationError('La razón social contiene caracteres inválidos.')
+                nombre = nombre.strip().upper()[:10] 
+                # Relaxed length check? User wants to put valid names. 3 is fine.
+            else:
+                if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+$', nombre):
+                    raise forms.ValidationError('El nombre solo debe contener letras y espacios.')
+                # Convertir a MAYÚSCULAS y limitar longitud
+                nombre = nombre.strip().upper()[:10]
+                if len(nombre) < 3:
+                    raise forms.ValidationError('El nombre debe tener al menos 3 caracteres.')
         return nombre
 
     def clean_apellido(self):
         apellido = self.cleaned_data.get('apellido')
+        # Usar self.data para asegurar acceso antes de que se limpie el campo
+        cedula_tipo = self.data.get('cedula_tipo')
+        
         if apellido:
+            # Si es jurídico, el apellido se usa como placeholder (.), permitirlo
+            if cedula_tipo == 'J':
+                # Permitir cualquier cosa si es J, ya que está oculto y auto-llenado
+                return apellido
+
             if not re.match(r'^[A-Za-zÁÉÍÓÚáéíóúñÑ\s]+$', apellido):
                 raise forms.ValidationError('El apellido solo debe contener letras y espacios.')
             # Convertir a MAYÚSCULAS y limitar longitud
