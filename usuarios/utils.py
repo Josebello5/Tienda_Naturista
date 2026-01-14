@@ -97,8 +97,8 @@ def get_user_role(user):
 
 
 def is_owner(user):
-    """Verifica si el usuario es Dueño"""
-    return user_has_role(user, 'Dueño')
+    """Verifica si el usuario es Dueño (via permiso)"""
+    return user.has_perm('usuarios.can_access_configuration')
 
 
 def is_admin(user):

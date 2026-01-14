@@ -15,7 +15,7 @@ def user_permissions(request):
     """
     if request.user.is_authenticated:
         return {
-            'is_dueno': request.user.groups.filter(name='Dueño').exists(),
+            'is_dueno': request.user.has_perm('usuarios.can_access_configuration'),
             'is_admin': request.user.groups.filter(name='Administrador').exists(),
             'is_cajero': request.user.groups.filter(name='Cajero').exists(),
         }

@@ -105,7 +105,7 @@ def owner_required(view_func):
     @wraps(view_func)
     @login_required
     def wrapper(request, *args, **kwargs):
-        if request.user.groups.filter(name='Dueño').exists():
+        if request.user.has_perm('usuarios.can_access_configuration'):
             return view_func(request, *args, **kwargs)
         else:
             messages.error(

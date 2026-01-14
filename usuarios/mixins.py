@@ -42,8 +42,8 @@ class OwnerRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     permission_denied_message = 'Solo el dueño puede acceder a esta sección.'
     
     def test_func(self):
-        """Verifica si el usuario es Dueño"""
-        return self.request.user.groups.filter(name='Dueño').exists()
+        """Verifica si el usuario es Dueño (via permiso)"""
+        return self.request.user.has_perm('usuarios.can_access_configuration')
     
     def handle_no_permission(self):
         """Maneja el caso cuando el usuario no tiene permisos"""
