@@ -151,4 +151,3 @@ El sistema cuenta con un botón de **"Ayuda / Tour"** en la barra lateral izquie
 *   *Recomendación*: Úselo cada vez que entre a un módulo nuevo o tenga dudas sobre un botón.
 
 ---
-*Generado automáticamente por el Asistente de Desarrollo - Tienda Naturista*

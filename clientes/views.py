@@ -12,6 +12,7 @@ import json
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+from usuarios.decorators import admin_or_owner_required
 
 def registrar_cliente(request):
     if request.method == 'POST':
@@ -70,6 +71,7 @@ def editar_cliente(request, id):
     return render(request, 'clientes/editar_cliente.html', {'form': form, 'cliente': cliente})
 
 @require_POST
+@admin_or_owner_required
 def eliminar_cliente(request, id):
     cliente = get_object_or_404(Cliente, id=id)
     try:

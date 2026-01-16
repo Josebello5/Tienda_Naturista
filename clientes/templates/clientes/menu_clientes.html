@@ -95,9 +95,11 @@
               <a href="{% url 'clientes:editar_cliente' cliente.id %}" class="btn-action btn-edit" title="Editar Cliente">
                 <i class="fas fa-edit"></i>
               </a>
+              {% if is_dueno or is_admin %}
               <button class="btn-action btn-delete" title="Eliminar Cliente" data-id="{{ cliente.id }}" data-nombre="{{ cliente.nombre }} {{ cliente.apellido }}">
                 <i class="fas fa-trash"></i>
               </button>
+              {% endif %}
             </td>
           </tr>
           {% empty %}
