@@ -10,6 +10,7 @@ urlpatterns = [
     path('reporte/productos/', views.reporte_productos_mas_vendidos, name='reporte_productos'),
     path('reporte/clientes/', views.reporte_clientes_frecuentes, name='reporte_clientes'),
     path('reporte/vencimiento/', views.reporte_por_vencer, name='reporte_vencimiento'),
+    path('reporte/bajo-stock/', views.reporte_bajo_stock, name='reporte_bajo_stock'),
 
     # NUEVOS reportes PDF para los gráficos
     path('reporte/ventas-tiempo/', views.reporte_ventas_tiempo, name='reporte_ventas_tiempo'),

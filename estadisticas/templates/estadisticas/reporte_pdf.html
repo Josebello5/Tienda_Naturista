@@ -127,6 +127,12 @@
                 <th>Categoría</th>
                 <th class="text-center">Cant. Productos</th>
                 <th class="text-right">Total Ventas ({% if moneda == 'usd' %}USD{% else %}Bs{% endif %})</th>
+                {% elif tipo_reporte == 'bajo_stock' %}
+                <th class="rank-col">#</th>
+                <th>Producto</th>
+                <th>ID</th>
+                <th class="text-center">Stock Actual</th>
+                <th class="text-center">Stock Mínimo</th>
                 {% endif %}
             </tr>
         </thead>
@@ -165,6 +171,12 @@
                 <td>{{ item.ID_lote__id_producto__categoria__nombre }}</td>
                 <td class="text-center">{{ item.total_cantidad }}</td>
                 <td class="text-right">{% if moneda == 'usd' %}${% else %}Bs{% endif %} {{ item.total|floatformat:2 }}</td>
+                {% elif tipo_reporte == 'bajo_stock' %}
+                <td class="rank-col">{{ forloop.counter }}</td>
+                <td>{{ item.nombre_pro }}</td>
+                <td>{{ item.pk }}</td>
+                <td class="text-center" style="color: #e74c3c; font-weight: bold;">{{ item.total_stock }}</td>
+                <td class="text-center">{{ item.stock_minimo }}</td>
                 {% endif %}
             </tr>
             {% empty %}

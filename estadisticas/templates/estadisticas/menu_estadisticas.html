@@ -185,6 +185,66 @@
             </div>
         </div>
 
+        <!-- === PANEL 5: PRODUCTOS POR TERMINARSE (BAJO STOCK) === -->
+        <div class="stats-card">
+            <div class="card-header">
+                <div>
+                    <h3><i class="fas fa-arrow-down text-danger"></i> Por Terminarse</h3>
+                    <span class="filter-info">
+                        Productos con stock crítico <br>
+                        <span id="info-stock" style="font-size: 0.9em; opacity: 0.8">Hoy</span>
+                    </span>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-icon-card btn-filter-date" 
+                        data-context="stock" 
+                        data-type="past"
+                        data-ini="{{ fecha_ini_prod|date:'Y-m-d' }}" 
+                        data-fin="{{ fecha_fin_prod|date:'Y-m-d' }}"
+                        title="Filtrar por fecha">
+                        <i class="fas fa-calendar-alt"></i>
+                    </button>
+                    <!-- Solo botón imprimir, no hay filtro de fechas para stock actual -->
+                    <a href="{% url 'estadisticas:reporte_bajo_stock' %}"
+                        class="btn-icon-card btn-print-stock" title="Descargar PDF" target="_blank">
+                        <i class="fas fa-print"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Barra de búsqueda -->
+                <div class="search-container">
+                    <input type="text" class="search-input" id="search-stock" placeholder="Buscar producto..." value="{{ search_stock }}">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+                <ul class="ranking-list" id="list-bajo-stock">
+                    {% if productos_bajo_stock %}
+                    {% for item in productos_bajo_stock %}
+                    <li class="ranking-item">
+                        <div class="item-info">
+                            <span class="item-name">{{ item.nombre_pro }}</span>
+                            <span class="item-meta">Mínimo: {{ item.stock_minimo }}</span>
+                        </div>
+                        <div class="text-end">
+                            <div class="item-value text-danger" style="color: var(--error-red);">{{ item.total_stock }} un.</div>
+                            <span class="item-meta">Stock Actual</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state text-center p-4">
+                        <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                        <p class="text-muted">Inventario saludable.<br>No hay productos con bajo stock.</p>
+                    </div>
+                    {% endif %}
+                </ul>
+                <div id="no-stock" class="empty-row text-center p-4" style="display: none;">
+                    <i class="fas fa-check-circle text-success fa-3x mb-2"></i>
+                    <p class="text-muted">Inventario saludable.<br>No hay productos con bajo stock.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- === PANEL 4: TOP CATEGORÍAS === -->
         <div class="stats-card">
             <div class="card-header">

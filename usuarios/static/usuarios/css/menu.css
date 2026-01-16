@@ -2,14 +2,15 @@
 :root {
   --primary-green: #3A8C6E;
   --primary-blue: #3498B5;
-  --white-base: #F9FCFA;
+  --white-base: #FFFFFF;
   --accent-green: #5CB85C;
   --soft-blue: #E6F4F8;
   --detail-green: #8DC26F;
   --natural-gray: #7F8C8D;
-  --dark-gray: #34495E;
+  --dark-gray: rgba(30, 41, 59, 0.75); /* GLASS DARK BACKGROUND */
   --sidebar-width: 270px;
-  --sidebar-collapsed: 85px;
+  --sidebar-collapsed: 70px; /* Reduced specific width: 85px -> 70px */
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* ===== RESET Y ESTILOS GENERALES ===== */
@@ -28,21 +29,27 @@ body {
 }
 
 /* ===== SIDEBAR ===== */
+/* ===== SIDEBAR (DOCKED FULL HEIGHT) ===== */
 .sidebar {
   position: fixed;
-  top: 16px;
-  left: 16px;
+  top: 0; /* Pegado arriba */
+  left: 0; /* Pegado a la izquierda */
   width: var(--sidebar-width);
-  height: calc(100vh - 32px);
+  height: 100vh; /* Altura total */
   background: var(--dark-gray);
-  border-radius: 16px;
+  backdrop-filter: blur(20px); /* GLASS BLUR EFFECT */
+  -webkit-backdrop-filter: blur(20px);
+  border-right: var(--glass-border); /* Solo borde derecho */
+  border-radius: 0; /* Totalmente cuadrado */
   transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   z-index: 1000;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1); /* Sombra lateral */
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
+
+
 
 .sidebar.collapsed {
   width: var(--sidebar-collapsed);
@@ -54,12 +61,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 15px 15px; /* Reducido de 25px 20px */
+  padding: 10px 15px; /* Compacted */
   position: relative;
-  background: rgba(0, 0, 0, 0.15);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  min-height: 70px; /* Reducido de 96px */
+  background: transparent; /* Cleaner look for Midnight theme */
+  border-radius: 0; /* Cuadrado */
+  min-height: 50px; /* Compacted */
+  margin-top: 10px; /* Espacio respirable arriba */
 }
 
 .sidebar-header .header-logo img {
@@ -106,11 +113,12 @@ body {
 }
 
 /* CORRECCIÓN: Header en estado colapsado */
+/* CORRECCIÓN: Header en estado colapsado */
 .sidebar.collapsed .sidebar-header {
-  padding: 15px 10px;
+  padding: 10px; /* Reduced padding */
   justify-content: center;
-  flex-direction: column;
-  gap: 10px;
+  /* Removed: flex-direction: column; to prevent stacking */
+  /* Removed: gap: 10px; */
 }
 
 .sidebar.collapsed .sidebar-header .sidebar-toggler {
@@ -120,16 +128,38 @@ body {
 }
 
 .sidebar.collapsed .header-logo {
-  display: block;
+  display: block; /* Show logo container in collapsed mode */
 }
 
-.sidebar.collapsed .header-logo img {
-  width: 32px; /* Reducido de 40px */
-  height: 32px;
+/* ESTILO PURISTA (SOLO LOGO REDONDO) */
+.header-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.logo-main {
+  width: 80px;  /* Tamaño Grande (Abierto) */
+  height: 80px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid var(--accent-green);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Suavizado Apple-like */
+}
+
+/* ESCALADO AL COLAPSAR */
+.sidebar.collapsed .logo-main {
+  width: 40px;  /* Tamaño Pequeño (Cerrado) */
+  height: 40px;
+  border-width: 2px;
+  box-shadow: none;
 }
 
 .sidebar-header .toggler span {
-  font-size: 1.5rem; /* Reducido de 1.75rem */
+  font-size: 1.5rem;
   transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
@@ -138,20 +168,46 @@ body {
 }
 
 /* ===== NAVEGACIÓN DEL SIDEBAR ===== */
+/* ===== NAVEGACIÓN DEL SIDEBAR ===== */
 .sidebar-nav {
   flex: 1;
-  padding: 15px 0; /* Reducido de 20px */
+  padding: 15px 0 0 0;
   display: flex;
   flex-direction: column;
   transition: all 0.6s ease;
+  overflow: hidden; /* Contain scroll within nav */
+}
+
+/* Modificación para permitir scroll solo en los items principales */
+.sidebar-nav .main-nav {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 10px;
+  min-height: 0; /* FIX: Allow flex item to shrink below content size */
+}
+
+/* Scrollbar personalizada para la navegación */
+.sidebar-nav .main-nav::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-nav .main-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-nav .main-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+.sidebar-nav .main-nav:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .sidebar-nav .nav-list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 4px; /* Reducido de 8px */
-  padding: 0 10px; /* Reducido de 15px */
+  gap: 4px;
+  padding: 0 10px;
 }
 
 .nav-item {
@@ -162,9 +218,9 @@ body {
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 10px; /* Reducido de 12px */
-  padding: 10px 12px; /* Reducido de 14px 15px */
-  border-radius: 8px; /* Reducido de 10px */
+  gap: 10px;
+  padding: 8px 12px; /* Compacted */
+  border-radius: 8px;
   color: var(--white-base);
   background-color: transparent;
   text-decoration: none;
@@ -173,13 +229,18 @@ body {
   font-weight: 500;
   width: 100%;
   box-sizing: border-box;
-  font-size: 0.95rem; /* Ajuste ligero de fuente */
+  font-size: 0.95rem;
+  border: none; /* Asegurar que botones no tengan borde */
 }
 
 .nav-link.active {
-  background-color: var(--primary-green);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.15); /* White Glass Highlight */
+  border-left: 3px solid var(--accent-green);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+  color: var(--white-base);
   font-weight: 600;
+  border-radius: 8px; /* Mantener bordes redondeados */
 }
 
 .nav-link:hover {
@@ -191,7 +252,7 @@ body {
   align-items: center;
   justify-content: center;
   min-width: 24px;
-  font-size: 20px; /* Reducido de 24px */
+  font-size: 20px;
   transition: transform 0.3s ease;
 }
 
@@ -211,16 +272,26 @@ body {
   width: 0;
   height: 0;
   overflow: hidden;
+  display: none; /* Asegura que no ocupe espacio */
 }
 
 .sidebar.collapsed .nav-link {
   justify-content: center;
-  padding: 12px 0;
-  width: 48px;
+  padding: 8px 0; /* Compacted: 12px -> 8px to match expanded state */
+  width: 48px !important; /* Forzar ancho */
   margin: 0 auto;
   gap: 0;
   border-radius: 10px;
   transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  text-align: center !important; /* Sobrescribir text-start de bootstrap */
+}
+
+/* Fix para botones en modo colapsado */
+.sidebar.collapsed .btn {
+    text-align: center !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    justify-content: center !important;
 }
 
 .sidebar.collapsed .nav-link.active {
@@ -229,6 +300,28 @@ body {
   width: 48px;
   margin: 0 auto;
   gap: 0;
+}
+
+/* Botón de Ayuda Centrado (Expandido) */
+#tour-btn {
+  justify-content: center;
+}
+
+/* FIX ESPECÍFICO PARA BOTÓN DE TOUR */
+.sidebar.collapsed #tour-btn {
+    width: 48px !important;
+    height: 48px !important;
+    padding: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+}
+
+.sidebar.collapsed #tour-btn .nav-icon {
+    margin: 0 !important;
+    transform: none !important;
 }
 
 .sidebar.collapsed .nav-icon {
@@ -271,11 +364,12 @@ body {
 /* ===== NAVEGACIÓN SECUNDARIA - CORREGIDO ===== */
 .secondary-nav {
   margin-top: auto;
-  padding: 15px;
+  padding: 10px 15px; /* Compacted */
   background: rgba(0, 0, 0, 0.1);
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 16px;
   transition: all 0.6s ease;
+  flex-shrink: 0; /* Evitar que se encoja */
 }
 
 /* CORRECCIÓN ESPECÍFICA PARA EL BOTÓN DE CERRAR SESIÓN */
@@ -327,7 +421,8 @@ body {
 .content {
   margin-left: var(--sidebar-width);
   padding: 2rem;
-  width: calc(100% - var(--sidebar-width));
+  /* width: calc(100% - var(--sidebar-width)); REMOVED to fix scroll */
+  width: auto; /* Allow block to fill remaining space naturally */
   transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   min-height: 100vh;
   background: var(--soft-blue);
@@ -349,7 +444,8 @@ body {
 
 .sidebar.collapsed ~ .content {
   margin-left: var(--sidebar-collapsed);
-  width: calc(100% - var(--sidebar-collapsed));
+  /* width: calc(100% - var(--sidebar-collapsed)); REMOVED */
+  width: auto;
 }
 
 .content h4 {
@@ -522,4 +618,62 @@ body {
   .content h4 {
     font-size: 1.5rem;
   }
+}
+
+/* ===== TABLAS DENSAS (High Density & No Scroll) ===== */
+.table-container {
+  width: 100%;
+  overflow-x: auto; /* Mantiene scroll de seguridad por si acaso */
+  margin-top: 15px;
+  background: white; /* O el color de fondo que corresponda al tema */
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+table#dataTable, .table {
+  width: 100% !important;
+  font-size: 0.85rem !important; /* Texto compacto (Tipo Excel) */
+  margin-bottom: 0;
+  border-color: rgba(0,0,0,0.05);
+}
+
+/* Cabeceras */
+table#dataTable th, .table th {
+  padding: 10px 8px !important; /* Reducido */
+  font-weight: 600;
+  white-space: normal !important; /* CRÍTICO: Permitir que los títulos bajen de línea */
+  background-color: var(--primary-green); /* Fondo sólido solicitado */
+  color: var(--white-base); /* Texto blanco solicitado */
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  vertical-align: middle;
+}
+
+/* Celdas de Datos */
+table#dataTable td, .table td {
+  padding: 6px 8px !important; /* ALTAMENTE COMPACTO */
+  white-space: normal !important; /* CRÍTICO: Permite que el texto baje de línea */
+  word-wrap: break-word; /* Evita que palabras largas rompan el layout */
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  line-height: 1.2;
+}
+
+/* Filas hover */
+table#dataTable tbody tr:hover, .table tbody tr:hover {
+  background-color: rgba(58, 140, 110, 0.05);
+}
+
+/* Botones de acción compactos */
+.table .btn-action, .table .btn {
+  padding: 3px 8px !important;
+  font-size: 0.8rem !important;
+  border-radius: 6px;
+  margin: 0 2px;
+}
+
+/* Status badges compactos */
+.table .status {
+  padding: 2px 8px !important;
+  font-size: 0.75rem !important;
+  display: inline-block;
 }

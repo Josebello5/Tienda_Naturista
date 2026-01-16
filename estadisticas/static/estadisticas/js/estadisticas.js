@@ -83,7 +83,10 @@ function initModals() {
             const titles = {
                 'prod': 'Filtrar Productos (Ventas Pasadas)',
                 'cli': 'Filtrar Clientes (Ventas Pasadas)',
-                'venc': 'Filtrar Vencimientos (Fechas Futuras)'
+                'prod': 'Filtrar Productos (Ventas Pasadas)',
+                'cli': 'Filtrar Clientes (Ventas Pasadas)',
+                'venc': 'Filtrar Vencimientos (Fechas Futuras)',
+                'stock': 'Filtrar Bajo Stock (Reporte)'
             };
             document.getElementById('modalTitulo').textContent = titles[currentFilterContext];
 
@@ -204,6 +207,7 @@ function initModals() {
                 params.set('fecha_fin_cat', fechaHasta);
             }
 
+            
             // Realizar petición AJAX
             const requestUrl = `${window.location.pathname}?${params.toString()}`;
 
@@ -225,6 +229,7 @@ function initModals() {
                         if (document.getElementById('info-prod')) document.getElementById('info-prod').textContent = data.fechas.prod;
                         if (document.getElementById('info-cli')) document.getElementById('info-cli').textContent = data.fechas.cli;
                         if (document.getElementById('info-venc')) document.getElementById('info-venc').textContent = data.fechas.venc;
+                        if (document.getElementById('info-stock')) document.getElementById('info-stock').textContent = data.fechas.stock;
                         if (document.getElementById('info-cat')) document.getElementById('info-cat').textContent = data.fechas.cat;
                     }
 
@@ -253,36 +258,39 @@ function initSearch() {
     const searchProd = document.getElementById('search-prod');
     const searchCli = document.getElementById('search-cli');
     const searchVenc = document.getElementById('search-venc');
-    
-    console.log('initSearch called', {searchProd, searchCli, searchVenc});
+    const searchStock = document.getElementById('search-stock');
+
+    console.log('initSearch called', {searchProd, searchCli, searchVenc, searchStock});
     
     if (searchProd) {
         currentSearchProd = searchProd.value;
-        console.log('Search prod initialized with value:', currentSearchProd);
         searchProd.addEventListener('input', debounce(function() {
             currentSearchProd = this.value;
-            console.log('Search prod changed to:', currentSearchProd);
             applyFilters('prod');
         }, 300));
     }
     
     if (searchCli) {
         currentSearchCli = searchCli.value;
-        console.log('Search cli initialized with value:', currentSearchCli);
         searchCli.addEventListener('input', debounce(function() {
             currentSearchCli = this.value;
-            console.log('Search cli changed to:', currentSearchCli);
             applyFilters('cli');
         }, 300));
     }
     
     if (searchVenc) {
         currentSearchVenc = searchVenc.value;
-        console.log('Search venc initialized with value:', currentSearchVenc);
         searchVenc.addEventListener('input', debounce(function() {
             currentSearchVenc = this.value;
-            console.log('Search venc changed to:', currentSearchVenc);
             applyFilters('venc');
+        }, 300));
+    }
+
+    if (searchStock) {
+        currentSearchStock = searchStock.value;
+        searchStock.addEventListener('input', debounce(function() {
+            currentSearchStock = this.value;
+            applyFilters('stock');
         }, 300));
     }
 
@@ -295,6 +303,192 @@ function initSearch() {
         }, 300));
     }
 }
+
+// ... [Currency Toggle Logic Omitted for Brevity - Keeping existing] ...
+
+// Función para aplicar filtros (búsqueda y moneda)
+function applyFilters(context) {
+    console.log('applyFilters called for context:', context);
+    const params = new URLSearchParams();
+    
+    // Para contextos de fecha, obtener de los botones
+    const filterBtn = document.querySelector(`.btn-filter-date[data-context="${context}"]`);
+    
+    // Configurar parámetros según el contexto
+    if (context === 'prod' && filterBtn) {
+        params.set('fecha_ini_prod', filterBtn.dataset.ini);
+        params.set('fecha_fin_prod', filterBtn.dataset.fin);
+        if (currentSearchProd) params.set('search_prod', currentSearchProd);
+    } else if (context === 'cli' && filterBtn) {
+        params.set('fecha_ini_cli', filterBtn.dataset.ini);
+        params.set('fecha_fin_cli', filterBtn.dataset.fin);
+        if (currentSearchCli) params.set('search_cli', currentSearchCli);
+        params.set('moneda_cli', currentMonedaCli);
+    } else if (context === 'venc' && filterBtn) {
+        params.set('fecha_ini_venc', filterBtn.dataset.ini);
+        params.set('fecha_fin_venc', filterBtn.dataset.fin);
+        if (currentSearchVenc) params.set('search_venc', currentSearchVenc);
+    } else if (context === 'stock') {
+        params.set('filtro_stock', 'si');
+        params.set('fecha_ini_stock', fechaIni);
+        params.set('fecha_fin_stock', fechaFin);
+        if (currentSearchStock) params.set('search_stock', currentSearchStock);
+    } else if (context === 'cat') {
+        params.set('fecha_ini_cat', filterBtn.dataset.ini);
+        params.set('fecha_fin_cat', filterBtn.dataset.fin);
+        if (currentSearchCat) params.set('search_cat', currentSearchCat);
+        params.set('moneda_cat', currentMonedaCat);
+    }
+    
+    // Realizar petición AJAX
+    const requestUrl = `${window.location.pathname}?${params.toString()}`;
+    
+    fetch(requestUrl, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Actualizar listas
+        updateList(data.productos, 'list-productos', 'no-prod', renderProductoItem);
+        updateList(data.clientes, 'list-clientes', 'no-cli', renderClienteItem);
+        updateList(data.vencimiento, 'list-vencimiento', 'no-venc', renderVencimientoItem);
+        updateList(data.bajo_stock, 'list-bajo-stock', 'no-stock', renderBajoStockItem);
+        
+        // Renderizado especial para categorías
+        if (data.categorias) {
+             const monedaRender = data.filtros && data.filtros.moneda_cat ? data.filtros.moneda_cat : currentMonedaCat;
+             const renderCatWithCurrency = (item, rank) => renderCategoriaItem(item, rank, monedaRender);
+             updateList(data.categorias, 'list-categorias-panel', 'no-cat', renderCatWithCurrency);
+        }
+        
+        // Actualizar textos de fechas
+        if (data.fechas) {
+            if (document.getElementById('info-prod')) document.getElementById('info-prod').textContent = data.fechas.prod;
+            if (document.getElementById('info-cli')) document.getElementById('info-cli').textContent = data.fechas.cli;
+            if (document.getElementById('info-venc')) document.getElementById('info-venc').textContent = data.fechas.venc;
+            if (document.getElementById('info-stock')) document.getElementById('info-stock').textContent = data.fechas.stock;
+            if (document.getElementById('info-cat')) document.getElementById('info-cat').textContent = data.fechas.cat;
+        }
+        
+        // Actualizar filtros desde respuesta
+        if (data.filtros) {
+            currentSearchProd = data.filtros.search_prod || '';
+            currentSearchCli = data.filtros.search_cli || '';
+            currentSearchVenc = data.filtros.search_venc || '';
+            currentSearchStock = data.filtros.search_stock || ''; // Nuevo
+            currentSearchCat = data.filtros.search_cat || '';
+            currentMonedaCli = data.filtros.moneda_cli || 'bs';
+            currentMonedaCat = data.filtros.moneda_cat || 'bs';
+        }
+        
+        // Actualizar URLs de PDF
+        updatePrintUrls();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Actualizar URLs de los botones de imprimir
+function updatePrintUrls() {
+    // Productos
+    const btnPrintProd = document.querySelector('.btn-print-prod');
+    if (btnPrintProd) {
+        const filterBtnProd = document.querySelector('.btn-filter-date[data-context="prod"]');
+        if (filterBtnProd) {
+            const url = new URL(btnPrintProd.href);
+            url.searchParams.set('fecha_ini', filterBtnProd.dataset.ini);
+            url.searchParams.set('fecha_fin', filterBtnProd.dataset.fin);
+            if (currentSearchProd) url.searchParams.set('search', currentSearchProd);
+            else url.searchParams.delete('search');
+            btnPrintProd.href = url.toString();
+        }
+    }
+    
+    // Clientes
+    const btnPrintCli = document.querySelector('.btn-print-cli');
+    if (btnPrintCli) {
+        const filterBtnCli = document.querySelector('.btn-filter-date[data-context="cli"]');
+        if (filterBtnCli) {
+            const url = new URL(btnPrintCli.href);
+            url.searchParams.set('fecha_ini', filterBtnCli.dataset.ini);
+            url.searchParams.set('fecha_fin', filterBtnCli.dataset.fin);
+            // Asegurar que pasamos la moneda actual
+            url.searchParams.set('moneda', currentMonedaCli);
+            
+            if (currentSearchCli) url.searchParams.set('search', currentSearchCli);
+            else url.searchParams.delete('search');
+            
+            btnPrintCli.href = url.toString();
+        }
+    }
+    
+    // Vencimiento
+    const btnPrintVenc = document.querySelector('.btn-print-venc');
+    if (btnPrintVenc) {
+        const filterBtnVenc = document.querySelector('.btn-filter-date[data-context="venc"]');
+        if (filterBtnVenc) {
+            const url = new URL(btnPrintVenc.href);
+            url.searchParams.set('fecha_ini', filterBtnVenc.dataset.ini);
+            url.searchParams.set('fecha_fin', filterBtnVenc.dataset.fin);
+            if (currentSearchVenc) url.searchParams.set('search', currentSearchVenc);
+            else url.searchParams.delete('search');
+            btnPrintVenc.href = url.toString();
+        }
+    }
+
+    // Bajo Stock
+    const btnPrintStock = document.querySelector('.btn-print-stock');
+    if (btnPrintStock) {
+        const url = new URL(btnPrintStock.href);
+        const filterBtnStock = document.querySelector('.btn-filter-date[data-context="stock"]');
+        if (filterBtnStock) {
+            url.searchParams.set('fecha_ini', filterBtnStock.dataset.ini);
+            url.searchParams.set('fecha_fin', filterBtnStock.dataset.fin);
+            if (currentSearchStock) url.searchParams.set('search', currentSearchStock);
+            else url.searchParams.delete('search');
+            btnPrintStock.href = url.toString();
+        }
+    }
+
+    // Panel Top Categorías
+    const btnPrintCatPanel = document.getElementById('btn-print-categorias-panel');
+    if (btnPrintCatPanel) {
+        const filterBtnCat = document.querySelector('.btn-filter-date[data-context="cat"]');
+        if (filterBtnCat) {
+            // Reconstruimos URL base para asegurar limpieza
+            let url = `/estadisticas/reporte/ventas-categoria/?modo=panel`;
+            
+            url += `&fecha_ini=${filterBtnCat.dataset.ini}`;
+            url += `&fecha_fin=${filterBtnCat.dataset.fin}`;
+            url += `&moneda=${currentMonedaCat}`;
+            
+            if (currentSearchCat) url += `&search_cat=${encodeURIComponent(currentSearchCat)}`;
+            
+            btnPrintCatPanel.href = url;
+        }
+    }
+}
+
+// ... [Helpers match] ...
+
+function renderBajoStockItem(item, rank) {
+    return `
+    <li class="ranking-item">
+        <div class="item-info">
+            <span class="item-name">${item.nombre}</span>
+            <span class="item-meta">Mínimo: ${item.minimo}</span>
+        </div>
+        <div class="text-end">
+            <div class="item-value text-danger" style="color: var(--error-red);">${item.stock} un.</div>
+            <span class="item-meta">Stock Actual</span>
+        </div>
+    </li>`;
+}
+
+// ... [Others kept] ...
 
 // === FUNCIONALIDAD DE TOGGLE DE MONEDA ===
 function initCurrencyToggle() {
@@ -340,159 +534,7 @@ function updateToggleIcon(btn, moneda) {
     }
 }
 
-// Función para aplicar filtros (búsqueda y moneda)
-function applyFilters(context) {
-    console.log('applyFilters called for context:', context);
-    const params = new URLSearchParams();
-    
-    // Obtener fechas actuales de los botones de filtro
-    const filterBtn = document.querySelector(`.btn-filter-date[data-context="${context}"]`);
-    if (!filterBtn) return;
-    
-    const fechaIni = filterBtn.dataset.ini;
-    const fechaFin = filterBtn.dataset.fin;
-    
-    // Configurar parámetros según el contexto
-    if (context === 'prod') {
-        params.set('fecha_ini_prod', fechaIni);
-        params.set('fecha_fin_prod', fechaFin);
-        if (currentSearchProd) params.set('search_prod', currentSearchProd);
-    } else if (context === 'cli') {
-        params.set('fecha_ini_cli', fechaIni);
-        params.set('fecha_fin_cli', fechaFin);
-        if (currentSearchCli) params.set('search_cli', currentSearchCli);
-        params.set('moneda_cli', currentMonedaCli);
-    } else if (context === 'venc') {
-        params.set('fecha_ini_venc', fechaIni);
-        params.set('fecha_fin_venc', fechaFin);
-        if (currentSearchVenc) params.set('search_venc', currentSearchVenc);
-    } else if (context === 'cat') {
-        params.set('fecha_ini_cat', fechaIni);
-        params.set('fecha_fin_cat', fechaFin);
-        if (currentSearchCat) params.set('search_cat', currentSearchCat);
-        params.set('moneda_cat', currentMonedaCat);
-    }
-    
-    // Realizar petición AJAX
-    const requestUrl = `${window.location.pathname}?${params.toString()}`;
-    
-    fetch(requestUrl, {
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Actualizar listas
-        updateList(data.productos, 'list-productos', 'no-prod', renderProductoItem);
-        updateList(data.clientes, 'list-clientes', 'no-cli', renderClienteItem);
-        updateList(data.vencimiento, 'list-vencimiento', 'no-venc', renderVencimientoItem);
-        
-        // Renderizado especial para categorías que ahora dependen de moneda
-        if (data.categorias) {
-             const listEl = document.getElementById('list-categorias-panel');
-             const emptyEl = document.getElementById('no-cat');
-             // Paso explícitamente data.filtros.moneda_cat o currentMonedaCat
-             const monedaRender = data.filtros && data.filtros.moneda_cat ? data.filtros.moneda_cat : currentMonedaCat;
-             
-             // Wrapper para pasar moneda al callback
-             const renderCatWithCurrency = (item, rank) => renderCategoriaItem(item, rank, monedaRender);
-             
-             updateList(data.categorias, 'list-categorias-panel', 'no-cat', renderCatWithCurrency);
-        }
-        
-        // Actualizar textos de fechas
-        if (data.fechas) {
-            if (document.getElementById('info-prod')) document.getElementById('info-prod').textContent = data.fechas.prod;
-            if (document.getElementById('info-cli')) document.getElementById('info-cli').textContent = data.fechas.cli;
-            if (document.getElementById('info-venc')) document.getElementById('info-venc').textContent = data.fechas.venc;
-            if (document.getElementById('info-cat')) document.getElementById('info-cat').textContent = data.fechas.cat;
-        }
-        
-        // Actualizar filtros desde respuesta
-        if (data.filtros) {
-            currentSearchProd = data.filtros.search_prod || '';
-            currentSearchCli = data.filtros.search_cli || '';
-            currentSearchVenc = data.filtros.search_venc || '';
-            currentSearchCat = data.filtros.search_cat || '';
-            currentMonedaCli = data.filtros.moneda_cli || 'bs';
-            currentMonedaCat = data.filtros.moneda_cat || 'bs';
-        }
-        
-        // Actualizar URLs de PDF
-        updatePrintUrls();
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
 
-// Actualizar URLs de los botones de imprimir
-function updatePrintUrls() {
-    // Productos
-    const btnPrintProd = document.querySelector('.btn-print-prod');
-    if (btnPrintProd) {
-        const filterBtnProd = document.querySelector('.btn-filter-date[data-context="prod"]');
-        if (filterBtnProd) {
-            const url = new URL(btnPrintProd.href);
-            url.searchParams.set('fecha_ini', filterBtnProd.dataset.ini);
-            url.searchParams.set('fecha_fin', filterBtnProd.dataset.fin);
-            if (currentSearchProd) url.searchParams.set('search', currentSearchProd);
-            else url.searchParams.delete('search');
-            btnPrintProd.href = url.toString();
-        }
-    }
-    
-    // Clientes - AÑADIDO MONEDA
-    const btnPrintCli = document.querySelector('.btn-print-cli');
-    if (btnPrintCli) {
-        const filterBtnCli = document.querySelector('.btn-filter-date[data-context="cli"]');
-        if (filterBtnCli) {
-            const url = new URL(btnPrintCli.href);
-            url.searchParams.set('fecha_ini', filterBtnCli.dataset.ini);
-            url.searchParams.set('fecha_fin', filterBtnCli.dataset.fin);
-            // Asegurar que pasamos la moneda actual
-            url.searchParams.set('moneda', currentMonedaCli);
-            
-            if (currentSearchCli) url.searchParams.set('search', currentSearchCli);
-            else url.searchParams.delete('search');
-            
-            btnPrintCli.href = url.toString();
-        }
-    }
-    
-    // Vencimiento
-    const btnPrintVenc = document.querySelector('.btn-print-venc');
-    if (btnPrintVenc) {
-        const filterBtnVenc = document.querySelector('.btn-filter-date[data-context="venc"]');
-        if (filterBtnVenc) {
-            const url = new URL(btnPrintVenc.href);
-            url.searchParams.set('fecha_ini', filterBtnVenc.dataset.ini);
-            url.searchParams.set('fecha_fin', filterBtnVenc.dataset.fin);
-            if (currentSearchVenc) url.searchParams.set('search', currentSearchVenc);
-            else url.searchParams.delete('search');
-            btnPrintVenc.href = url.toString();
-        }
-    }
-
-    // Panel Top Categorías - AÑADIDO MONEDA
-    const btnPrintCatPanel = document.getElementById('btn-print-categorias-panel');
-    if (btnPrintCatPanel) {
-        const filterBtnCat = document.querySelector('.btn-filter-date[data-context="cat"]');
-        if (filterBtnCat) {
-            // Reconstruimos URL base para asegurar limpieza
-            let url = `/estadisticas/reporte/ventas-categoria/?modo=panel`;
-            
-            url += `&fecha_ini=${filterBtnCat.dataset.ini}`;
-            url += `&fecha_fin=${filterBtnCat.dataset.fin}`;
-            url += `&moneda=${currentMonedaCat}`;
-            
-            if (currentSearchCat) url += `&search_cat=${encodeURIComponent(currentSearchCat)}`;
-            
-            btnPrintCatPanel.href = url;
-        }
-    }
-}
 
 // Helpers para renderizado
 function updateList(items, listId, emptyId, renderCallback) {

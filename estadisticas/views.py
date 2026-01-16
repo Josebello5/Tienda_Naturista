@@ -200,6 +200,30 @@ def menu_estadisticas(request):
         .order_by('-total_cantidad')[:10]
     )
 
+    # === PANEL 5: PRODUCTOS POR TERMINARSE (Bajo Stock) ===
+    search_stock = request.GET.get('search_stock', '').strip()
+    
+    # Filtro opcional por URL/AJAX
+    if request.GET.get('filtro_stock') == 'si' or search_stock:
+        # El filtro de bajo stock es instantáneo, no depende de fechas, pero mantenemos estructura
+        pass
+
+    # Lógica: Total stock (suma lotes activos) <= stock_minimo
+    productos_bajo_stock_query = Producto.objects.filter(estado='activo').annotate(
+        total_stock=Coalesce(
+            Sum('lote__cantidad_disponible', filter=Q(lote__estado='activo')), 
+            0
+        )
+    ).filter(total_stock__lte=F('stock_minimo'))
+
+    # Aplicar filtro de búsqueda
+    if search_stock:
+        productos_bajo_stock_query = productos_bajo_stock_query.filter(
+            nombre_pro__icontains=search_stock
+        )
+    
+    productos_bajo_stock = productos_bajo_stock_query.order_by('total_stock', 'nombre_pro')
+
     # RESPUESTA AJAX JSON
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
         # Serializar datos
@@ -244,12 +268,21 @@ def menu_estadisticas(request):
                 'cantidad': float(item['total_cantidad']),
                 'total': float(item['total_ventas'])
             })
+            
+        bajo_stock_data = []
+        for item in productos_bajo_stock:
+            bajo_stock_data.append({
+                'nombre': item.nombre_pro,
+                'stock': item.total_stock,
+                'minimo': item.stock_minimo
+            })
 
         return JsonResponse({
             'productos': productos_data,
             'clientes': clientes_data,
             'vencimiento': vencimiento_data,
             'categorias': categorias_data,
+            'bajo_stock': bajo_stock_data,
             'fechas': {
                 'prod': f"Del {fecha_ini_prod.strftime('%d/%m/%Y')} al {fecha_fin_prod.strftime('%d/%m/%Y')}",
                 'cli': f"Del {fecha_ini_cli.strftime('%d/%m/%Y')} al {fecha_fin_cli.strftime('%d/%m/%Y')}",
@@ -261,6 +294,7 @@ def menu_estadisticas(request):
                 'search_cli': search_cli,
                 'search_venc': search_venc,
                 'search_cat': search_cat,
+                'search_stock': search_stock,
                 'moneda_cli': moneda_cli,
                 'moneda_cat': moneda_cat,
             }
@@ -288,6 +322,9 @@ def menu_estadisticas(request):
         'fecha_ini_cat': fecha_ini_cat,
         'fecha_fin_cat': fecha_fin_cat,
         'search_cat': search_cat,
+
+        'productos_bajo_stock': productos_bajo_stock,
+        'search_stock': search_stock,
     }
     
     return render(request, 'estadisticas/menu_estadisticas.html', context)
@@ -467,6 +504,72 @@ def reporte_por_vencer(request):
             search_clean = search.replace(' ', '_')[:20]
             filename_parts.append(f"busqueda_{search_clean}")
         filename_parts.append(f"{fecha_ini}_{fecha_fin}")
+        filename = "_".join(filename_parts) + ".pdf"
+        
+        return generar_pdf_generico('estadisticas/reporte_pdf.html', context, filename)
+
+    except Exception as e:
+        return HttpResponse(f"Error: {str(e)}", status=500)
+
+
+@login_required
+def reporte_bajo_stock(request):
+    """Genera PDF de productos con bajo stock"""
+    try:
+        search = request.GET.get('search', '').strip()
+        fecha_ini_str = request.GET.get('fecha_ini')
+        fecha_fin_str = request.GET.get('fecha_fin')
+        
+        # Simular fechas para el template (hoy por defecto)
+        fecha_ini = timezone.now().date()
+        fecha_fin = timezone.now().date()
+        
+        if fecha_ini_str:
+            try:
+                fecha_ini = datetime.strptime(fecha_ini_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+                
+        if fecha_fin_str:
+            try:
+                fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        
+        # Lógica: Total stock (suma lotes activos) <= stock_minimo
+        # Aquí no hay filtro de fechas para la QUERY porque es estado actual
+        
+        productos_query = Producto.objects.filter(estado='activo').annotate(
+            total_stock=Coalesce(
+                Sum('lote__cantidad_disponible', filter=Q(lote__estado='activo')), 
+                0
+            )
+        ).filter(total_stock__lte=F('stock_minimo'))
+        
+        # Aplicar filtro de búsqueda si existe
+        if search:
+            productos_query = productos_query.filter(
+                nombre_pro__icontains=search
+            )
+        
+        productos = productos_query.order_by('total_stock', 'nombre_pro')
+
+        context = {
+            'titulo': 'Reporte de Productos por Terminarse',
+            'fecha_ini': fecha_ini,
+            'fecha_fin': fecha_fin,
+            'datos': productos,
+            'tipo_reporte': 'bajo_stock',
+            'fecha_generacion': timezone.now(),
+            'filtro_busqueda': search
+        }
+        
+        # Generar nombre de archivo dinámico
+        filename_parts = ["bajo_stock"]
+        if search:
+            search_clean = search.replace(' ', '_')[:20]
+            filename_parts.append(f"busqueda_{search_clean}")
+        filename_parts.append(f"{timezone.now().strftime('%Y-%m-%d')}")
         filename = "_".join(filename_parts) + ".pdf"
         
         return generar_pdf_generico('estadisticas/reporte_pdf.html', context, filename)

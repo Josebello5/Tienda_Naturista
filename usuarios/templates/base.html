@@ -29,10 +29,10 @@
 
 <body>
   <!-- Sidebar -->
-  <aside class="sidebar">
+  <aside class="sidebar collapsed">
     <header class="sidebar-header">
       <a href="#" class="header-logo">
-        <img src="{% static 'usuarios/img/logo.png' %}" alt="Logo">
+        <img src="{% static 'usuarios/img/logo redondo.png' %}" alt="Logo Tienda" class="logo-main">
       </a>
       <button class="toggler sidebar-toggler">
         <span class="material-symbols-rounded">chevron_left</span>
@@ -131,6 +131,15 @@
 
 
       <ul class="nav-list secondary-nav">
+        <!-- BOTÓN DE TOUR -->
+        <li class="nav-item">
+          <a href="#" id="tour-btn" onclick="startTour(); return false;" class="nav-link text-white">
+            <span class="nav-icon material-symbols-rounded">help</span>
+            <span class="nav-label">Ayuda / Tour</span>
+          </a>
+          <span class="nav-tooltip">Ayuda / Tour</span>
+        </li>
+
         <li class="nav-item">
           <form method="post" action="{% url 'usuarios:logout' %}" class="logout-form nav-link">
             {% csrf_token %}
@@ -152,8 +161,19 @@
     {% endblock %}
   </div>
 
+  <!-- Intro.js CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/introjs.min.css">
+
   <!-- Bootstrap 5 JS Bundle with Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Intro.js JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/intro.js/7.2.0/intro.min.js"></script>
+  
+  <!-- Tour Script -->
+  <script src="{% static 'usuarios/js/tour.js' %}"></script>
+
+  <!-- JavaScript Personalizado -->
 
   <!-- JavaScript Personalizado -->
   <script src="{% static 'usuarios/js/menu.js' %}"></script>
