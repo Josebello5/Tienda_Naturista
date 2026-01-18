@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, F
 from django.contrib import messages
 from decimal import Decimal
 from datetime import datetime, date
@@ -174,7 +174,7 @@ def historial_cierres(request):
     fecha_desde = request.GET.get('fecha_desde', None)
     fecha_hasta = request.GET.get('fecha_hasta', None)
     
-    cierres = CierreCaja.objects.all()
+    cierres = CierreCaja.objects.select_related('Usuario').prefetch_related('Usuario__groups').all()
     
     # Validar y convertir fechas
     fecha_desde_obj = None
@@ -197,11 +197,23 @@ def historial_cierres(request):
     estado = request.GET.get('estado', '')
     
     if estado == 'completo':
-        cierres = cierres.filter(Diferencia_Total=0)
+        # Both Bs and USD must be exactly 0
+        cierres = cierres.annotate(
+            dif_bs=F('Real_Efectivo_Bs') + F('Real_Transferencia') + F('Real_Pago_Movil') + F('Real_Tarjeta') + F('Real_Punto_Venta') - F('Sistema_Efectivo_Bs') - F('Sistema_Transferencia') - F('Sistema_Pago_Movil') - F('Sistema_Tarjeta') - F('Sistema_Punto_Venta'),
+            dif_usd=F('Real_Efectivo_USD') - F('Sistema_Efectivo_USD')
+        ).filter(dif_bs=0, dif_usd=0)
     elif estado == 'sobra':
-        cierres = cierres.filter(Diferencia_Total__gt=0)
+        # Show if EITHER Bs OR USD has excess (positive difference)
+        cierres = cierres.annotate(
+            dif_bs=F('Real_Efectivo_Bs') + F('Real_Transferencia') + F('Real_Pago_Movil') + F('Real_Tarjeta') + F('Real_Punto_Venta') - F('Sistema_Efectivo_Bs') - F('Sistema_Transferencia') - F('Sistema_Pago_Movil') - F('Sistema_Tarjeta') - F('Sistema_Punto_Venta'),
+            dif_usd=F('Real_Efectivo_USD') - F('Sistema_Efectivo_USD')
+        ).filter(Q(dif_bs__gt=0) | Q(dif_usd__gt=0))
     elif estado == 'falta':
-        cierres = cierres.filter(Diferencia_Total__lt=0)
+        # Show if EITHER Bs OR USD has shortage (negative difference)
+        cierres = cierres.annotate(
+            dif_bs=F('Real_Efectivo_Bs') + F('Real_Transferencia') + F('Real_Pago_Movil') + F('Real_Tarjeta') + F('Real_Punto_Venta') - F('Sistema_Efectivo_Bs') - F('Sistema_Transferencia') - F('Sistema_Pago_Movil') - F('Sistema_Tarjeta') - F('Sistema_Punto_Venta'),
+            dif_usd=F('Real_Efectivo_USD') - F('Sistema_Efectivo_USD')
+        ).filter(Q(dif_bs__lt=0) | Q(dif_usd__lt=0))
     
     context = {
         'cierres': cierres,
@@ -309,13 +321,22 @@ def generar_reporte_cierres(request):
         
         if estado:
             if estado == 'completo':
-                cierres = cierres.filter(Diferencia_Total=0)
+                cierres = cierres.annotate(
+                    dif_bs=F('Real_Efectivo_Bs') + F('Real_Transferencia') + F('Real_Pago_Movil') + F('Real_Tarjeta') + F('Real_Punto_Venta') - F('Sistema_Efectivo_Bs') - F('Sistema_Transferencia') - F('Sistema_Pago_Movil') - F('Sistema_Tarjeta') - F('Sistema_Punto_Venta'),
+                    dif_usd=F('Real_Efectivo_USD') - F('Sistema_Efectivo_USD')
+                ).filter(dif_bs=0, dif_usd=0)
                 filtros_texto.append("Estado: Cuadre Exacto")
             elif estado == 'sobra':
-                cierres = cierres.filter(Diferencia_Total__gt=0)
+                cierres = cierres.annotate(
+                    dif_bs=F('Real_Efectivo_Bs') + F('Real_Transferencia') + F('Real_Pago_Movil') + F('Real_Tarjeta') + F('Real_Punto_Venta') - F('Sistema_Efectivo_Bs') - F('Sistema_Transferencia') - F('Sistema_Pago_Movil') - F('Sistema_Tarjeta') - F('Sistema_Punto_Venta'),
+                    dif_usd=F('Real_Efectivo_USD') - F('Sistema_Efectivo_USD')
+                ).filter(Q(dif_bs__gt=0) | Q(dif_usd__gt=0))
                 filtros_texto.append("Estado: Sobra Dinero")
             elif estado == 'falta':
-                cierres = cierres.filter(Diferencia_Total__lt=0)
+                cierres = cierres.annotate(
+                    dif_bs=F('Real_Efectivo_Bs') + F('Real_Transferencia') + F('Real_Pago_Movil') + F('Real_Tarjeta') + F('Real_Punto_Venta') - F('Sistema_Efectivo_Bs') - F('Sistema_Transferencia') - F('Sistema_Pago_Movil') - F('Sistema_Tarjeta') - F('Sistema_Punto_Venta'),
+                    dif_usd=F('Real_Efectivo_USD') - F('Sistema_Efectivo_USD')
+                ).filter(Q(dif_bs__lt=0) | Q(dif_usd__lt=0))
                 filtros_texto.append("Estado: Falta Dinero")
         
         # Ordenar por fecha descendente

@@ -6,25 +6,20 @@
 {% block title %}Historial de Cierres - Tienda Naturista{% endblock %}
 
 {% block content %}
-<!-- ===== TARJETA DE BIENVENIDA ===== -->
 <div class="welcome-card">
     <h2><i class="fas fa-history me-2"></i>Historial de Cierres</h2>
     <p>Registro histórico de cierres de caja diarios</p>
 </div>
 
-<!-- ===== CONTENEDOR PRINCIPAL ===== -->
 <div class="productos-container">
     <div class="productos-main">
 
-        <!-- ===== BARRA DE HERRAMIENTAS ===== -->
         <div class="productos-toolbar">
             <div class="filtros-container">
                 <form method="get" id="filterForm" style="display: flex; gap: 15px; width: 100%;">
-                    <!-- Inputs ocultos para enviar el formulario -->
                     <input type="hidden" name="fecha_desde" id="inputFechaDesde" value="{{ fecha_desde|default:'' }}">
                     <input type="hidden" name="fecha_hasta" id="inputFechaHasta" value="{{ fecha_hasta|default:'' }}">
 
-                    <!-- Botón para abrir modal de fechas -->
                     <button type="button"
                         class="btn-filtro-fecha {% if fecha_desde or fecha_hasta %}filtro-activo{% endif %}"
                         id="btnFiltroFecha" style="width: 175px; justify-content: center;">
@@ -36,7 +31,6 @@
                         {% endif %}
                     </button>
 
-                    <!-- Filtro por Estado -->
                     <select name="estado" class="form-select" onchange="this.form.submit()"
                         style="width: 175px; padding: 10px 15px; border-radius: 50px; border: 2px solid var(--border-gray); background: white; color: var(--dark-gray); cursor: pointer; font-family: inherit; font-size: 0.95rem; font-weight: 500;">
                         <option value="">Todos los Estados</option>
@@ -66,7 +60,6 @@
             </div>
         </div>
 
-        <!-- ===== TABLA DE HISTORIAL ===== -->
         <div class="table-container">
             <table>
                 <thead>
@@ -88,10 +81,29 @@
                         </td>
                         <td>
                             <div style="display: flex; align-items: center; gap: 10px;">
+                                {% with rol=cierre.Usuario.groups.all.0.name %}
+                                {% if rol == 'Dueño' %}
+                                <div style="width: 32px; height: 32px; background: #e74c3c; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem;"
+                                    title="Dueño">
+                                    D
+                                </div>
+                                {% elif rol == 'Administrador' %}
+                                <div style="width: 32px; height: 32px; background: #3498db; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem;"
+                                    title="Administrador">
+                                    A
+                                </div>
+                                {% elif rol == 'Cajero' %}
+                                <div style="width: 32px; height: 32px; background: #17a2b8; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem;"
+                                    title="Cajero">
+                                    C
+                                </div>
+                                {% else %}
                                 <div
                                     style="width: 32px; height: 32px; background: var(--primary-green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem;">
                                     {{ cierre.Usuario.username|first|upper }}
                                 </div>
+                                {% endif %}
+                                {% endwith %}
                                 {{ cierre.Usuario.username }}
                             </div>
                         </td>
@@ -105,15 +117,39 @@
                             <div>Bs {{ cierre.total_real_bs|formato_venezolano }}</div>
                             <div class="text-muted small">Ref {{ cierre.total_real_usd|formato_venezolano }}</div>
                         </td>
+                        
                         <td style="text-align: center; font-family: 'Roboto Mono', monospace;">
-    <div class="{% if cierre.diferencia_bs == 0 %}text-success{% elif cierre.diferencia_bs > 0 %}text-primary{% else %}text-danger{% endif %}">
-        Bs {% if cierre.diferencia_bs > 0 %}+{% endif %}{{ cierre.diferencia_bs|formato_venezolano }}
-    </div>
-    
-    <div class="small {% if cierre.diferencia_usd == 0 %}text-success{% elif cierre.diferencia_usd > 0 %}text-primary{% else %}text-danger{% endif %}">
-        Ref {% if cierre.diferencia_usd > 0 %}+{% endif %}{{ cierre.diferencia_usd|formato_venezolano }}
-    </div>
-</td>
+                            <div class="mb-1">
+                                {% if cierre.diferencia_bs > 0 %}
+                                    <span class="text-primary fw-bold">
+                                        Bs +{{ cierre.diferencia_bs|formato_venezolano }}
+                                    </span>
+                                {% elif cierre.diferencia_bs < 0 %}
+                                    <span class="text-danger fw-bold">
+                                        Bs {{ cierre.diferencia_bs|formato_venezolano }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-success fw-bold">
+                                        Bs {{ cierre.diferencia_bs|formato_venezolano }}
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <div class="small">
+                                {% if cierre.diferencia_usd > 0 %}
+                                    <span class="text-primary fw-bold">
+                                        Ref +{{ cierre.diferencia_usd|formato_venezolano }}
+                                    </span>
+                                {% elif cierre.diferencia_usd < 0 %}
+                                    <span class="text-danger fw-bold">
+                                        Ref {{ cierre.diferencia_usd|formato_venezolano }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-success fw-bold">
+                                        Ref {{ cierre.diferencia_usd|formato_venezolano }}
+                                    </span>
+                                {% endif %}
+                            </div>
                         </td>
                         <td style="text-align: center;">
                             {% if cierre.Notas %}
@@ -160,7 +196,6 @@
     </div>
 </div>
 
-<!-- ===== MODAL FILTRO FECHAS ===== -->
 <div id="modalFiltroFechas" class="modal-filtro">
     <div class="modal-contenido">
         <div class="modal-header">
@@ -178,7 +213,6 @@
                     <input type="date" id="fechaHasta">
                 </div>
             </div>
-            <!-- Mensaje de error para validación de fechas -->
             <div id="fechaError" class="error-message" style="display: none;">
                 <i class="fas fa-exclamation-triangle"></i> La fecha "Hasta" no puede ser menor que la fecha "Desde"
             </div>
@@ -229,7 +263,6 @@
         font-size: 1rem;
     }
 </style>
-<!-- ===== MODAL VER NOTA ===== -->
 <div id="modalVerNota" class="modal-overlay">
     <div class="modal-contenido">
         <div class="modal-header">
