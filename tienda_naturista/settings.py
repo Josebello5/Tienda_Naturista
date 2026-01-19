@@ -166,3 +166,7 @@ EMAIL_USE_SSL = False
 EMAIL_HOST_USER = 'a05adc001@smtp-brevo.com'
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'cambiar_por_clave_segura')
 DEFAULT_FROM_EMAIL = 'algomasparatusalud1@outlook.com'
+try:
+    from .local_settings import *
+except ImportError:
+    pass

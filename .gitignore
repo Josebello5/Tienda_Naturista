@@ -33,3 +33,5 @@ brain/
 task.md
 implementation_plan.md
 walkthrough.md
+
+tienda_naturista/local_settings.py

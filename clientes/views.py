@@ -41,12 +41,14 @@ def menu_clientes(request):
     registro_exitoso = request.GET.get('registro_exitoso')
     edicion_exitosa = request.GET.get('edicion_exitosa')
     eliminacion_exitosa = request.GET.get('eliminacion_exitosa')
+    error_eliminacion = request.GET.get('error_eliminacion')
     
     context = {
         'clientes': clientes,
         'registro_exitoso': registro_exitoso,
         'edicion_exitosa': edicion_exitosa,
         'eliminacion_exitosa': eliminacion_exitosa,
+        'error_eliminacion': error_eliminacion,
     }
     return render(request, 'clientes/menu_clientes.html', context)
 
@@ -75,6 +77,10 @@ def editar_cliente(request, id):
 def eliminar_cliente(request, id):
     cliente = get_object_or_404(Cliente, id=id)
     try:
+        # Validación: No eliminar si tiene ventas asociadas
+        if cliente.venta_set.exists():
+             return redirect(f"{reverse('clientes:menu_clientes')}?error_eliminacion=1")
+
         cliente_nombre = f"{cliente.nombre} {cliente.apellido}"
         cliente.delete()
         messages.success(request, f'Cliente {cliente_nombre} eliminado exitosamente')

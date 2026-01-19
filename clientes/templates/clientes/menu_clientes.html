@@ -170,6 +170,18 @@
     <button id="closeSuccessModal">Continuar</button>
   </div>
 </div>
+
+<!-- ===== MODAL DE ERROR PARA ACCIONES ===== -->
+<div id="modalError" class="modal-overlay">
+  <div class="modal-success" style="border-left: 5px solid #e74c3c;">
+    <div class="modal-success-icon" style="background: rgba(231, 76, 60, 0.1); color: #e74c3c;">
+      <i class="fas fa-times-circle"></i>
+    </div>
+    <h2 id="errorModalTitle" style="color: #e74c3c;">¡Error!</h2>
+    <p id="errorModalMessage">No se puede eliminar el cliente porque tiene ventas registradas.</p>
+    <button id="closeErrorModal" style="background: #e74c3c;">Entendido</button>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_css %}
@@ -181,9 +193,54 @@
 <script>
     // Pasar URLs de Django al JavaScript
     const GENERAR_PDF_URL = "{% url 'clientes:generar_pdf' %}";
-    const REGISTRO_EXITOSO = {% if registro_exitoso %}true{% else %}false{% endif %};
-    const EDICION_EXITOSA = {% if edicion_exitosa %}true{% else %}false{% endif %};
-    const ELIMINACION_EXITOSA = {% if eliminacion_exitosa %}true{% else %}false{% endif %};
+    
+    // Obtener parámetros de la URL directamente para definir las constantes globales
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Definir variables globales requeridas por menu_clientes.js
+    const REGISTRO_EXITOSO = urlParams.has('registro_exitoso');
+    const EDICION_EXITOSA = urlParams.has('edicion_exitosa');
+    const ELIMINACION_EXITOSA = urlParams.has('eliminacion_exitosa');
+    
+    // Obtener parámetros de la URL directamente y mostrar modal de error
+    window.addEventListener('load', function() {
+        if (urlParams.has('error_eliminacion')) {
+            const modalError = document.getElementById('modalError');
+            if (modalError) {
+                // Forzar visibilidad inmediata
+                modalError.style.display = 'flex';
+                modalError.style.visibility = 'visible';
+                modalError.style.opacity = '1';
+                
+                // Asegurar que el contenido también sea visible
+                const content = modalError.querySelector('.modal-success');
+                if (content) {
+                    content.style.transform = 'scale(1)';
+                    content.style.opacity = '1';
+                }
+                
+                // Configurar cierre
+                const closeBtn = document.getElementById('closeErrorModal');
+                const cerrarModal = function() {
+                    modalError.style.opacity = '0';
+                    setTimeout(() => {
+                        modalError.style.display = 'none';
+                        // Limpiar URL sin recargar
+                        const url = new URL(window.location);
+                        url.searchParams.delete('error_eliminacion');
+                        window.history.replaceState({}, '', url);
+                    }, 300);
+                };
+                
+                if (closeBtn) closeBtn.onclick = cerrarModal;
+                
+                // Cerrar al click fuera
+                modalError.onclick = function(e) {
+                    if (e.target === modalError) cerrarModal();
+                };
+            }
+        }
+    });
     
     // Auto-ocultar mensajes después de 5 segundos (solo para errores)
     document.addEventListener('DOMContentLoaded', function() {
