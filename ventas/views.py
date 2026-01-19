@@ -26,6 +26,7 @@ from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib.units import mm, inch
 from usuarios.utils import can_void_sales, can_print_reports
 from usuarios.decorators import role_required
+from django.contrib.auth.decorators import login_required
 
 
 def menu_ventas(request):
@@ -980,3 +981,17 @@ def generar_pdf_ventas(request):
         p.showPage()
         p.save()
         return response
+@login_required
+def ver_ticket_58mm(request, venta_id):
+    """Vista para ticket térmico de 58mm"""
+    try:
+        venta = get_object_or_404(Venta, ID_Ventas=venta_id)
+        
+        # Reutilizar el contexto existente del modelo
+        context = venta.get_html_context()
+        
+        # Renderizar template específico para 58mm
+        return render(request, 'ventas/ticket_58mm.html', context)
+        
+    except Exception as e:
+        return HttpResponse(f"Error al mostrar ticket 58mm: {str(e)}", status=500)

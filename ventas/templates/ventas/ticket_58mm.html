@@ -1,0 +1,248 @@
+{% load static %}
+{% load currency_tags %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket 58mm - #{{ venta.ID_Ventas }}</title>
+    <style>
+        /* Estilos para impresora térmica (58mm) */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @page {
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            width: 58mm;
+            max-width: 58mm;
+            margin: 0;
+            padding: 1mm 2mm; /* Mínimo padding solo a los lados */
+            line-height: 1.1;
+            background: #fff;
+        }
+        
+        .ticket-header {
+            text-align: center;
+            margin-bottom: 3px;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 2px;
+        }
+        
+        .ticket-header h1 {
+            font-size: 11px;
+            font-weight: bold;
+            margin: 1px 0;
+            text-transform: uppercase;
+        }
+        
+        .ticket-header .subtitle {
+            font-size: 9px;
+            margin: 0;
+        }
+        
+        .venta-info {
+            margin: 3px 0;
+            padding: 2px 0;
+            border-bottom: 1px dashed #000;
+            font-size: 9px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 1px 0;
+        }
+        
+        /* Layout de productos para espacio reducido */
+        .productos-list {
+            width: 100%;
+            margin: 3px 0;
+        }
+        
+        .producto-item {
+            margin-bottom: 2px;
+            border-bottom: 1px dotted #ccc;
+            padding-bottom: 1px;
+        }
+        
+        .prod-nombre {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 1px;
+            font-size: 9px;
+            text-transform: uppercase;
+        }
+        
+        .prod-detalles {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+        }
+        
+        .totales {
+            margin-top: 3px;
+            border-top: 1px dashed #000;
+            padding-top: 2px;
+            font-size: 10px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 1px 0;
+        }
+        
+        .total-row.total-final {
+            font-weight: bold;
+            font-size: 11px;
+            border-top: 1px solid #000;
+            padding-top: 2px;
+            margin-top: 2px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 8px;
+            color: #000;
+        }
+
+        .print-btn-container {
+            display: block;
+            text-align: center;
+            margin: 5px 0;
+        }
+
+        @media print {
+            .print-btn-container {
+                display: none !important;
+            }
+            
+            body {
+                width: 58mm;
+                margin: 0;
+                padding: 0 2mm;
+            }
+            
+            @page {
+                margin: 0;
+                size: 58mm auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-btn-container">
+        <button onclick="window.print()" style="padding: 5px 10px;">🖨️ Imprimir</button>
+    </div>
+
+    <div class="ticket-header">
+        <h1>TIENDA NATURISTA</h1>
+        <div class="subtitle">Ticket de Venta</div>
+    </div>
+    
+    <div class="venta-info">
+        <div class="info-row">
+            <span>#: {{ venta.ID_Ventas }}</span>
+            <span>{{ fecha_formateada }}</span>
+        </div>
+        <div class="info-row">
+            <span>Cli: {{ venta.Cedula.nombre }} {{ venta.Cedula.apellido }}</span>
+        </div>
+        <div class="info-row">
+            <span>CI: {{ venta.Cedula.cedula }}</span>
+        </div>
+    </div>
+    
+    <div class="productos-list">
+        {% for producto_id, datos in productos_agrupados.items %}
+        <div class="producto-item">
+            <span class="prod-nombre">{{ datos.nombre }}</span>
+            <div class="prod-detalles">
+                <span>{{ datos.cantidad }} x {{ datos.precio_sin_iva_formatted }}</span>
+                <span>{{ datos.subtotal_formatted }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="totales">
+        <div class="total-row">
+            <span>Subt:</span>
+            <span>{{ subtotal_formatted }}</span>
+        </div>
+        {% if iva_formatted != "0,00" %}
+        <div class="total-row">
+            <span>IVA (16%):</span>
+            <span>{{ iva_formatted }}</span>
+        </div>
+        {% endif %}
+        <div class="total-row total-final">
+            <span>TOTAL:</span>
+            <span>Based {{ total_formatted }}</span>
+        </div>
+        
+        
+        {% if venta.Tipo_Venta == 'credito' %}
+        <div class="total-row" style="margin-top: 3px; border-top: 1px dotted #000;">
+            <span>Abono:</span>
+            <span>{{ abono_formatted }}</span>
+        </div>
+        <div class="total-row">
+            <span>Pend:</span>
+            <span>{{ saldo_formatted }}</span>
+        </div>
+        
+        {% if abonos_detallados %}
+        <div style="margin-top: 5px; padding-top: 3px; border-top: 1px dashed #000;">
+            <div style="text-align: center; font-weight: bold; font-size: 9px; margin-bottom: 2px;">
+                HISTORIAL DE ABONOS
+            </div>
+            {% for abono in abonos_detallados %}
+            <div style="margin-bottom: 3px; font-size: 8px; padding: 2px; background: #f5f5f5; border: 1px dotted #ccc;">
+                <div style="font-weight: bold; margin-bottom: 1px;">
+                    Abono #{{ abono.id }} - {{ abono.fecha }}
+                </div>
+                <div style="margin-left: 2px;">
+                    <div>{{ abono.metodo }}</div>
+                    {% if abono.comprobante %}
+                    <div>Comp: {{ abono.comprobante }}</div>
+                    {% endif %}
+                    <div style="margin-top: 1px; padding-top: 1px; border-top: 1px dotted #ccc;">
+                        <strong>Monto:</strong> Bs {{ abono.monto_bs_formatted }}
+                    </div>
+                    <div>Tasa: {{ abono.tasa_abono_formatted }} Bs/$</div>
+                    <div>Equiv: $ {{ abono.monto_usd_formatted }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endif %}
+
+    </div>
+    
+    <div class="footer">
+        <div>¡Gracias por su compra!</div>
+        <div>{{ fecha_formateada }}</div>
+    </div>
+
+    <script>
+        // Auto-imprimir al cargar
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
+</body>
+</html>

@@ -12,6 +12,7 @@ urlpatterns = [
     path('procesar-venta/', views.procesar_venta, name='procesar_venta'),
     path('descargar-comprobante/<int:venta_id>/', views.descargar_comprobante, name='descargar_comprobante'),
     path('ver-comprobante/<int:venta_id>/', views.ver_comprobante, name='ver_comprobante'),
+    path('ver-ticket-58mm/<int:venta_id>/', views.ver_ticket_58mm, name='ver_ticket_58mm'),
     path('devolver-venta/<int:venta_id>/', views.devolver_venta, name='devolver_venta'),
     path('generar-pdf-ventas/', views.generar_pdf_ventas, name='generar_pdf_ventas'),
 ]
