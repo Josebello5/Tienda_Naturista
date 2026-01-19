@@ -39,11 +39,16 @@ function initChartControls() {
     // Toggle de moneda para ventas
     const toggleVentas = document.getElementById('toggle-moneda-ventas');
     if (toggleVentas) {
+        // Inicializar estado visual
+        updateCurrencyButtonState(toggleVentas, toggleVentas.dataset.moneda);
+
         toggleVentas.addEventListener('click', function() {
             const currentMoneda = this.dataset.moneda;
             const newMoneda = currentMoneda === 'bs' ? 'usd' : 'bs';
             this.dataset.moneda = newMoneda;
-            this.querySelector('span').textContent = newMoneda === 'bs' ? 'Bs' : 'USD';
+            
+            updateCurrencyButtonState(this, newMoneda);
+
             // Recargar gráfico y actualizar URLs
             loadChartVentas();
         });
@@ -64,11 +69,16 @@ function initChartControls() {
     // Toggle de moneda para categorías
     const toggleCategorias = document.getElementById('toggle-moneda-categorias');
     if (toggleCategorias) {
+        // Inicializar estado visual
+        updateCurrencyButtonState(toggleCategorias, toggleCategorias.dataset.moneda);
+
         toggleCategorias.addEventListener('click', function() {
             const currentMoneda = this.dataset.moneda;
             const newMoneda = currentMoneda === 'bs' ? 'usd' : 'bs';
             this.dataset.moneda = newMoneda;
-            this.querySelector('span').textContent = newMoneda === 'bs' ? 'Bs' : 'USD';
+            
+            updateCurrencyButtonState(this, newMoneda);
+
             // Recargar gráfico inmediatamente
             loadChartCategorias();
         });
@@ -92,6 +102,23 @@ function initChartControls() {
     
     // Inicializar fechas por defecto
     initDefaultDates();
+}
+
+/**
+ * Actualiza el estado visual del botón de moneda
+ * Oculta el icono de dólar si es Bs
+ */
+function updateCurrencyButtonState(button, moneda) {
+    const icon = button.querySelector('i');
+    const span = button.querySelector('span');
+    
+    if (moneda === 'bs') {
+        if (icon) icon.style.display = 'none';
+        if (span) span.textContent = 'Bs';
+    } else {
+        if (icon) icon.style.display = 'inline-block';
+        if (span) span.textContent = 'USD';
+    }
 }
 
 function setupDateValidations() {
