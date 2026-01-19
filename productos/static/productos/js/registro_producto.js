@@ -108,6 +108,17 @@ document.addEventListener('DOMContentLoaded', function () {
             validarSerial();
             toggleSubmitButton();
         });
+
+        // Manejo de Scanner (Enter Key)
+        serial.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevenir envío del formulario
+                // Mover foco al siguiente campo (Categoría)
+                if (categoriaBusqueda) {
+                    categoriaBusqueda.focus();
+                }
+            }
+        });
     }
 
     // ===== SUGERENCIAS PARA CATEGORÍA Y PATOLOGÍA =====

@@ -182,6 +182,7 @@ def buscar_productos(request):
             productos_data.append({
                 'id': producto.ID_producto,
                 'nombre': producto.nombre_pro,
+                'serial': producto.serial,  # Agregar serial para validación exacta
                 'precio_usd': float(producto.precio_venta),  # Convertir Decimal a float
                 'precio_formateado': f"${producto.precio_venta:.2f}",  # Para mostrar en la interfaz
                 'stock_total': stock_total,

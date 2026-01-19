@@ -884,6 +884,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         });
 
+        // Manejo de Scanner (Enter Key)
+        buscarProductoInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const query = this.value.trim();
+                if (query.length > 0) {
+                    clearTimeout(searchTimeout); // Cancelar búsqueda por input normal
+                    buscarProductos(query, true); // Buscar con flag de auto-agregar
+                }
+            }
+        });
+
         // Formulario de cliente
         btnCancelarCliente.addEventListener('click', function() {
             clienteFormContainer.style.display = 'none';
@@ -1138,7 +1150,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ===== BÚSQUEDA DE PRODUCTOS =====
-    function buscarProductos(query) {
+    // ===== BÚSQUEDA DE PRODUCTOS =====
+    function buscarProductos(query, autoAdd = false) {
         if (query.length < 2) {
             productosResult.innerHTML = '';
             return;
@@ -1147,6 +1160,34 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`/ventas/buscar-productos/?q=${encodeURIComponent(query)}`)
             .then(response => response.json())
             .then(data => {
+                // Lógica de Autoscan
+                if (autoAdd) {
+                    // Buscar coincidencia exacta por serial o código
+                    const exactMatch = data.productos.find(p => 
+                        (p.serial && p.serial.toUpperCase() === query.toUpperCase()) || 
+                        p.nombre.toUpperCase() === query.toUpperCase() // Fallback por nombre exacto
+                    );
+
+                    if (exactMatch) {
+                        agregarProductoAVenta(exactMatch);
+                        // Limpiar input y resultados
+                        buscarProductoInput.value = '';
+                        productosResult.innerHTML = '';
+                        buscarProductoInput.focus();
+                        return; // Detener flujo aquí si se agrego
+                    } else if (data.productos.length === 1) {
+                         // Si solo hay un resultado (aunque no sea match exacto de texto), agregarlo también?
+                         // Mejor ser conservador: Solo match exacto de serial.
+                         // Pero si el usuario escanea un código y solo sale un producto, probablemente sea ese.
+                         // Vamos a asumir que si hay un solo resultado y vino de Enter, es ese.
+                         agregarProductoAVenta(data.productos[0]);
+                         buscarProductoInput.value = '';
+                         productosResult.innerHTML = '';
+                         buscarProductoInput.focus();
+                         return;
+                    }
+                }
+
                 mostrarResultadosProductos(data.productos);
             })
             .catch(error => {
