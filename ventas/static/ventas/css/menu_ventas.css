@@ -1425,7 +1425,7 @@ tbody tr {
 }
 
 .modal-success button {
-  background: linear-gradient(to right, var(--primary), var(--secondary));
+  background: linear-gradient(to right, var(--primary-green), var(--detail-green));
   color: white;
   border: none;
   padding: 12px 25px;

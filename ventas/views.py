@@ -66,7 +66,15 @@ def menu_ventas(request):
     total_pagos_bs = Decimal('0')  # Pagos en bolívares (efectivo_bs, transferencia, pago_movil, etc.)
     total_pagos_ref = Decimal('0')  # Pagos en dólares (efectivo_usd)
     
+    # Recalcular cantidad de ventas válidas (no anuladas)
+    ventas_validas = 0
+    
     for venta in ventas:
+        if venta.anulada:
+            continue
+            
+        ventas_validas += 1
+        
         # Usar los valores guardados en la venta
         total_bs += venta.Total
         total_usd += venta.Total_USD
@@ -89,7 +97,7 @@ def menu_ventas(request):
         'ventas': ventas,
         'clientes_json': clientes_json,
         'tasa_actual': tasa_actual,
-        'total_ventas': total_ventas,
+        'total_ventas': ventas_validas,
         'total_bs': total_bs,
         'total_usd': total_usd,
         'subtotal_bs': subtotal_bs,
@@ -561,23 +569,39 @@ def devolver_venta(request, venta_id):
                 return JsonResponse({'success': False, 'error': 'Esta venta ya fue anulada anteriormente'})
             
             detalles = venta.detalles.all()
+            productos_inactivos = []
+            
             for detalle in detalles:
                 lote = detalle.ID_lote
                 lote.cantidad_disponible += detalle.Cantidad
                 
-                if lote.estado == 'agotado' and lote.cantidad_disponible > 0:
-                    lote.estado = 'activo'
+                # Reactivar lote si tiene disponibilidad y no está vencido
+                # Importante: Esto se hace independientemente de si el producto está activo o no,
+                # para asegurar la integridad del inventario físico.
+                if lote.cantidad_disponible > 0 and lote.estado in ['agotado', 'inactivo']:
+                     # Verificar fecha de vencimiento antes de activar ciegamente
+                    if lote.fecha_vencimiento >= timezone.now().date():
+                        lote.estado = 'activo'
+                    else:
+                        lote.estado = 'vencido'
                 
                 lote.save()
+                
+                # Advertencia informativa si el producto está inactivo
+                if lote.id_producto.estado != 'activo':
+                    productos_inactivos.append(lote.id_producto.nombre_pro)
             
             venta.anulada = True
             venta.save()
             
-            # messages.success eliminated to use modal only
+            mensaje = f'Venta #{venta_id} anulada exitosamente. Productos reintegrados al stock.'
+            if productos_inactivos:
+                nombres = ", ".join(set(productos_inactivos))
+                mensaje += f' NOTA: Los siguientes productos reintegrados están actualmente INACTIVOS en el sistema: {nombres}.'
             
             return JsonResponse({
                 'success': True,
-                'mensaje': f'Venta #{venta_id} anulada exitosamente. Productos reintegrados al stock.'
+                'mensaje': mensaje
             })
             
         except Exception as e:

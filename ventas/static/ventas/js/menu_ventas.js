@@ -228,6 +228,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const tieneProductosConIva = fila.hasAttribute('data-tiene-iva')
                 ? fila.getAttribute('data-tiene-iva') === 'true'
                 : true;
+            
+            // VERIFICAR SI ESTÁ ANULADA PARA EXCLUIR DE LOS MONTOS
+            const esAnulada = fila.getAttribute('data-anulada') === 'si';
 
             let subtotalVentaBs = 0;
             let ivaVentaBs = 0;
@@ -263,20 +266,21 @@ document.addEventListener('DOMContentLoaded', function () {
                             }
                         }
 
-                        totalBs += pagoBs;
-                        totalUsd += pagoUsd;
-                        subtotalBs += subtotalVentaBs;
-                        subtotalUsd += subtotalVentaUsd;
-                        ivaBs += ivaVentaBs;
-                        ivaUsd += ivaVentaUsd;
+                        // SOLO SUMAR SI NO ESTÁ ANULADA
+                        if (!esAnulada) {
+                            totalBs += pagoBs;
+                            totalUsd += pagoUsd;
+                            subtotalBs += subtotalVentaBs;
+                            subtotalUsd += subtotalVentaUsd;
+                            ivaBs += ivaVentaBs;
+                            ivaUsd += ivaVentaUsd;
+                        }
                     }
                 } catch (e) {
                     console.error('Error al procesar datos de pagos:', e);
                 }
             } else {
                 // Sin filtro por método, usar el total de la venta
-                totalBs += totalVentaBs;
-                totalUsd += totalVentaUsd;
 
                 // Calcular subtotal e IVA aproximados
                 if (tieneProductosConIva) {
@@ -293,10 +297,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     ivaVentaUsd = 0;
                 }
 
-                subtotalBs += subtotalVentaBs;
-                subtotalUsd += subtotalVentaUsd;
-                ivaBs += ivaVentaBs;
-                ivaUsd += ivaVentaUsd;
+                // SOLO SUMAR SI NO ESTÁ ANULADA
+                if (!esAnulada) {
+                    totalBs += totalVentaBs;
+                    totalUsd += totalVentaUsd;
+                    subtotalBs += subtotalVentaBs;
+                    subtotalUsd += subtotalVentaUsd;
+                    ivaBs += ivaVentaBs;
+                    ivaUsd += ivaVentaUsd;
+                }
             }
         });
 
