@@ -115,10 +115,10 @@ body {
 /* CORRECCIÓN: Header en estado colapsado */
 /* CORRECCIÓN: Header en estado colapsado */
 .sidebar.collapsed .sidebar-header {
-  padding: 10px; /* Reduced padding */
+  padding: 5px 0; /* Reduced padding to save vertical space */
   justify-content: center;
-  /* Removed: flex-direction: column; to prevent stacking */
-  /* Removed: gap: 10px; */
+  flex-direction: column; /* Stack logo and button */
+  gap: 10px; /* Slight separation (reduced from 15px) */
 }
 
 .sidebar.collapsed .sidebar-header .sidebar-toggler {
@@ -131,13 +131,14 @@ body {
   display: block; /* Show logo container in collapsed mode */
 }
 
-/* ESTILO PURISTA (SOLO LOGO REDONDO) */
-.header-logo {
-  display: flex;
+/* ESCALADO AL COLAPSAR */
+.sidebar.collapsed .header-logo {
+  width: 48px; /* Match nav-link width */
+  height: 48px; /* Match nav-link height */
+  margin: 0 auto; /* Center horizontally like nav-link */
+  display: flex !important; /* Ensure flex is active */
   align-items: center;
   justify-content: center;
-  height: 100%;
-  width: 100%;
 }
 
 .logo-main {
