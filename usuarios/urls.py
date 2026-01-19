@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, views_db
 from django.contrib.auth.views import LogoutView
 
 app_name = 'usuarios' 
@@ -20,4 +20,8 @@ urlpatterns = [
     path('send-reset-code/', views.send_reset_code, name='send_reset_code'),
     path('verify-code/', views.verify_reset_code, name='verify_reset_code'),
     path('reset-password/', views.reset_password, name='reset_password'),
+    
+    # Database Management
+    path('configuracion/exportar-db/', views_db.exportar_base_datos, name='exportar_db'),
+    path('configuracion/importar-db/', views_db.importar_base_datos, name='importar_db'),
 ]

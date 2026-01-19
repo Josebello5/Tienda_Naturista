@@ -523,4 +523,97 @@ document.addEventListener('DOMContentLoaded', function () {
         // Clean URL
         window.history.replaceState({}, document.title, window.location.pathname);
     }
+
+
+    // ===== GESTIÓN DE BASE DE DATOS =====
+    const btnImportarDB = document.getElementById('btnImportarDB');
+    const dbImportInput = document.getElementById('dbImportInput');
+    const modalConfirmImport = document.getElementById('modalConfirmImport');
+    const btnCancelImport = document.getElementById('btnCancelImport');
+    const btnConfirmImport = document.getElementById('btnConfirmImport');
+    const selectedFileName = document.getElementById('selectedFileName');
+
+    if (btnImportarDB && dbImportInput) {
+        btnImportarDB.addEventListener('click', function() {
+            dbImportInput.click();
+        });
+
+        dbImportInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                if (selectedFileName) selectedFileName.textContent = file.name;
+                
+                // Mostrar modal de confirmación
+                if (modalConfirmImport) {
+                    modalConfirmImport.classList.add('active');
+                    modalConfirmImport.style.visibility = 'visible';
+                    modalConfirmImport.style.opacity = '1';
+                }
+            }
+        });
+    }
+
+    if (btnCancelImport) {
+        btnCancelImport.addEventListener('click', function() {
+            if (modalConfirmImport) {
+                modalConfirmImport.classList.remove('active');
+                modalConfirmImport.style.visibility = 'hidden';
+                modalConfirmImport.style.opacity = '0';
+            }
+            // Limpiar input
+            if (dbImportInput) dbImportInput.value = '';
+        });
+    }
+
+    if (btnConfirmImport) {
+        btnConfirmImport.addEventListener('click', function() {
+            if (!dbImportInput.files.length) return;
+
+            const file = dbImportInput.files[0];
+            const formData = new FormData();
+            formData.append('backup_file', file);
+
+            // Deshabilitar botón y mostrar estado de carga
+            const originalText = btnConfirmImport.innerHTML;
+            btnConfirmImport.disabled = true;
+            btnConfirmImport.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Restaurando...';
+
+            fetch(window.IMPORTAR_DB_URL, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Cerrar modal de confirmación
+                    if (modalConfirmImport) {
+                        modalConfirmImport.classList.remove('active');
+                        modalConfirmImport.style.visibility = 'hidden';
+                        modalConfirmImport.style.opacity = '0';
+                    }
+                    
+                    // Mostrar éxito
+                    mostrarExito('Restauración Exitosa', 'La base de datos ha sido restaurada correctamente. El sistema se reiniciará.');
+                    
+                    // Recargar página después de unos segundos
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    alert('Error al importar: ' + data.error);
+                    btnConfirmImport.disabled = false;
+                    btnConfirmImport.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ocurrió un error inesperado al importar la base de datos.');
+                btnConfirmImport.disabled = false;
+                btnConfirmImport.innerHTML = originalText;
+            });
+        });
+    }
 });

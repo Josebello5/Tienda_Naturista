@@ -20,6 +20,23 @@
 </div>
 {% endif %}
 
+
+<div class="db-management-card" style="background: white; padding: 1.5rem; border-radius: 15px; margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;">
+  <div>
+    <h3 style="color: #2c3e50; margin-bottom: 0.5rem;"><i class="fas fa-database"></i> Gestión de Base de Datos</h3>
+    <p style="color: #7f8c8d; margin: 0;">Realice copias de seguridad o restaure el sistema.</p>
+  </div>
+  <div class="db-actions" style="display: flex; gap: 10px;">
+    <a href="{% url 'usuarios:exportar_db' %}" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px;">
+      <i class="fas fa-download"></i> Exportar Respaldo
+    </a>
+    <button id="btnImportarDB" class="btn btn-secondary" style="display: flex; align-items: center; gap: 8px;">
+      <i class="fas fa-upload"></i> Importar Respaldo
+    </button>
+    <input type="file" id="dbImportInput" accept=".json" style="display: none;">
+  </div>
+</div>
+
 <div class="productos-container">
   <div class="productos-main">
 
@@ -209,6 +226,29 @@
   </div>
 </div>
 
+<div id="modalConfirmImport" class="modal-overlay">
+  <div class="modal-confirm" style="background: white; padding: 2rem; border-radius: 15px; text-align: center; max-width: 450px; width: 90%;">
+    <div class="modal-confirm-icon" style="font-size: 3rem; color: #e74c3c; margin-bottom: 1rem;">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h2 style="color: #c0392b;">¡Advertencia de Seguridad!</h2>
+    <p style="color: #555; margin-bottom: 1.5rem;">
+        Está a punto de restaurar la base de datos. <br>
+        <strong>Esta acción sobrescribirá los datos actuales y no se puede deshacer.</strong>
+    </p>
+    <div style="background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 1.5rem; text-align: left;">
+        <small style="display: block; color: #7f8c8d; margin-bottom: 5px;">Archivo seleccionado:</small>
+        <strong id="selectedFileName" style="color: #2c3e50;">backup.json</strong>
+    </div>
+    <div class="modal-confirm-actions" style="display: flex; justify-content: center; gap: 1rem;">
+      <button id="btnCancelImport" class="btn btn-secondary">Cancelar</button>
+      <button id="btnConfirmImport" class="btn btn-danger">
+         <i class="fas fa-file-import"></i> Confirmar Restauración
+      </button>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_css %}
@@ -345,6 +385,7 @@
   window.EDITAR_USUARIO_URL = "{% url 'usuarios:editar_usuario_api' %}";
   window.VERIFICAR_EMAIL_URL = "{% url 'usuarios:verificar_email_api' %}";
   window.CAMBIAR_ESTADO_URL = "{% url 'usuarios:cambiar_estado_usuario_api' %}";
+  window.IMPORTAR_DB_URL = "{% url 'usuarios:importar_db' %}";
 </script>
 <script src="{% static 'usuarios/js/menu_configuracion.js' %}"></script>
 {% endblock %}
