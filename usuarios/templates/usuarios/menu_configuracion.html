@@ -173,6 +173,9 @@
         <div class="mb-3">
           <label for="editEmail" class="form-label">Correo Electrónico:</label>
           <input type="email" id="editEmail" class="form-control" required>
+          <div id="emailError" class="invalid-feedback" style="display: none; color: #e74c3c; font-size: 0.85rem; margin-top: 5px;">
+            <i class="fas fa-exclamation-circle"></i> Este correo ya está asociado a otro usuario.
+          </div>
         </div>
 
         <div class="mb-3">
@@ -340,6 +343,7 @@
 {% block extra_js %}
 <script>
   window.EDITAR_USUARIO_URL = "{% url 'usuarios:editar_usuario_api' %}";
+  window.VERIFICAR_EMAIL_URL = "{% url 'usuarios:verificar_email_api' %}";
   window.CAMBIAR_ESTADO_URL = "{% url 'usuarios:cambiar_estado_usuario_api' %}";
 </script>
 <script src="{% static 'usuarios/js/menu_configuracion.js' %}"></script>

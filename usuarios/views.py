@@ -311,6 +311,10 @@ def editar_usuario_api(request):
             if not rol_nombre:
                 return JsonResponse({'success': False, 'error': 'El rol es obligatorio'}, status=400)
 
+            # Verificar que el email no esté tomado por otro usuario
+            if Usuario.objects.filter(email=email).exclude(pk=user_id).exists():
+                return JsonResponse({'success': False, 'error': 'Este correo ya está en uso por otro usuario.'}, status=400)
+
             # Actualizar datos básicos
             user.first_name = first_name.upper()
             user.last_name = last_name.upper()
@@ -333,6 +337,30 @@ def editar_usuario_api(request):
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
             
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+@login_required
+def verificar_email_api(request):
+    """Verifica si un email ya está en uso por otro usuario"""
+    if request.method == 'GET':
+        email = request.GET.get('email', '').strip().lower()
+        user_id = request.GET.get('id')
+        
+        if not email:
+            return JsonResponse({'exists': False})
+            
+        from .models import Usuario
+        
+        # Buscar usuarios con ese email
+        query = Usuario.objects.filter(email=email)
+        
+        # Si se proporciona un ID, excluir ese usuario (es el que estamos editando)
+        if user_id:
+            query = query.exclude(pk=user_id)
+            
+        exists = query.exists()
+        return JsonResponse({'exists': exists})
+        
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 @login_required
 def cambiar_estado_usuario_api(request):
@@ -358,3 +386,257 @@ def cambiar_estado_usuario_api(request):
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
             
     return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+# ===== PASSWORD RECOVERY VIEWS =====
+
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse, HttpResponse
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
+from .models import Usuario, PasswordResetToken
+import json
+from django.db.models import Q
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+from datetime import datetime
+
+
+# ===== PASSWORD RECOVERY VIEWS =====
+
+def password_reset_request(request):
+    """Vista para solicitar recuperación de contraseña"""
+    return render(request, 'usuarios/password_reset_request.html')
+
+
+def send_reset_code(request):
+    """Envía código de verificación por email"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email', '').strip().lower()
+            print(f"DEBUG REQUERIMIENTO: Buscando email '{email}'")
+            
+            if not email:
+                return JsonResponse({'success': False, 'error': 'Email es requerido'}, status=400)
+            
+            # Buscar usuario por email
+            try:
+                user = Usuario.objects.get(email=email)
+            except Usuario.DoesNotExist:
+                # Por seguridad, no revelar si el email existe o no
+                return JsonResponse({'success': True, 'message': 'Si el email existe, recibirás un código de verificación'})
+            
+            # Verificar rate limiting (máximo 3 intentos por hora)
+            one_hour_ago = timezone.now() - timedelta(hours=1)
+            recent_tokens = PasswordResetToken.objects.filter(
+                user=user,
+                created_at__gte=one_hour_ago
+            ).count()
+            
+            if recent_tokens >= 3:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Has excedido el límite de intentos. Intenta nuevamente en 1 hora.'
+                }, status=429)
+            
+            # Crear nuevo token
+            token = PasswordResetToken.objects.create(
+                user=user,
+                ip_address=get_client_ip(request)
+            )
+            
+            # Enviar email
+            subject = 'Código de Recuperación de Contraseña - Tienda Naturista'
+            message = f"""
+Hola {user.first_name},
+
+Has solicitado recuperar tu contraseña en Tienda Naturista.
+
+Tu código de verificación es: {token.code}
+
+Este código expirará en 15 minutos.
+
+Si no solicitaste este cambio, ignora este mensaje.
+
+Saludos,
+Equipo de Tienda Naturista
+            """
+            
+            print(f"DEBUG: Intentando enviar email desde {settings.DEFAULT_FROM_EMAIL} hacia {user.email}")
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False,
+                )
+                print("DEBUG: Email enviado exitosamente según Django")
+            except Exception as mail_error:
+                print(f"DEBUG ERROR SMTP: {str(mail_error)}")
+                raise mail_error
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Código enviado a tu email',
+                'email_masked': mask_email(email)
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Error al enviar el código: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+
+def verify_reset_code(request):
+    """Verifica el código de recuperación"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email', '').strip().lower()
+            code = data.get('code', '').strip()
+            
+            if not email or not code:
+                return JsonResponse({'success': False, 'error': 'Email y código son requeridos'}, status=400)
+            
+            # Buscar usuario
+            try:
+                user = Usuario.objects.get(email=email)
+            except Usuario.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Código inválido'}, status=400)
+            
+            # Buscar token válido
+            try:
+                token = PasswordResetToken.objects.filter(
+                    user=user,
+                    code=code,
+                    is_used=False
+                ).latest('created_at')
+                
+                if not token.is_valid():
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'El código ha expirado. Solicita uno nuevo.'
+                    }, status=400)
+                
+                # Guardar token_id en sesión para el siguiente paso
+                request.session['reset_token_id'] = token.id
+                request.session['reset_user_id'] = user.id
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Código verificado correctamente'
+                })
+                
+            except PasswordResetToken.DoesNotExist:
+                return JsonResponse({'success': False, 'error': 'Código inválido'}, status=400)
+                
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+
+def reset_password(request):
+    """Restablece la contraseña del usuario"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            new_password = data.get('password', '')
+            confirm_password = data.get('confirm_password', '')
+            
+            # Verificar que hay una sesión activa de reset
+            token_id = request.session.get('reset_token_id')
+            user_id = request.session.get('reset_user_id')
+            
+            if not token_id or not user_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Sesión expirada. Inicia el proceso nuevamente.'
+                }, status=400)
+            
+            # Validaciones de contraseña
+            if not new_password or not confirm_password:
+                return JsonResponse({'success': False, 'error': 'Todos los campos son requeridos'}, status=400)
+            
+            if new_password != confirm_password:
+                return JsonResponse({'success': False, 'error': 'Las contraseñas no coinciden'}, status=400)
+            
+            if len(new_password) < 8:
+                return JsonResponse({'success': False, 'error': 'La contraseña debe tener al menos 8 caracteres'}, status=400)
+            
+            if not any(c.isupper() for c in new_password):
+                return JsonResponse({'success': False, 'error': 'La contraseña debe contener al menos una mayúscula'}, status=400)
+            
+            if not any(c.islower() for c in new_password):
+                return JsonResponse({'success': False, 'error': 'La contraseña debe contener al menos una minúscula'}, status=400)
+            
+            if not any(c.isdigit() for c in new_password):
+                return JsonResponse({'success': False, 'error': 'La contraseña debe contener al menos un número'}, status=400)
+            
+            # Obtener usuario y token
+            user = get_object_or_404(Usuario, pk=user_id)
+            token = get_object_or_404(PasswordResetToken, pk=token_id)
+            
+            # Verificar que el token sigue siendo válido
+            if not token.is_valid():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'El código ha expirado. Inicia el proceso nuevamente.'
+                }, status=400)
+            
+            # Cambiar contraseña
+            user.set_password(new_password)
+            user.save()
+            
+            # Marcar token como usado
+            token.mark_as_used()
+            
+            # Limpiar sesión
+            request.session.pop('reset_token_id', None)
+            request.session.pop('reset_user_id', None)
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Contraseña restablecida exitosamente'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+    # GET request - mostrar formulario
+    if 'reset_token_id' not in request.session:
+        messages.error(request, 'Sesión expirada. Inicia el proceso nuevamente.')
+        return redirect('usuarios:password_reset_request')
+    
+    return render(request, 'usuarios/password_reset_confirm.html')
+
+
+# ===== UTILITY FUNCTIONS =====
+
+def get_client_ip(request):
+    """Obtiene la IP del cliente"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+def mask_email(email):
+    """Enmascara el email para privacidad"""
+    if '@' not in email:
+        return email
+    username, domain = email.split('@')
+    if len(username) <= 2:
+        masked_username = username[0] + '*'
+    else:
+        masked_username = username[0] + '*' * (len(username) - 2) + username[-1]
+    return f"{masked_username}@{domain}"

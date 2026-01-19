@@ -1794,3 +1794,51 @@ tbody tr {
   transform: scale(1.15);
   box-shadow: 0 4px 12px rgba(52, 152, 181, 0.3);
 }
+/* ===== TABLA COMPACTA (Proveedores) ===== */
+.table-compact th,
+.table-compact td {
+  padding: 8px 10px !important;
+  font-size: 0.85rem !important;
+}
+
+.table-compact .btn-action {
+  width: 28px;
+  height: 28px;
+  font-size: 0.8rem;
+}
+
+
+/* ===== OPTIMIZACIÓN TABLA PRINCIPAL (Lotes) ===== */
+.productos-main th, 
+.productos-main td {
+  padding: 10px 8px;
+  font-size: 0.8rem;
+}
+
+
+/* ===== AJUSTE DE ANCHOS DE COLUMNAS (Para eliminar scroll horizontal) ===== */
+table {
+  min-width: 950px !important; /* Reducido de 1200px */
+}
+
+/* Producto */
+th:nth-child(1) { width: 180px !important; }
+
+/* Unidades del Lote */
+th:nth-child(2) { width: 100px !important; }
+
+/* Costo Unitario */
+th:nth-child(3) { width: 110px !important; }
+
+/* Fecha Recibimiento */
+th:nth-child(4) { width: 130px !important; }
+
+/* Fecha Vencimiento */
+th:nth-child(5) { width: 130px !important; }
+
+/* Estado */
+th:nth-child(6) { width: 100px !important; }
+
+/* Acciones */
+th:nth-child(7) { width: 160px !important; }
+

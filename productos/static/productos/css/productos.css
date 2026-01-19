@@ -40,7 +40,7 @@
 /* ===== BARRA DE HERRAMIENTAS MEJORADA ===== */
 .productos-toolbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start; align-items: center; gap: 15px;
   align-items: flex-start;
   margin-bottom: 30px;
   flex-wrap: wrap;
@@ -50,15 +50,9 @@
 }
 
 /* ===== CONTENEDOR DE FILTROS ===== */
-.filtros-container {
-  display: flex;
-  gap: 15px;
-  flex: 1;
-  max-width: 700px;
-  flex-wrap: wrap;
-}
+.filtros-container { display: contents; }
 
-/* ===== BARRA DE BÚSQUEDA ===== */
+/* ===== BARRA DE BÃSQUEDA ===== */
 .search-box {
   position: relative;
   flex: 1;
@@ -181,13 +175,7 @@
 }
 
 /* ===== CONTENEDOR DE ACCIONES REORGANIZADO ===== */
-.toolbar-actions {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  flex: 0 0 auto;
-}
+.toolbar-actions { display: contents; }
 
 /* ===== GRUPOS DE ACCIONES ===== */
 .action-group {
@@ -216,7 +204,7 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Estilos específicos para enlaces que son botones */
+/* Estilos especÃ­ficos para enlaces que son botones */
 a.btn {
   text-decoration: none;
   color: var(--white-base);
@@ -228,7 +216,7 @@ a.btn:focus {
   color: var(--white-base);
 }
 
-/* ===== BOTÓN PRIMARIO (VERDE) ===== */
+/* ===== BOTÃN PRIMARIO (VERDE) ===== */
 .btn-primary {
   background: var(--primary-green);
   color: white;
@@ -246,7 +234,7 @@ a.btn:focus {
   transform: translateY(0);
 }
 
-/* ===== BOTÓN SECUNDARIO (AZUL) ===== */
+/* ===== BOTÃN SECUNDARIO (AZUL) ===== */
 .btn-secondary {
   background: var(--primary-blue);
   color: white;
@@ -260,7 +248,7 @@ a.btn:focus {
   color: white;
 }
 
-/* ===== BOTÓN INFO (AZUL CLARO) ===== */
+/* ===== BOTÃN INFO (AZUL CLARO) ===== */
 .btn-info {
   background: linear-gradient(135deg, var(--primary-blue), #2980b9);
   color: white;
@@ -343,7 +331,7 @@ td:nth-child(1) {
 
 th:nth-child(2),
 td:nth-child(2) {
-  /* Categoría */
+  /* CategorÃ­a */
   width: 140px;
   min-width: 120px;
   text-align: left;
@@ -351,7 +339,7 @@ td:nth-child(2) {
 
 th:nth-child(3),
 td:nth-child(3) {
-  /* Patología */
+  /* PatologÃ­a */
   width: 140px;
   min-width: 120px;
   text-align: center;
@@ -380,7 +368,7 @@ td:nth-child(5) {
 
 th:nth-child(6),
 td:nth-child(6) {
-  /* Stock Mínimo */
+  /* Stock MÃ­nimo */
   width: 130px;
   text-align: center;
 }
@@ -416,7 +404,7 @@ td:nth-child(9) {
   min-width: 140px;
 }
 
-/* Botones de acción (editar, eliminar) */
+/* Botones de acciÃ³n (editar, eliminar) */
 .btn-action {
   width: 32px;
   height: 32px;
@@ -448,7 +436,7 @@ td:nth-child(9) {
   left: 100%;
 }
 
-/* ===== BOTÓN EDITAR PRODUCTO ===== */
+/* ===== BOTÃN EDITAR PRODUCTO ===== */
 .btn-editar {
   background: linear-gradient(135deg, var(--primary-green), #2d7058);
   color: white;
@@ -462,7 +450,7 @@ td:nth-child(9) {
   text-decoration: none;
 }
 
-/* ===== BOTÓN EDITAR PRECIO ===== */
+/* ===== BOTÃN EDITAR PRECIO ===== */
 .btn-edit-precio {
   background: linear-gradient(135deg, var(--warning-orange), #e67e22);
   color: white;
@@ -474,7 +462,7 @@ td:nth-child(9) {
   box-shadow: 0 6px 15px rgba(255, 193, 7, 0.4);
 }
 
-/* ===== BOTÓN CAMBIAR ESTADO ===== */
+/* ===== BOTÃN CAMBIAR ESTADO ===== */
 .btn-cambiar-estado {
   background: linear-gradient(135deg, var(--primary-blue), #2980b9);
   color: white;
@@ -486,7 +474,7 @@ td:nth-child(9) {
   box-shadow: 0 6px 15px rgba(52, 152, 181, 0.4);
 }
 
-/* Botones para categorías y patologías */
+/* Botones para categorÃ­as y patologÃ­as */
 .btn-editar-categoria,
 .btn-editar-patologia {
   background: linear-gradient(135deg, var(--primary-green), #2e7d32);
@@ -576,7 +564,7 @@ td:nth-child(9) {
   border: 1px solid rgba(255, 193, 7, 0.3);
 }
 
-/* ===== ESTILOS PARA TABLA VACÍA ===== */
+/* ===== ESTILOS PARA TABLA VACÃA ===== */
 .empty-row {
   text-align: center;
   padding: 60px 40px;
@@ -614,7 +602,7 @@ td:nth-child(9) {
   }
 }
 
-/* Aplicar animación a las filas */
+/* Aplicar animaciÃ³n a las filas */
 tbody tr {
   animation: fadeIn 0.4s ease forwards;
 }
@@ -639,17 +627,20 @@ tbody tr {
   border-radius: 15px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   width: 90%;
-  max-width: 500px;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
   overflow: hidden;
   animation: slideIn 0.3s ease;
 }
 
 .modal-contenido.modal-lg {
-  max-width: 800px;
+  max-width:  650px;
 }
 
 .modal-header {
-  padding: 20px 25px;
+  padding: 15px 20px;
   background: linear-gradient(135deg, var(--primary-green), var(--primary-blue));
   color: white;
   display: flex;
@@ -684,11 +675,12 @@ tbody tr {
 }
 
 .modal-body {
-  padding: 25px;
+  padding: 20px;
+  overflow-y: auto;
 }
 
 .modal-footer {
-  padding: 20px 25px;
+  padding: 15px 20px;
   background: var(--light-gray);
   display: flex;
   gap: 12px;
@@ -976,7 +968,7 @@ tbody tr {
   }
 }
 
-/* ===== MENSAJES DE TABLA VACÍA ===== */
+/* ===== MENSAJES DE TABLA VACÃA ===== */
 .empty-message {
   text-align: center;
   padding: 60px 40px;
@@ -1130,7 +1122,7 @@ tbody tr {
   box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
 }
 
-/* ===== DISEÑO RESPONSIVE ===== */
+/* ===== DISEÃO RESPONSIVE ===== */
 
 /* Ajustes responsivos para la barra de herramientas */
 @media (max-width: 1200px) {
@@ -1139,10 +1131,7 @@ tbody tr {
     align-items: stretch;
   }
 
-  .toolbar-actions {
-    justify-content: center;
-    width: 100%;
-  }
+  .toolbar-actions { display: contents; }
 
   .action-group {
     justify-content: center;
@@ -1157,16 +1146,9 @@ tbody tr {
     align-items: stretch;
   }
 
-  .filtros-container {
-    max-width: 100%;
-    margin-bottom: 15px;
-  }
+  .filtros-container { display: contents; }
 
-  .toolbar-actions {
-    width: 100%;
-    flex-direction: column;
-    gap: 10px;
-  }
+  .toolbar-actions { display: contents; }
 
   .action-group {
     justify-content: stretch;
@@ -1226,11 +1208,9 @@ tbody tr {
   }
 }
 
-/* Dispositivos móviles */
+/* Dispositivos mÃ³viles */
 @media (max-width: 480px) {
-  .filtros-container {
-    flex-direction: column;
-  }
+  .filtros-container { display: contents; }
 
   .search-box,
   .filtro-select {
@@ -1317,7 +1297,7 @@ tbody tr {
   }
 }
 
-/* ===== ESTILOS PARA IMPRESIÓN ===== */
+/* ===== ESTILOS PARA IMPRESIÃN ===== */
 @media print {
 
   .productos-toolbar,
@@ -1382,7 +1362,7 @@ tbody tr {
   font-family: 'Roboto', sans-serif;
 }
 
-/* Aumentar tamaño de letra en tabla para mejor legibilidad */
+/* Aumentar tamaÃ±o de letra en tabla para mejor legibilidad */
 td {
   padding: 14px 12px;
   font-size: 0.95rem;
@@ -1446,7 +1426,7 @@ td {
     transform: translateY(0px);
   }
 }
-/* ===== PAGINACI�N ===== */
+/* ===== PAGINACIÓN ===== */
 .pagination-wrapper {
   display: flex;
   justify-content: center;

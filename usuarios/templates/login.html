@@ -335,6 +335,13 @@
       </div>
 
       <button type="submit" class="btn-login">Iniciar Sesión</button>
+      
+      <div class="login-footer" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(0, 0, 0, 0.05);">
+        <a href="{% url 'usuarios:password_reset_request' %}" style="color: var(--primary-blue); text-decoration: none; font-weight: 500; font-size: 0.9rem;">
+          ¿Olvidaste tu contraseña?
+        </a>
+      </div>
+      
       <a href="{% url 'usuarios:registro_usuario' %}" class="btn-register">Registrar Usuario</a>
 
     </form>

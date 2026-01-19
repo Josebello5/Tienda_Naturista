@@ -22,6 +22,12 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
+    // ===== VARIABLES GLOBALES PAGINACIÓN =====
+    let todosLosProveedores = [];
+    let proveedoresFiltrados = [];
+    let currentPage = 1;
+    const ITEMS_PER_PAGE = 5;
+
     // ===== FUNCIONES PRINCIPALES =====
 
     function abrirModalProveedores() {
@@ -94,56 +100,9 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(data => {
                 console.log('✅ Proveedores cargados:', data.length);
-                const tbody = document.getElementById('tbodyProveedores');
-                if (!tbody) {
-                    console.error('❌ tbodyProveedores no encontrado');
-                    return;
-                }
-
-                tbody.innerHTML = '';
-
-                if (data.length === 0) {
-                    tbody.innerHTML = `
-                        <tr class="empty-message">
-                            <td colspan="5" style="text-align: center; padding: 40px; color: var(--natural-gray);">
-                                <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
-                                <h3 style="margin-bottom: 10px;">No hay proveedores registrados</h3>
-                                <p>Utilice el botón "Agregar" para crear un nuevo proveedor.</p>
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
-
-                data.forEach(proveedor => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>${proveedor.id}</td>
-                        <td>${proveedor.nombre}</td>
-                        <td>${proveedor.contacto || ''}</td>
-                        <td>${proveedor.fecha_creacion}</td>
-                        <td class="actions">
-                            <button class="btn-action btn-editar-proveedor" 
-                                    data-id="${proveedor.id}" 
-                                    data-nombre="${proveedor.nombre}" 
-                                    data-contacto="${proveedor.contacto || ''}">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn-action btn-eliminar-proveedor" 
-                                    data-id="${proveedor.id}" 
-                                    data-nombre="${proveedor.nombre}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-
-                // Aplicar filtro si hay búsqueda activa
-                const searchInput = document.getElementById('searchProveedores');
-                if (searchInput && searchInput.value) {
-                    filtrarTablaProveedores();
-                }
+                todosLosProveedores = data;
+                proveedoresFiltrados = [...todosLosProveedores];
+                filtrarYPaginar(1);
             })
             .catch(error => {
                 console.error('❌ Error al cargar proveedores:', error);
@@ -151,6 +110,136 @@ document.addEventListener('DOMContentLoaded', function () {
                     mostrarModalError('Error', 'No se pudieron cargar los proveedores: ' + error.message);
                 }
             });
+    }
+
+    function filtrarYPaginar(pagina = 1) {
+        currentPage = pagina;
+        const searchInput = document.getElementById('searchProveedores');
+        const filtro = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+        // Filtrar
+        if (filtro) {
+            proveedoresFiltrados = todosLosProveedores.filter(p => 
+                p.nombre.toLowerCase().includes(filtro) || 
+                (p.contacto && p.contacto.toLowerCase().includes(filtro))
+            );
+        } else {
+            proveedoresFiltrados = [...todosLosProveedores];
+        }
+
+        // Calcular total páginas
+        const totalPages = Math.ceil(proveedoresFiltrados.length / ITEMS_PER_PAGE) || 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        // Slice de datos
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        const end = start + ITEMS_PER_PAGE;
+        const paginatedData = proveedoresFiltrados.slice(start, end);
+
+        renderTabla(paginatedData);
+        renderPaginacion(paginatedData.length, totalPages);
+    }
+
+    function renderTabla(data) {
+        const tbody = document.getElementById('tbodyProveedores');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        if (data.length === 0) {
+             tbody.innerHTML = `
+                <tr class="empty-message">
+                    <td colspan="5" style="text-align: center; padding: 40px; color: var(--natural-gray);">
+                        <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                        <h3 style="margin-bottom: 10px;">No hay proveedores encontrados</h3>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        data.forEach(proveedor => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${proveedor.id}</td>
+                <td>${proveedor.nombre}</td>
+                <td>${proveedor.contacto || ''}</td>
+                <td>${proveedor.fecha_creacion}</td>
+                <td class="actions">
+                    <button class="btn-action btn-editar-proveedor" 
+                            data-id="${proveedor.id}" 
+                            data-nombre="${proveedor.nombre}" 
+                            data-contacto="${proveedor.contacto || ''}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-action btn-eliminar-proveedor" 
+                            data-id="${proveedor.id}" 
+                            data-nombre="${proveedor.nombre}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderPaginacion(currentCount, totalPages) {
+        const container = document.getElementById('paginationProveedores');
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (totalPages <= 1) return;
+
+        // Info text
+        const totalRegistros = proveedoresFiltrados.length;
+        const infoDiv = document.createElement('div');
+        infoDiv.style.width = '100%';
+        infoDiv.style.textAlign = 'center';
+        infoDiv.style.marginBottom = '10px';
+        infoDiv.style.color = 'var(--natural-gray)';
+        infoDiv.style.fontSize = '0.9rem';
+        infoDiv.textContent = `Mostrando página ${currentPage} de ${totalPages} (Total: ${totalRegistros})`;
+        container.appendChild(infoDiv);
+
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.style.display = 'flex';
+        buttonsDiv.style.justifyContent = 'center';
+        buttonsDiv.style.gap = '5px';
+        buttonsDiv.style.width = '100%';
+        container.appendChild(buttonsDiv);
+
+        // Botón Anterior
+        const btnPrev = document.createElement('button');
+        btnPrev.className = 'pagination-btn';
+        btnPrev.innerHTML = '<i class="fas fa-angle-left"></i>';
+        btnPrev.disabled = currentPage === 1;
+        btnPrev.onclick = () => filtrarYPaginar(currentPage - 1);
+        buttonsDiv.appendChild(btnPrev);
+
+        // Números
+        for (let i = 1; i <= totalPages; i++) {
+             // Mostrar siempre primera, última, y cercanas a la actual
+             if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                const btn = document.createElement('button');
+                btn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+                btn.textContent = i;
+                btn.onclick = () => filtrarYPaginar(i);
+                buttonsDiv.appendChild(btn);
+             } else if (i === currentPage - 2 || i === currentPage + 2) {
+                 const span = document.createElement('span');
+                 span.textContent = '...';
+                 span.style.padding = '5px';
+                 buttonsDiv.appendChild(span);
+             }
+        }
+
+        // Botón Siguiente
+        const btnNext = document.createElement('button');
+        btnNext.className = 'pagination-btn';
+        btnNext.innerHTML = '<i class="fas fa-angle-right"></i>';
+        btnNext.disabled = currentPage === totalPages;
+        btnNext.onclick = () => filtrarYPaginar(currentPage + 1);
+        buttonsDiv.appendChild(btnNext);
     }
 
     // ===== FUNCIONALIDAD PARA GUARDAR PROVEEDOR =====
@@ -275,48 +364,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Buscador de proveedores
     document.getElementById('searchProveedores')?.addEventListener('input', function () {
-        const filtro = this.value.toLowerCase();
-        const tbody = document.getElementById('tbodyProveedores');
-        if (!tbody) return;
-
-        const filas = tbody.querySelectorAll('tr');
-        let visibleRows = 0;
-
-        filas.forEach(fila => {
-            if (fila.classList.contains('empty-message')) {
-                fila.style.display = 'none';
-                return;
-            }
-
-            const nombre = fila.cells[1].textContent.toLowerCase();
-            if (nombre.includes(filtro)) {
-                fila.style.display = '';
-                visibleRows++;
-            } else {
-                fila.style.display = 'none';
-            }
-        });
-
-        // Mostrar mensaje si no hay resultados
-        const emptyMessage = tbody.querySelector('.empty-message');
-        if (visibleRows === 0 && filtro !== '') {
-            if (!emptyMessage) {
-                const tr = document.createElement('tr');
-                tr.className = 'empty-message';
-                tr.innerHTML = `
-                    <td colspan="5" style="text-align: center; padding: 40px; color: var(--natural-gray);">
-                        <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
-                        <h3 style="margin-bottom: 10px;">No se encontraron proveedores</h3>
-                        <p>Intente con otros términos de búsqueda.</p>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            } else {
-                emptyMessage.style.display = '';
-            }
-        } else if (emptyMessage) {
-            emptyMessage.style.display = 'none';
-        }
+        filtrarYPaginar(1);
     });
 
     // ===== FUNCIONALIDAD PARA EDITAR Y ELIMINAR =====

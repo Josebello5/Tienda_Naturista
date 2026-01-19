@@ -313,18 +313,28 @@
 
 <!-- ===== MODAL GESTIÓN PROVEEDORES ===== -->
 <div id="modalProveedores" class="modal-filtro">
-  <div class="modal-contenido" style="max-width: 900px;">
+  <div class="modal-contenido" style="max-width: 900px; max-height: 85vh; display: flex; flex-direction: column;">
     <div class="modal-header">
       <h3>Gestión de Proveedores</h3>
       <button class="btn-cerrar" id="btnCerrarModalProveedores">&times;</button>
     </div>
-    <div class="modal-body">
-      <div class="search-box" style="margin-bottom: 20px;">
-        <i class="fas fa-search"></i>
-        <input type="text" id="searchProveedores" placeholder="Buscar proveedor...">
+    <div class="modal-body" style="padding: 20px; overflow-y: auto;">
+      <div class="modal-toolbar" style="display: flex; justify-content: space-between; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+        <div class="search-box" style="flex: 1; min-width: 250px;">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchProveedores" placeholder="Buscar proveedor...">
+        </div>
+        <div class="toolbar-actions" style="display: flex; gap: 10px;">
+          <button class="btn btn-primary" id="btnAgregarProveedor">
+            <i class="fas fa-plus"></i> Agregar
+          </button>
+          <button class="btn btn-secondary" id="btnImprimirProveedores">
+            <i class="fas fa-print"></i> Imprimir
+          </button>
+        </div>
       </div>
-      <div class="table-container" style="max-height: 400px; overflow-y: auto;">
-        <table style="min-width: 800px;">
+      <div class="table-container">
+        <table class="table-compact" style="min-width: 100%;">
           <thead>
             <tr>
               <th>ID</th>
@@ -339,15 +349,11 @@
           </tbody>
         </table>
       </div>
+      <!-- Paginación de Proveedores -->
+      <div id="paginationProveedores" class="pagination-wrapper" style="margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 5px;"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" id="btnCancelarProveedores">Cerrar</button>
-      <button class="btn btn-primary" id="btnAgregarProveedor">
-        <i class="fas fa-plus"></i> Agregar Proveedor
-      </button>
-      <button class="btn btn-secondary" id="btnImprimirProveedores">
-        <i class="fas fa-print"></i> Imprimir
-      </button>
     </div>
   </div>
 </div>

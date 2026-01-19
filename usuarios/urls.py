@@ -12,5 +12,12 @@ urlpatterns = [
     path('configuracion/generar-pdf/', views.generar_pdf_usuarios, name='generar_pdf_usuarios'),
     path('configuracion/crear-usuario/', views.crear_usuario_interno, name='crear_usuario_interno'),
     path('configuracion/editar-usuario/', views.editar_usuario_api, name='editar_usuario_api'),
+    path('configuracion/verificar-email/', views.verificar_email_api, name='verificar_email_api'),
     path('configuracion/cambiar-estado/', views.cambiar_estado_usuario_api, name='cambiar_estado_usuario_api'),
+    
+    # Password Recovery
+    path('password-reset/', views.password_reset_request, name='password_reset_request'),
+    path('send-reset-code/', views.send_reset_code, name='send_reset_code'),
+    path('verify-code/', views.verify_reset_code, name='verify_reset_code'),
+    path('reset-password/', views.reset_password, name='reset_password'),
 ]

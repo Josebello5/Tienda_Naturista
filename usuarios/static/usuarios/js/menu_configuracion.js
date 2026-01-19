@@ -249,6 +249,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function cerrarModalEditar() {
         if (modalEditar) modalEditar.style.display = 'none';
+        // Limpiar errores
+        const emailError = document.getElementById('emailError');
+        const editEmail = document.getElementById('editEmail');
+        if (emailError) emailError.style.display = 'none';
+        if (editEmail) {
+            editEmail.classList.remove('is-invalid');
+            editEmail.style.borderColor = '';
+        }
+        if (btnGuardarEditar) btnGuardarEditar.disabled = false;
     }
 
     // ===== VALIDACIONES EDICIÓN DE USUARIO =====
@@ -286,6 +295,52 @@ document.addEventListener('DOMContentLoaded', function () {
     function validarEmailEditar(email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
+    }
+
+    // Real-time email validation
+    let emailTimeout;
+    if (editEmail) {
+        editEmail.addEventListener('input', function() {
+            const email = this.value.trim();
+            const userId = document.getElementById('editUserId').value;
+            const emailError = document.getElementById('emailError');
+
+            clearTimeout(emailTimeout);
+
+            // Deshabilitar botón inmediatamente para evitar clicks accidentales mientras se valida
+            btnGuardarEditar.disabled = true;
+
+            if (!email || !validarEmailEditar(email)) {
+                emailError.style.display = 'none';
+                this.classList.remove('is-invalid');
+                this.style.borderColor = '';
+                // Solo rehabilitar si el campo no está vacío (si está vacío, las otras validaciones fallarán luego)
+                if (email) btnGuardarEditar.disabled = false;
+                return;
+            }
+
+            emailTimeout = setTimeout(() => {
+                fetch(`${window.VERIFICAR_EMAIL_URL}?email=${encodeURIComponent(email)}&id=${userId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists) {
+                            emailError.style.display = 'block';
+                            this.classList.add('is-invalid');
+                            this.style.borderColor = '#e74c3c';
+                            btnGuardarEditar.disabled = true;
+                        } else {
+                            emailError.style.display = 'none';
+                            this.classList.remove('is-invalid');
+                            this.style.borderColor = '';
+                            btnGuardarEditar.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error verificando email:', error);
+                        btnGuardarEditar.disabled = false;
+                    });
+            }, 500);
+        });
     }
 
 
