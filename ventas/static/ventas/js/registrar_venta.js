@@ -1157,7 +1157,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        fetch(`/ventas/buscar-productos/?q=${encodeURIComponent(query)}`)
+        fetch(`/ventas/buscar-productos/?q=${encodeURIComponent(query)}&_t=${new Date().getTime()}`)
             .then(response => response.json())
             .then(data => {
                 // Lógica de Autoscan

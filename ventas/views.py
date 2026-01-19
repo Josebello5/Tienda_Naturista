@@ -186,7 +186,7 @@ def buscar_productos(request):
         stock_total = sum(lote.cantidad_disponible for lote in lotes_validos)
         stock_costo_mayor = sum(lote.cantidad_disponible for lote in lotes_costo_mayor)
         
-        if stock_total > 0:
+        if stock_total > 0 or stock_costo_mayor > 0:
             # CORRECCIÓN: Enviar el precio como número (no string) para evitar problemas de formato
             productos_data.append({
                 'id': producto.ID_producto,
