@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Reporte de Clientes</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 2cm;
+            @frame header_frame {           /* Static Header */
+                -pdf-frame-content: header_content;
+                left: 2cm; width: 17.59cm; top: 1cm; height: 4cm;
+            }
+            @frame content_frame {          /* Content Frame */
+                left: 2cm; width: 17.59cm; top: 5cm; height: 20cm;
+            }
+            @frame footer_frame {           /* Static Footer */
+                -pdf-frame-content: footer_content;
+                left: 2cm; width: 17.59cm; top: 26cm; height: 1cm;
+            }
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 10pt;
+            color: #333;
+        }
+
+        /* Header Styles */
+        #header_content {
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* Header Layout Table */
+        .header-table {
+            width: 100%;
+            border: none;
+            margin-bottom: 0;
+        }
+        
+        .header-table td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .logo-img {
+            width: 80px;
+            height: 80px;
+        }
+
+        h1 {
+            color: #1b5e20; /* Darker Green */
+            font-size: 18pt;
+            margin: 0;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 14pt;
+            margin: 5px 0 0 0;
+            font-weight: normal;
+        }
+
+        .meta-info {
+            font-size: 9pt;
+            color: #444;
+            margin-top: 5px;
+        }
+
+        /* Data Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            table-layout: fixed;
+        }
+
+        .data-table th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+
+        .data-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #ddd;
+            font-size: 9pt;
+            vertical-align: top;
+            word-wrap: break-word; 
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Content -->
+    <div id="header_content">
+        <table class="header-table">
+            <tr>
+                <td width="100">
+                    {% if logo_url %}
+                    <img src="{{ logo_url }}" class="logo-img">
+                    {% endif %}
+                </td>
+                <td>
+                    <h1>Tienda Naturista</h1>
+                    <h2>"Algo más para tu salud"</h2>
+                    <div class="meta-info">
+                        <strong>Reporte de Clientes</strong> | {{ fecha_generacion|date:"d/m/Y H:i" }}
+                        {% if filtros_info %}
+                        <br><span style="color: #d32f2f;">{{ filtros_info }}</span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Footer Content -->
+    <div id="footer_content">
+        Página <pdf:pagenumber> de <pdf:pagecount>
+    </div>
+
+    <!-- Main Content -->
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th width="12%">Cédula</th>
+                <th width="18%">Nombre</th>
+                <th width="18%">Apellido</th>
+                <th width="12%">Teléfono</th>
+                <th width="12%">Tipo</th>
+                <th width="28%">Dirección</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in clientes %}
+            <tr>
+                <td>{{ cliente.cedula }}</td>
+                <td>{{ cliente.nombre }}</td>
+                <td>{{ cliente.apellido }}</td>
+                <td>{{ cliente.telefono }}</td>
+                <td>
+                    <span class="badge {% if cliente.tipo_cliente == 'particular' %}badge-particular{% else %}badge-mayorista{% endif %}">
+                        {{ cliente.get_tipo_cliente_display }}
+                    </span>
+                </td>
+                <td>{{ cliente.direccion|truncatechars:30 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 20px;">
+                    No se encontraron clientes con los filtros seleccionados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div style="margin-top: 20px; text-align: right; color: #666; font-size: 10pt;">
+        <strong>Total de clientes:</strong> {{ clientes|length }}
+    </div>
+
+</body>
+</html>

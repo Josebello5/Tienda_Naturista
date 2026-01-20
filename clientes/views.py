@@ -1,10 +1,14 @@
+from django.conf import settings
+import os
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
+from reportlab.lib.utils import ImageReader
 from reportlab.lib.units import inch
 from datetime import datetime
+from django.template.loader import render_to_string
 from .forms import ClienteForm, EditarClienteForm
 from .models import Cliente
 from django.db.models import Q
@@ -142,25 +146,7 @@ def generar_pdf_clientes(request):
         filename = filename.replace(' ', '_').replace('/', '_')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
-        # Crear el PDF
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
-        
-        # Configuración inicial
-        p.setTitle("Listado de Clientes - Tienda Naturista")
-        
-        # Encabezado
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
-        
-        p.setFont("Helvetica", 10)
-        fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-        
-        # Información de filtros aplicados
-        filtros_info = "Listado Completo de Clientes"
+        # Preparar contexto para la plantilla
         filtros_detalle = []
         if busqueda:
             filtros_detalle.append(f"Búsqueda: '{busqueda}'")
@@ -169,61 +155,34 @@ def generar_pdf_clientes(request):
         if tipo_cliente:
             tipo_cliente_display = "Particular" if tipo_cliente == "particular" else "Mayorista"
             filtros_detalle.append(f"Tipo cliente: {tipo_cliente_display}")
-        
-        if filtros_detalle:
-            filtros_info = "Clientes Filtrados - " + ", ".join(filtros_detalle)
-        
-        p.drawString(1*inch, height-1.6*inch, f"{filtros_info} - {fecha_actual}")
-        
-        # Línea separadora
-        p.line(1*inch, height-1.7*inch, 7.5*inch, height-1.7*inch)
-        
-        # Configurar posición inicial para la tabla
-        y_position = height - 2.2*inch
-        line_height = 0.25*inch
-        
-        # Encabezados de tabla
-        p.setFont("Helvetica-Bold", 10)
-        p.drawString(1*inch, y_position, "CÉDULA")
-        p.drawString(2*inch, y_position, "NOMBRE")
-        p.drawString(3.5*inch, y_position, "APELLIDO")
-        p.drawString(5*inch, y_position, "TELÉFONO")
-        p.drawString(6*inch, y_position, "TIPO")
-        
-        y_position -= line_height
-        p.line(1*inch, y_position, 7.5*inch, y_position)
-        y_position -= 0.1*inch
-        
-        # Datos de clientes
-        p.setFont("Helvetica", 9)
-        
-        for cliente in clientes:
-            if y_position < 1*inch:  # Si queda poco espacio, nueva página
-                p.showPage()
-                y_position = height - 1*inch
-                p.setFont("Helvetica", 9)
             
-            p.drawString(1*inch, y_position, cliente.cedula)
-            p.drawString(2*inch, y_position, cliente.nombre)
-            p.drawString(3.5*inch, y_position, cliente.apellido)
-            p.drawString(5*inch, y_position, cliente.telefono)
-            p.drawString(6*inch, y_position, cliente.get_tipo_cliente_display())
-            
-            y_position -= line_height
+        filtros_info = ", ".join(filtros_detalle) if filtros_detalle else None
         
-        # Total
-        p.setFont("Helvetica-Bold", 10)
-        p.drawString(1*inch, y_position - 0.5*inch, f"Total de clientes: {clientes.count()}")
+        # Obtener url del logo 
+        logo_url = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
         
-        # Pie de página
-        p.setFont("Helvetica-Oblique", 8)
-        p.drawString(1*inch, 0.5*inch, "Sistema de Gestión - Tienda Naturista")
+        context = {
+            'clientes': clientes,
+            'fecha_generacion': datetime.now(),
+            'filtros_info': filtros_info,
+            'logo_url': logo_url,
+        }
         
-        # Finalizar PDF
-        p.showPage()
-        p.save()
+        # Renderizar template a string
+        html_string = render_to_string('clientes/reporte_pdf.html', context)
         
-        return response
+        # Generar PDF
+        from xhtml2pdf import pisa
+        import io
+        
+        result = io.BytesIO()
+        pdf = pisa.pisaDocument(io.BytesIO(html_string.encode("UTF-8")), result)
+        
+        if not pdf.err:
+            response.write(result.getvalue())
+            return response
+        
+        return HttpResponse(f"Error al generar PDF: {pdf.err}", status=500)
         
     except Exception as e:
         error_message = f"Error al generar el PDF: {str(e)}"
