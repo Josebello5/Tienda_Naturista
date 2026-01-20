@@ -570,26 +570,43 @@ document.addEventListener('DOMContentLoaded', function () {
         cantidadInput.addEventListener('blur', validarCantidad);
     }
 
-    // Validación para costo unitario (solo números y punto decimal)
+    // Validación para costo unitario (permite coma y números)
     if (costoUnitarioInput) {
-        costoUnitarioInput.addEventListener('input', function () {
-            this.value = this.value.replace(/[^0-9.]/g, '');
-            const parts = this.value.split('.');
-            if (parts.length > 2) {
-                this.value = parts[0] + '.' + parts.slice(1).join('');
+        costoUnitarioInput.addEventListener('keypress', function (e) {
+            const char = String.fromCharCode(e.keyCode || e.which);
+            const currentValue = this.value;
+            
+            // Permitir números y coma
+            if (!/^[0-9,]$/.test(char)) {
+                e.preventDefault();
+                return;
             }
-            validarCostoUnitario();
-        });
-        costoUnitarioInput.addEventListener('blur', validarCostoUnitario);
 
-        costoUnitarioInput.addEventListener('blur', function () {
-            if (this.value.trim() !== '') {
-                let value = parseFloat(this.value);
-                if (!isNaN(value)) {
-                    this.value = value.toFixed(2);
-                    validarCostoUnitario();
+            // Solo una coma
+            if (char === ',') {
+                if (currentValue.includes(',') || currentValue === '') {
+                    e.preventDefault();
+                    return;
                 }
             }
+        });
+
+        costoUnitarioInput.addEventListener('input', function () {
+           // Solo validación en tiempo real, sin reemplazo agresivo
+           // Permitimos que el usuario escriba libremente números y una coma
+           let val = this.value;
+           
+           // Si hay más de una coma, dejar solo la primera
+           const parts = val.split(',');
+           if (parts.length > 2) {
+               this.value = parts[0] + ',' + parts.slice(1).join('');
+           }
+           
+            validarCostoUnitario();
+        });
+        
+        costoUnitarioInput.addEventListener('blur', function() {
+            validarCostoUnitario();
         });
     }
 
@@ -642,12 +659,14 @@ document.addEventListener('DOMContentLoaded', function () {
             return false;
         }
 
-        if (!/^\d+(\.\d{0,2})?$/.test(val)) {
-            setInvalid(costoUnitarioInput, errorCosto, "Formato inválido. Use números y punto decimal (ej: 25.50)");
+        // Regex para validar formato con coma (ej: 12,50 o 100)
+        if (!/^\d+(,\d{0,2})?$/.test(val)) {
+            setInvalid(costoUnitarioInput, errorCosto, "Formato inválido. Use números y coma decimal (ej: 25,50)");
             return false;
         }
 
-        const numericValue = parseFloat(val);
+        // Convertir a número para validar valor positivo
+        const numericValue = parseFloat(val.replace(',', '.'));
         if (isNaN(numericValue) || numericValue <= 0) {
             setInvalid(costoUnitarioInput, errorCosto, "El costo unitario debe ser mayor a cero.");
             return false;
@@ -726,12 +745,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 codigoLoteInput.value = codigoLoteInput.value.toUpperCase();
             }
 
-            if (costoUnitarioInput && costoUnitarioInput.value.trim() !== '') {
-                let value = parseFloat(costoUnitarioInput.value);
-                if (!isNaN(value)) {
-                    costoUnitarioInput.value = value.toFixed(2);
-                }
-            }
+
 
             const validaciones = [
                 validarProducto(),

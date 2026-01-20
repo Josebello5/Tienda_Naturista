@@ -5,8 +5,17 @@ from django.utils import timezone
 import re
 from datetime import timedelta
 from django.core.exceptions import ValidationError
+from decimal import Decimal, InvalidOperation
 
 class LoteForm(forms.ModelForm):
+    costo_unitario = forms.CharField(
+        label='Costo Unitario',
+        widget=forms.TextInput(attrs={
+            'placeholder': '0,00',
+            'autocomplete': 'off'
+        })
+    )
+
     class Meta:
         model = Lote
         fields = ['codigo_lote', 'id_producto', 'cantidad', 'costo_unitario', 'proveedor', 'fecha_recibimiento', 'fecha_vencimiento']
@@ -17,7 +26,6 @@ class LoteForm(forms.ModelForm):
             }),
             'fecha_recibimiento': forms.DateInput(attrs={'type': 'date'}),
             'fecha_vencimiento': forms.DateInput(attrs={'type': 'date'}),
-            'costo_unitario': forms.NumberInput(attrs={'step': '0.01', 'min': '0.01', 'placeholder': '0.00'}),
             'proveedor': forms.Select(attrs={'class': 'form-control'}),
         }
 
@@ -30,15 +38,16 @@ class LoteForm(forms.ModelForm):
         
         self.fields['id_producto'].label = "Producto"
         self.fields['codigo_lote'].label = "Código de Lote"
-        self.fields['costo_unitario'].label = "Costo Unitario"
+        # self.fields['costo_unitario'].label = "Costo Unitario" # Defined in field
         self.fields['proveedor'].label = "Proveedor"
         self.fields['fecha_recibimiento'].label = "Fecha de Recibimiento"
         
         # Fecha de recibimiento por defecto: hoy
-        self.fields['fecha_recibimiento'].initial = timezone.localdate()
+        if not self.initial.get('fecha_recibimiento'):
+            self.fields['fecha_recibimiento'].initial = timezone.localdate()
         
         # Costo unitario en blanco por defecto
-        self.fields['costo_unitario'].initial = None
+        # self.fields['costo_unitario'].initial = None
 
     def clean_codigo_lote(self):
         codigo_lote = self.cleaned_data.get('codigo_lote')
@@ -73,11 +82,22 @@ class LoteForm(forms.ModelForm):
         return cantidad
 
     def clean_costo_unitario(self):
-        costo_unitario = self.cleaned_data.get('costo_unitario')
-        if costo_unitario is None:
+        costo_unitario_str = self.data.get('costo_unitario', '').strip()
+        
+        if not costo_unitario_str:
             raise forms.ValidationError('El costo unitario es obligatorio.')
-        if costo_unitario <= 0:
+            
+        # Reemplazar coma por punto
+        costo_unitario_str = costo_unitario_str.replace(',', '.')
+        
+        try:
+            costo_unitario = Decimal(costo_unitario_str)
+        except (ValueError, InvalidOperation):
+            raise forms.ValidationError('Ingrese un costo válido.')
+            
+        if costo_unitario <= Decimal('0'):
             raise forms.ValidationError('El costo unitario debe ser un número positivo mayor a cero.')
+            
         return costo_unitario
 
     def clean_fecha_recibimiento(self):
@@ -111,11 +131,18 @@ class LoteForm(forms.ModelForm):
         return fecha_vencimiento
 
 class EditarLoteForm(forms.ModelForm):
+    costo_unitario = forms.CharField(
+        label='Costo Unitario',
+        widget=forms.TextInput(attrs={
+            'placeholder': '0,00', 
+            'autocomplete': 'off'
+        })
+    )
+
     class Meta:
         model = Lote
         fields = ['id_producto', 'cantidad', 'costo_unitario', 'proveedor']
         widgets = {
-            'costo_unitario': forms.NumberInput(attrs={'step': '0.01', 'min': '0.01', 'placeholder': '0.00'}),
             'proveedor': forms.Select(attrs={'class': 'form-control'}),
         }
 
@@ -127,8 +154,12 @@ class EditarLoteForm(forms.ModelForm):
         self.fields['proveedor'].queryset = Proveedor.objects.all().order_by('nombre')
         
         self.fields['id_producto'].label = "Producto"
-        self.fields['costo_unitario'].label = "Costo Unitario"
+        # self.fields['costo_unitario'].label = "Costo Unitario" # Defined in field
         self.fields['proveedor'].label = "Proveedor"
+        
+        # Formatear costo unitario con coma si existe
+        if self.instance and self.instance.costo_unitario:
+             self.fields['costo_unitario'].initial = str(self.instance.costo_unitario).replace('.', ',')
 
     def clean_cantidad(self):
         cantidad = self.cleaned_data.get('cantidad')
@@ -144,9 +175,20 @@ class EditarLoteForm(forms.ModelForm):
         return cantidad
 
     def clean_costo_unitario(self):
-        costo_unitario = self.cleaned_data.get('costo_unitario')
-        if costo_unitario is None:
+        costo_unitario_str = self.data.get('costo_unitario', '').strip()
+        
+        if not costo_unitario_str:
             raise forms.ValidationError('El costo unitario es obligatorio.')
-        if costo_unitario <= 0:
+            
+        # Reemplazar coma por punto
+        costo_unitario_str = costo_unitario_str.replace(',', '.')
+        
+        try:
+            costo_unitario = Decimal(costo_unitario_str)
+        except (ValueError, InvalidOperation):
+            raise forms.ValidationError('Ingrese un costo válido.')
+            
+        if costo_unitario <= Decimal('0'):
             raise forms.ValidationError('El costo unitario debe ser un número positivo mayor a cero.')
+            
         return costo_unitario

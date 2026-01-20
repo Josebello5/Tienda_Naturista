@@ -449,27 +449,68 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnCerrar = document.getElementById('btnCerrarModalCosto');
 
         if (!modal || !inputCosto) {
-            const nuevoCosto = prompt('Ingrese el nuevo costo unitario:', costoActual);
-            if (nuevoCosto !== null && nuevoCosto.trim() !== '') {
-                actualizarCosto(loteId, parseFloat(nuevoCosto).toFixed(2));
-            }
+            console.error('Modal or input not found');
             return;
         }
 
         inputLoteId.value = loteId;
-        inputCosto.value = parseFloat(costoActual).toFixed(2);
+        
+        // Formatear para mostrar con coma
+        let displayCosto = parseFloat(costoActual).toFixed(2).replace('.', ',');
+        inputCosto.value = displayCosto;
+        
         modal.style.display = 'flex';
         inputCosto.focus();
         inputCosto.select();
 
+        // Limpiar listeners anteriores para evitar duplicados si la función se llama varias veces
+        const newInputCosto = inputCosto.cloneNode(true);
+        inputCosto.parentNode.replaceChild(newInputCosto, inputCosto);
+        
+        // Re-asignar referencia
+        const inputCostoRef = document.getElementById('nuevoCostoUnitario');
+
+        // === LISTENERS DE VALIDACIÓN (Idéntico a registrar_lote.js) ===
+        inputCostoRef.addEventListener('keypress', function (e) {
+            const char = String.fromCharCode(e.keyCode || e.which);
+            const currentValue = this.value;
+            
+            // Permitir números y coma
+            if (!/^[0-9,]$/.test(char)) {
+                e.preventDefault();
+                return;
+            }
+
+            // Solo una coma
+            if (char === ',') {
+                if (currentValue.includes(',') || currentValue === '') {
+                    e.preventDefault();
+                    return;
+                }
+            }
+        });
+
+        inputCostoRef.addEventListener('input', function () {
+           let val = this.value;
+           const parts = val.split(',');
+           if (parts.length > 2) {
+               this.value = parts[0] + ',' + parts.slice(1).join('');
+           }
+        });
+        // ==========================================================
+
         const guardar = () => {
-            const costo = parseFloat(inputCosto.value);
+            let val = inputCostoRef.value.trim();
+            // Reemplazar coma por punto para validar/enviar
+            val = val.replace(',', '.');
+            
+            const costo = parseFloat(val);
             if (isNaN(costo) || costo <= 0) {
                 mostrarModalError('Error', 'Por favor, ingrese un costo válido mayor a 0');
                 return;
             }
             modal.style.display = 'none';
-            actualizarCosto(loteId, costo);
+            actualizarCosto(loteId, costo); // Se enviará como número (float)
         };
 
         const cerrar = () => {
