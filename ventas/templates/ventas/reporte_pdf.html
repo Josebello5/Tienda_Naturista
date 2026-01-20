@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Reporte de Lotes</title>
+    <title>Reporte de Ventas</title>
     <style>
         @page {
             size: letter landscape;
@@ -105,10 +105,9 @@
         }
         
         /* Status Colors */
-        .status-activo { color: #2E7D32; font-weight: bold; }
-        .status-inactivo { color: #c62828; font-weight: bold; }
-        .status-agotado { color: #ef6c00; font-weight: bold; }
-        .status-vencido { color: #b71c1c; font-weight: bold; }
+        .status-pagado { color: #2E7D32; font-weight: bold; }
+        .status-pendiente { color: #ef6c00; font-weight: bold; }
+        .status-anulada { color: #c62828; font-weight: bold; }
 
         /* Specific Column Styles */
         .col-wrap { 
@@ -138,10 +137,21 @@
                     <h1>Tienda Naturista</h1>
                     <h2>"Algo más para tu salud"</h2>
                     <div class="meta-info">
-                        <strong>Reporte de Lotes</strong> | {{ fecha_generacion|date:"d/m/Y H:i" }}
+                        <strong>Reporte de Ventas</strong> | {{ fecha_generacion|date:"d/m/Y H:i" }}
+                        {% if total_ventas %}
+                        <br><strong>Total Ventas:</strong> {{ total_ventas }}
+                        {% endif %}
                         {% if filtros_info %}
                         <br><span style="color: #d32f2f;">{{ filtros_info }}</span>
                         {% endif %}
+                    </div>
+                </td>
+                <td width="250" valign="top" style="text-align: right; font-size: 8pt;">
+                    <!-- Panel de Totales -->
+                    <div style="background-color: #f1f8e9; padding: 5px; border-radius: 4px; border: 1px solid #c5e1a5;">
+                        <strong>RESUMEN</strong><br>
+                        Total Bs: {{ total_bs }}<br>
+                        Total $: {{ total_usd }}
                     </div>
                 </td>
             </tr>
@@ -157,48 +167,58 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th width="10%">Código</th>
-                <th width="18%">Producto</th>
-                <th width="12%">Proveedor</th>
-                <th width="5%">Cant.</th>
-                <th width="5%">Disp.</th>
-                <th width="10%">Costo U.</th>
-                <th width="10%">Costo T.</th>
-                <th width="10%">Recibido</th>
-                <th width="10%">Vence</th>
-                <th width="10%">Estado</th>
+                <th width="6%">No.</th>
+                <th width="14%">Cliente</th>
+                <th width="9%">Fecha</th>
+                <th width="10%">Total Bs</th>
+                <th width="8%">Total $</th>
+                <th width="10%">Total Venta</th>
+                <th width="10%">Saldo Pend.</th>
+                <th width="9%">Estado</th>
+                <th width="8%">Tipo</th>
+                <th width="16%">Método Pago</th>
             </tr>
         </thead>
         <tbody>
-            {% for lote in lotes %}
+            {% for venta in ventas %}
             <tr>
-                <td><div class="col-wrap">{{ lote.codigo_lote }}</div></td>
-                <td><div class="col-wrap">{{ lote.id_producto.nombre_pro }}</div></td>
-                <td><div class="col-wrap">{{ lote.proveedor.nombre }}</div></td>
-                <td>{{ lote.cantidad }}</td>
-                <td>{{ lote.cantidad_disponible }}</td>
-                <td>${{ lote.costo_unitario }}</td>
-                <td>${{ lote.costo_total }}</td>
-                <td>{{ lote.fecha_recibimiento|date:"d/m/Y" }}</td>
-                <td>{{ lote.fecha_vencimiento|date:"d/m/Y" }}</td>
+                <td>{{ venta.ID_Ventas }}</td>
+                <td><div class="col-wrap">{{ venta.cliente_display }}</div></td>
+                <td>{{ venta.Fecha_Venta|date:"d/m/Y" }}</td>
+                <td>{{ venta.total_bs_display }}</td>
+                <td>{{ venta.total_usd_display }}</td>
+                <td>{{ venta.total_bs_display }}</td> <!-- Repetido según solicitud -->
                 <td>
-                    <span class="status-{{ lote.estado }}">
-                        {{ lote.get_estado_display }}
-                    </span>
+                    {% if venta.saldo_pendiente > 0 %}
+                    <span style="color: #ef6c00;">{{ venta.saldo_display }}</span>
+                    {% else %}
+                    0,00
+                    {% endif %}
                 </td>
+                <td>
+                    {% if venta.anulada %}
+                    <span class="status-anulada">ANULADA</span>
+                    {% else %}
+                    <span class="status-{{ venta.Estado_Pago|lower }}">
+                        {{ venta.Estado_Pago }}
+                    </span>
+                    {% endif %}
+                </td>
+                <td>{{ venta.Tipo_Venta|title }}</td>
+                <td><div class="col-wrap">{{ venta.metodos_pago_str }}</div></td>
             </tr>
             {% empty %}
             <tr>
                 <td colspan="10" style="text-align: center; padding: 20px;">
-                    No se encontraron lotes con los filtros seleccionados.
+                    No se encontraron ventas con los filtros seleccionados.
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
     
-    <div style="margin-top: 20px; text-align: right; color: #666; font-size: 9pt;">
-        <strong>Total de lotes:</strong> {{ lotes|length }}
+    <div style="margin-top: 20px; color: #666; font-size: 8pt; border-top: 1px solid #ddd; padding-top: 5px;">
+        <strong>Nota:</strong> Los montos están expresados en su moneda original de registro.
     </div>
 
 </body>

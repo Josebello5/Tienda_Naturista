@@ -27,6 +27,7 @@ from reportlab.lib.units import mm, inch
 from usuarios.utils import can_void_sales, can_print_reports
 from usuarios.decorators import role_required
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 
 
 def menu_ventas(request):
@@ -725,13 +726,157 @@ def ver_comprobante(request, venta_id):
 
 # Mantener la función original para reportes generales (usa reportlab)
 def generar_pdf_ventas(request):
-    """Función para reporte general de ventas"""
+    """Función para reporte general de ventas usando xhtml2pdf"""
     try:
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.units import inch
+        from django.db.models import Sum
         
         query = request.GET.get('q', '')
+        cliente_cedula = request.GET.get('cliente', '')
+        estado_pago = request.GET.get('estado_pago', '')
+        tipo_venta = request.GET.get('tipo_venta', '')
+        metodo_pago = request.GET.get('metodo_pago', '')
+        anulada = request.GET.get('anulada', '')
+        fecha_desde = request.GET.get('fecha_desde', '')
+        fecha_hasta = request.GET.get('fecha_hasta', '')
+        moneda = request.GET.get('moneda', 'bs')
+
+        ventas = Venta.objects.select_related('Cedula').prefetch_related('pagos', 'detalles').all().order_by('-Fecha_Venta')
+
+        filtros_detalle = []
+
+        if query:
+            ventas = ventas.filter(
+                Q(ID_Ventas__icontains=query) |
+                Q(Cedula__nombre__icontains=query) |
+                Q(Cedula__apellido__icontains=query) |
+                Q(Cedula__cedula__icontains=query)
+            )
+            filtros_detalle.append(f"Búsqueda: {query}")
+            
+        if cliente_cedula:
+            ventas = ventas.filter(Cedula__cedula=cliente_cedula)
+            filtros_detalle.append(f"Cédula: {cliente_cedula}")
+            
+        if estado_pago:
+            ventas = ventas.filter(Estado_Pago=estado_pago)
+            filtros_detalle.append(f"Estado: {estado_pago}")
+            
+        if tipo_venta:
+            ventas = ventas.filter(Tipo_Venta=tipo_venta)
+            filtros_detalle.append(f"Tipo: {tipo_venta}")
+            
+        if metodo_pago:
+            ventas = ventas.filter(pagos__Metodo_Pago=metodo_pago).distinct()
+            filtros_detalle.append(f"Método Pago: {metodo_pago}")
+            
+        if anulada:
+            if anulada == 'si':
+                ventas = ventas.filter(anulada=True)
+                filtros_detalle.append("Solo Anuladas")
+            else:
+                ventas = ventas.filter(anulada=False)
+                filtros_detalle.append("Sin Anuladas")
+        
+        if fecha_desde and fecha_hasta:
+            ventas = ventas.filter(Fecha_Venta__date__range=[fecha_desde, fecha_hasta])
+            filtros_detalle.append(f"Fecha: {fecha_desde} al {fecha_hasta}")
+        elif fecha_desde:
+            ventas = ventas.filter(Fecha_Venta__date__gte=fecha_desde)
+            filtros_detalle.append(f"Desde: {fecha_desde}")
+        elif fecha_hasta:
+            ventas = ventas.filter(Fecha_Venta__date__lte=fecha_hasta)
+            filtros_detalle.append(f"Hasta: {fecha_hasta}")
+            
+        # Helper para formato europeo (1.234,56)
+        def format_number_es(number):
+            if number is None:
+                return "0,00"
+            try:
+                # Convertir a float primero para usar el formato de string
+                # {:,.2f} genera 1,234.56
+                s = "{:,.2f}".format(float(number))
+                # Reemplazar comas por X, puntos por comas, X por puntos
+                return s.replace(',', 'X').replace('.', ',').replace('X', '.')
+            except (ValueError, TypeError):
+                return str(number)
+
+        # Calcular totales para el panel superior
+        total_bs_sum = Decimal('0')
+        total_usd_sum = Decimal('0')
+        
+        ventas_list = []
+        for venta in ventas:
+            # 1. Calcular totales globales
+            if not venta.anulada:
+                total_bs_sum += venta.Total
+                total_usd_sum += venta.Total_USD
+
+            # 2. String Wrapper manual para Cliente
+            nombre_cliente = f"{venta.Cedula.nombre} {venta.Cedula.apellido}"
+            if len(nombre_cliente) > 15:
+                 venta.cliente_display = " ".join([nombre_cliente[i:i+15] for i in range(0, len(nombre_cliente), 15)])
+            else:
+                 venta.cliente_display = nombre_cliente
+
+            # 3. Métodos de pago string
+            metodos = [p.get_Metodo_Pago_display() for p in venta.pagos.all()]
+            metodos_str = ", ".join(set(metodos)) if metodos else "N/A"
+            venta.metodos_pago_str = metodos_str
+
+            # 4. Calculo de Saldo Pendiente
+            if venta.Estado_Pago == 'Pagado':
+                venta.saldo_pendiente = Decimal('0.00')
+            else:
+                pagado = sum([p.Monto_Bs for p in venta.pagos.all()]) + (venta.Abono_Inicial or 0)
+                venta.saldo_pendiente = venta.Total - pagado
+                if venta.saldo_pendiente < 0: venta.saldo_pendiente = 0
+
+            # 5. Formatear números para el reporte
+            venta.total_bs_display = format_number_es(venta.Total)
+            venta.total_usd_display = format_number_es(venta.Total_USD)
+            venta.saldo_display = format_number_es(venta.saldo_pendiente)
+
+            ventas_list.append(venta)
+        
+        ventas = ventas_list
+        
+        filtros_info = None
+        if filtros_detalle:
+            filtros_info = "Filtros: " + ", ".join(filtros_detalle)
+
+        # Configurar respuesta PDF
+        response = HttpResponse(content_type='application/pdf')
+        filename = "reporte_ventas.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        # Logo path
+        logo_url = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
+        
+        context = {
+            'ventas': ventas,
+            'fecha_generacion': datetime.now(),
+            'total_ventas': len(ventas),
+            'total_bs': format_number_es(total_bs_sum),
+            'total_usd': format_number_es(total_usd_sum),
+            'filtros_info': filtros_info,
+            'logo_url': logo_url,
+        }
+        
+        html_string = render_to_string('ventas/reporte_pdf.html', context)
+        
+        result = io.BytesIO()
+        pdf = pisa.pisaDocument(io.BytesIO(html_string.encode("UTF-8")), result)
+        
+        if not pdf.err:
+            response.write(result.getvalue())
+            return response
+            
+        return HttpResponse(f"Error al generar PDF: {pdf.err}", status=500)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return HttpResponse(f"Error al generar PDF: {str(e)}", status=500)
         cliente_cedula = request.GET.get('cliente', '')
         estado_pago = request.GET.get('estado_pago', '')
         tipo_venta = request.GET.get('tipo_venta', '')
