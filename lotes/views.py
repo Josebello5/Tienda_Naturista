@@ -19,7 +19,11 @@ import json
 import re
 import logging
 from usuarios.decorators import role_required
-
+from django.template.loader import render_to_string
+from django.conf import settings
+import os
+from xhtml2pdf import pisa
+import io
 # Configurar logger
 logger = logging.getLogger(__name__)
 
@@ -609,181 +613,25 @@ def generar_pdf_lotes(request):
             'vencido': 'Vencido',
             'agotado': 'Agotado'
         }
+        
+        # PROCESAMIENTO MANUAL DE TEXTOS LARGOS (Safety)
+        lotes_list = []
+        if lotes.exists():
+            for l in lotes:
+                # Wrap codigo
+                c = l.codigo_lote
+                if len(c) > 10:
+                   l.codigo_display = " ".join([c[i:i+10] for i in range(0, len(c), 10)])
+                else: 
+                   l.codigo_display = c
+                lotes_list.append(l)
+            lotes = lotes_list
 
-        # Verificar si hay lotes después de aplicar filtros
-        if not lotes.exists():
-            # Crear respuesta HTTP para mensaje de error
-            response = HttpResponse(content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="sin_lotes.pdf"'
-            
-            # Crear PDF con mensaje de error
-            p = canvas.Canvas(response, pagesize=letter)
-            width, height = letter
-            
-            # Configuración inicial
-            p.setTitle("Listado de Lotes - Tienda Naturista")
-            
-            # Encabezado
-            p.setFont("Helvetica-Bold", 16)
-            p.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
-            
-            p.setFont("Helvetica", 12)
-            p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
-            
-            p.setFont("Helvetica", 10)
-            fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-            p.drawString(1*inch, height-1.6*inch, f"Listado de Lotes - {fecha_actual}")
-            
-            # Línea separadora
-            p.line(1*inch, height-1.7*inch, 7.5*inch, height-1.7*inch)
-            
-            # Mensaje de no lotes
-            p.setFont("Helvetica-Bold", 14)
-            p.drawString(2*inch, height-3*inch, "No hay lotes con los filtros aplicados")
-            
-            p.setFont("Helvetica", 12)
-            p.drawString(1.5*inch, height-3.5*inch, "Por favor, ajuste los criterios de búsqueda e intente nuevamente.")
-            
-            # Información de filtros aplicados
-            filtros_info = "Filtros aplicados: "
-            filtros = []
-            if query:
-                filtros.append(f"Búsqueda: '{query}'")
-            if producto_id:
-                try:
-                    producto = Producto.objects.get(ID_producto=producto_id)
-                    filtros.append(f"Producto: {producto.nombre_pro}")
-                except Producto.DoesNotExist:
-                    filtros.append(f"Producto ID: {producto_id}")
-            if estado:
-                estado_display = ESTADOS_DICT.get(estado, estado)
-                filtros.append(f"Estado: {estado_display}")
-            if proveedor_id:
-                try:
-                    proveedor = Proveedor.objects.get(id_proveedor=proveedor_id)
-                    filtros.append(f"Proveedor: {proveedor.nombre}")
-                except Proveedor.DoesNotExist:
-                    filtros.append(f"Proveedor ID: {proveedor_id}")
-            if fecha_recibimiento_desde and fecha_recibimiento_hasta:
-                filtros.append(f"Recibimiento: {fecha_recibimiento_desde} a {fecha_recibimiento_hasta}")
-            elif fecha_recibimiento_desde:
-                filtros.append(f"Recibimiento desde: {fecha_recibimiento_desde}")
-            elif fecha_recibimiento_hasta:
-                filtros.append(f"Recibimiento hasta: {fecha_recibimiento_hasta}")
-            if fecha_vencimiento_desde and fecha_vencimiento_hasta:
-                filtros.append(f"Vencimiento: {fecha_vencimiento_desde} a {fecha_vencimiento_hasta}")
-            elif fecha_vencimiento_desde:
-                filtros.append(f"Vencimiento desde: {fecha_vencimiento_desde}")
-            elif fecha_vencimiento_hasta:
-                filtros.append(f"Vencimiento hasta: {fecha_vencimiento_hasta}")
-            
-            if filtros:
-                filtros_info += ", ".join(filtros)
-                p.setFont("Helvetica", 10)
-                # Dividir texto largo en múltiples líneas
-                lines = []
-                words = filtros_info.split()
-                current_line = ""
-                for word in words:
-                    test_line = current_line + word + " "
-                    if len(test_line) > 80:
-                        lines.append(current_line)
-                        current_line = word + " "
-                    else:
-                        current_line = test_line
-                if current_line:
-                    lines.append(current_line)
-                
-                y_position = height - 4*inch
-                for line in lines:
-                    p.drawString(1*inch, y_position, line)
-                    y_position -= 0.2*inch
-            
-            # Pie de página
-            p.setFont("Helvetica-Oblique", 8)
-            p.drawString(1*inch, 0.5*inch, "Sistema de Gestión - Tienda Naturista")
-            
-            # Finalizar PDF
-            p.showPage()
-            p.save()
-            
-            return response
         
-        # Crear respuesta HTTP para lotes encontrados
-        response = HttpResponse(content_type='application/pdf')
-        
-        # Generar nombre de archivo descriptivo basado en filtros
-        filename_parts = ["lotes"]
-        
-        if query:
-            filename_parts.append(f"busqueda_{query.replace(' ', '_')[:20]}")
-        if producto_id:
-            try:
-                producto = Producto.objects.get(ID_producto=producto_id)
-                filename_parts.append(f"producto_{producto.nombre_pro.replace(' ', '_')[:15]}")
-            except Producto.DoesNotExist:
-                filename_parts.append(f"producto_{producto_id}")
-        if estado:
-            filename_parts.append(f"estado_{estado}")
-        if proveedor_id:
-            try:
-                proveedor = Proveedor.objects.get(id_proveedor=proveedor_id)
-                filename_parts.append(f"proveedor_{proveedor.nombre.replace(' ', '_')[:15]}")
-            except Proveedor.DoesNotExist:
-                filename_parts.append(f"proveedor_{proveedor_id}")
-        
-        # Fechas de recibimiento
-        if fecha_recibimiento_desde and fecha_recibimiento_hasta:
-            desde_str = fecha_recibimiento_desde.replace('-', '')
-            hasta_str = fecha_recibimiento_hasta.replace('-', '')
-            filename_parts.append(f"recib_{desde_str}_{hasta_str}")
-        elif fecha_recibimiento_desde:
-            desde_str = fecha_recibimiento_desde.replace('-', '')
-            filename_parts.append(f"recib_desde_{desde_str}")
-        elif fecha_recibimiento_hasta:
-            hasta_str = fecha_recibimiento_hasta.replace('-', '')
-            filename_parts.append(f"recib_hasta_{hasta_str}")
-            
-        # Fechas de vencimiento
-        if fecha_vencimiento_desde and fecha_vencimiento_hasta:
-            desde_str = fecha_vencimiento_desde.replace('-', '')
-            hasta_str = fecha_vencimiento_hasta.replace('-', '')
-            filename_parts.append(f"venc_{desde_str}_{hasta_str}")
-        elif fecha_vencimiento_desde:
-            desde_str = fecha_vencimiento_desde.replace('-', '')
-            filename_parts.append(f"venc_desde_{desde_str}")
-        elif fecha_vencimiento_hasta:
-            hasta_str = fecha_vencimiento_hasta.replace('-', '')
-            filename_parts.append(f"venc_hasta_{hasta_str}")
-        
-        filename = "_".join(filename_parts) + ".pdf"
-        
-        # Limitar longitud del nombre del archivo
-        if len(filename) > 100:
-            filename = "lotes_filtrados.pdf"
-        
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        
-        # Resto del código para generar el PDF
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
-        
-        # Configuración inicial
-        p.setTitle("Listado de Lotes - Tienda Naturista")
-        
-        # Encabezado
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
-        
-        p.setFont("Helvetica", 10)
-        fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-        
-        # Información de filtros aplicados
-        filtros_info = "Listado Completo de Lotes"
+        # Construir string de filtros
+        filtros_info = None
         filtros_detalle = []
+        
         if query:
             filtros_detalle.append(f"Búsqueda: '{query}'")
         if producto_id:
@@ -801,142 +649,179 @@ def generar_pdf_lotes(request):
                 filtros_detalle.append(f"Proveedor: {proveedor.nombre}")
             except Proveedor.DoesNotExist:
                 filtros_detalle.append(f"Proveedor ID: {proveedor_id}")
+                
         if fecha_recibimiento_desde and fecha_recibimiento_hasta:
             filtros_detalle.append(f"Recibimiento: {fecha_recibimiento_desde} a {fecha_recibimiento_hasta}")
         elif fecha_recibimiento_desde:
             filtros_detalle.append(f"Recibimiento desde: {fecha_recibimiento_desde}")
         elif fecha_recibimiento_hasta:
             filtros_detalle.append(f"Recibimiento hasta: {fecha_recibimiento_hasta}")
+            
         if fecha_vencimiento_desde and fecha_vencimiento_hasta:
             filtros_detalle.append(f"Vencimiento: {fecha_vencimiento_desde} a {fecha_vencimiento_hasta}")
         elif fecha_vencimiento_desde:
             filtros_detalle.append(f"Vencimiento desde: {fecha_vencimiento_desde}")
         elif fecha_vencimiento_hasta:
             filtros_detalle.append(f"Vencimiento hasta: {fecha_vencimiento_hasta}")
-        
+            
         if filtros_detalle:
-            filtros_info = "Lotes Filtrados - " + ", ".join(filtros_detalle)
-        
-        p.drawString(1*inch, height-1.6*inch, f"{filtros_info} - {fecha_actual}")
-        
-        # Línea separadora
-        p.line(1*inch, height-1.7*inch, 7.5*inch, height-1.7*inch)
-        
-        # Configurar posición inicial para la tabla
-        y_position = height - 2.2*inch
-        line_height = 0.2*inch
-        
-        # Encabezados de tabla (SIN ID)
-        p.setFont("Helvetica-Bold", 7)
-        p.drawString(0.5*inch, y_position, "CÓDIGO")
-        p.drawString(1.3*inch, y_position, "PRODUCTO")
-        p.drawString(2.8*inch, y_position, "PROVEEDOR")
-        p.drawString(4.0*inch, y_position, "C.UNIT")
-        p.drawString(4.7*inch, y_position, "C.TOTAL")
-        p.drawString(5.4*inch, y_position, "CANT.")
-        p.drawString(5.9*inch, y_position, "DISP.")
-        p.drawString(6.4*inch, y_position, "F.REC.")
-        p.drawString(7.0*inch, y_position, "F.VENC.")
-        p.drawString(7.6*inch, y_position, "ESTADO")
-        
-        y_position -= line_height
-        p.line(0.5*inch, y_position, 8.0*inch, y_position)
-        y_position -= 0.1*inch
-        
-        # Datos de lotes
-        p.setFont("Helvetica", 6)
-        
-        for lote in lotes:
-            if y_position < 1*inch:
-                p.showPage()
-                y_position = height - 1*inch
-                p.setFont("Helvetica", 6)
-                
-                # Encabezados en nueva página (SIN ID)
-                p.setFont("Helvetica-Bold", 7)
-                p.drawString(0.5*inch, y_position, "CÓDIGO")
-                p.drawString(1.3*inch, y_position, "PRODUCTO")
-                p.drawString(2.8*inch, y_position, "PROVEEDOR")
-                p.drawString(4.0*inch, y_position, "C.UNIT")
-                p.drawString(4.7*inch, y_position, "C.TOTAL")
-                p.drawString(5.4*inch, y_position, "CANT.")
-                p.drawString(5.9*inch, y_position, "DISP.")
-                p.drawString(6.4*inch, y_position, "F.REC.")
-                p.drawString(7.0*inch, y_position, "F.VENC.")
-                p.drawString(7.6*inch, y_position, "ESTADO")
-                
-                y_position -= line_height
-                p.line(0.5*inch, y_position, 8.0*inch, y_position)
-                y_position -= 0.1*inch
-                p.setFont("Helvetica", 6)
-            
-            # Truncar nombres largos
-            producto_nombre = lote.id_producto.nombre_pro
-            if len(producto_nombre) > 18:
-                producto_nombre = producto_nombre[:15] + "..."
-            
-            proveedor_nombre = lote.proveedor.nombre
-            if len(proveedor_nombre) > 14:
-                proveedor_nombre = proveedor_nombre[:11] + "..."
-            
-            # Formatear fechas
-            fecha_recibimiento = lote.fecha_recibimiento.strftime("%d/%m/%y")
-            fecha_vencimiento = lote.fecha_vencimiento.strftime("%d/%m/%y")
-            
-            # Dibujar datos (SIN ID)
-            p.drawString(0.5*inch, y_position, lote.codigo_lote)
-            p.drawString(1.3*inch, y_position, producto_nombre)
-            p.drawString(2.8*inch, y_position, proveedor_nombre)
-            p.drawString(4.0*inch, y_position, f"${lote.costo_unitario}")
-            p.drawString(4.7*inch, y_position, f"${lote.costo_total}")
-            p.drawString(5.4*inch, y_position, str(lote.cantidad))
-            p.drawString(5.9*inch, y_position, str(lote.cantidad_disponible))
-            p.drawString(6.4*inch, y_position, fecha_recibimiento)
-            p.drawString(7.0*inch, y_position, fecha_vencimiento)
-            p.drawString(7.6*inch, y_position, lote.get_estado_display())
-            
-            y_position -= line_height
-        
-        # Totales
-        p.setFont("Helvetica-Bold", 10)
-        y_position -= 0.3*inch
-        p.drawString(0.5*inch, y_position, f"Total de lotes: {lotes.count()}")
-        
-        # Información adicional sobre filtros
-        if filtros_detalle:
-            y_position -= 0.2*inch
-            p.setFont("Helvetica-Oblique", 8)
-            p.drawString(0.5*inch, y_position, f"Filtros aplicados: {', '.join(filtros_detalle)}")
-        
-        # Pie de página
-        p.setFont("Helvetica-Oblique", 8)
-        p.drawString(0.5*inch, 0.5*inch, "Sistema de Gestión - Tienda Naturista")
-        
-        # Finalizar PDF
-        p.showPage()
-        p.save()
-        
-        return response
-        
-    except Exception as e:
-        # Log del error para debugging
-        logger.error(f"Error al generar PDF: {str(e)}")
-        
-        # Crear PDF de error
+            filtros_info = "Filtros: " + ", ".join(filtros_detalle)
+
+        # Configurar respuesta PDF
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="error.pdf"'
+        filename = "reporte_lotes.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
         
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
+        # Logo path
+        logo_url = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
         
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-2*inch, "Error al generar el PDF")
+        context = {
+            'lotes': lotes,
+            'fecha_generacion': datetime.now(),
+            'filtros_info': filtros_info,
+            'logo_url': logo_url,
+        }
         
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-2.5*inch, "Ocurrió un error inesperado al generar el listado.")
-        p.drawString(1*inch, height-3*inch, "Por favor, intente nuevamente.")
+        html_string = render_to_string('lotes/reporte_pdf.html', context)
         
-        p.showPage()
-        p.save()
+        result = io.BytesIO()
+        pdf = pisa.pisaDocument(io.BytesIO(html_string.encode("UTF-8")), result)
         
-        return response
+        if not pdf.err:
+            response.write(result.getvalue())
+            return response
+            
+        return HttpResponse(f"Error al generar PDF: {pdf.err}", status=500)
+
+    except Exception as e:
+        logger.error(f"Error al generar PDF de lotes: {str(e)}")
+        return HttpResponse(f"Error al generar PDF: {str(e)}", status=500)
+        producto_id = request.GET.get('producto', '')
+        estado = request.GET.get('estado', '')
+        proveedor_id = request.GET.get('proveedor', '')
+        fecha_recibimiento_desde = request.GET.get('fecha_recibimiento_desde', '')
+        fecha_recibimiento_hasta = request.GET.get('fecha_recibimiento_hasta', '')
+        fecha_vencimiento_desde = request.GET.get('fecha_vencimiento_desde', '')
+        fecha_vencimiento_hasta = request.GET.get('fecha_vencimiento_hasta', '')
+        
+        # Obtener lotes con información relacionada
+        lotes = Lote.objects.select_related('id_producto', 'proveedor').all().order_by('-fecha_creacion')
+        
+        # Aplicar filtros (misma lógica que menu_lote)
+        if query:
+            lotes = lotes.filter(
+                Q(codigo_lote__icontains=query) |
+                Q(id_producto__nombre_pro__icontains=query)
+            )
+        if producto_id:
+            lotes = lotes.filter(id_producto_id=producto_id)
+        if estado:
+            lotes = lotes.filter(estado=estado)
+        if proveedor_id:
+            lotes = lotes.filter(proveedor_id=proveedor_id)
+        
+        # Aplicar filtros de fecha
+        if fecha_recibimiento_desde and fecha_recibimiento_hasta:
+            lotes = lotes.filter(fecha_recibimiento__range=[fecha_recibimiento_desde, fecha_recibimiento_hasta])
+        elif fecha_recibimiento_desde:
+            lotes = lotes.filter(fecha_recibimiento__gte=fecha_recibimiento_desde)
+        elif fecha_recibimiento_hasta:
+            lotes = lotes.filter(fecha_recibimiento__lte=fecha_recibimiento_hasta)
+            
+        if fecha_vencimiento_desde and fecha_vencimiento_hasta:
+            lotes = lotes.filter(fecha_vencimiento__range=[fecha_vencimiento_desde, fecha_vencimiento_hasta])
+        elif fecha_vencimiento_desde:
+            lotes = lotes.filter(fecha_vencimiento__gte=fecha_vencimiento_desde)
+        elif fecha_vencimiento_hasta:
+            lotes = lotes.filter(fecha_vencimiento__lte=fecha_vencimiento_hasta)
+
+        # Diccionarios para las opciones de choices
+        ESTADOS_DICT = {
+            'activo': 'Activo',
+            'inactivo': 'Inactivo',
+            'vencido': 'Vencido',
+            'agotado': 'Agotado'
+        }
+        
+        # PROCESAMIENTO MANUAL DE TEXTOS LARGOS (Safety)
+        lotes_list = []
+        if lotes.exists(): # Verify exists first
+            for l in lotes:
+                # Wrap codigo
+                c = l.codigo_lote
+                if len(c) > 10:
+                   l.codigo_display = " ".join([c[i:i+10] for i in range(0, len(c), 10)])
+                else: 
+                   l.codigo_display = c
+                lotes_list.append(l)
+            lotes = lotes_list
+
+        
+        # Construir string de filtros
+        filtros_info = None
+        filtros_detalle = []
+        
+        if query:
+            filtros_detalle.append(f"Búsqueda: '{query}'")
+        if producto_id:
+            try:
+                producto = Producto.objects.get(ID_producto=producto_id)
+                filtros_detalle.append(f"Producto: {producto.nombre_pro}")
+            except Producto.DoesNotExist:
+                filtros_detalle.append(f"Producto ID: {producto_id}")
+        if estado:
+            estado_display = ESTADOS_DICT.get(estado, estado)
+            filtros_detalle.append(f"Estado: {estado_display}")
+        if proveedor_id:
+            try:
+                proveedor = Proveedor.objects.get(id_proveedor=proveedor_id)
+                filtros_detalle.append(f"Proveedor: {proveedor.nombre}")
+            except Proveedor.DoesNotExist:
+                filtros_detalle.append(f"Proveedor ID: {proveedor_id}")
+                
+        if fecha_recibimiento_desde and fecha_recibimiento_hasta:
+            filtros_detalle.append(f"Recibimiento: {fecha_recibimiento_desde} a {fecha_recibimiento_hasta}")
+        elif fecha_recibimiento_desde:
+            filtros_detalle.append(f"Recibimiento desde: {fecha_recibimiento_desde}")
+        elif fecha_recibimiento_hasta:
+            filtros_detalle.append(f"Recibimiento hasta: {fecha_recibimiento_hasta}")
+            
+        if fecha_vencimiento_desde and fecha_vencimiento_hasta:
+            filtros_detalle.append(f"Vencimiento: {fecha_vencimiento_desde} a {fecha_vencimiento_hasta}")
+        elif fecha_vencimiento_desde:
+            filtros_detalle.append(f"Vencimiento desde: {fecha_vencimiento_desde}")
+        elif fecha_vencimiento_hasta:
+            filtros_detalle.append(f"Vencimiento hasta: {fecha_vencimiento_hasta}")
+            
+        if filtros_detalle:
+            filtros_info = "Filtros: " + ", ".join(filtros_detalle)
+
+        # Configurar respuesta PDF
+        response = HttpResponse(content_type='application/pdf')
+        filename = "reporte_lotes.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        # Logo path
+        logo_url = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
+        
+        context = {
+            'lotes': lotes,
+            'fecha_generacion': datetime.now(),
+            'filtros_info': filtros_info,
+            'logo_url': logo_url,
+        }
+        
+        html_string = render_to_string('lotes/reporte_pdf.html', context)
+        
+        result = io.BytesIO()
+        pdf = pisa.pisaDocument(io.BytesIO(html_string.encode("UTF-8")), result)
+        
+        if not pdf.err:
+            response.write(result.getvalue())
+            return response
+            
+        return HttpResponse(f"Error al generar PDF: {pdf.err}", status=500)
+
+    except Exception as e:
+        logger.error(f"Error al generar PDF de lotes: {str(e)}")
+        return HttpResponse(f"Error al generar PDF: {str(e)}", status=500)
