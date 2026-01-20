@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Reporte de Productos</title>
+    <style>
+        @page {
+            size: letter landscape;
+            margin: 1cm;
+            @frame header_frame {           /* Static Header */
+                -pdf-frame-content: header_content;
+                left: 1cm; width: 25.94cm; top: 1cm; height: 3.5cm;
+            }
+            @frame content_frame {          /* Content Frame */
+                left: 1cm; width: 25.94cm; top: 4.5cm; height: 16cm;
+            }
+            @frame footer_frame {           /* Static Footer */
+                -pdf-frame-content: footer_content;
+                left: 1cm; width: 25.94cm; top: 20.5cm; height: 1cm;
+            }
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 9pt; /* Slightly larger font allowed in landscape */
+            color: #333;
+        }
+
+        /* Header Styles */
+        #header_content {
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Header Layout Table */
+        .header-table {
+            width: 100%;
+            border: none;
+            margin-bottom: 0;
+        }
+        
+        .header-table td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .logo-img {
+            width: 70px;
+            height: 70px;
+        }
+
+        h1 {
+            color: #1b5e20;
+            font-size: 16pt;
+            margin: 0;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 12pt;
+            margin: 3px 0 0 0;
+            font-weight: normal;
+        }
+
+        .meta-info {
+            font-size: 8pt;
+            color: #444;
+            margin-top: 5px;
+        }
+
+        /* Data Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            table-layout: fixed;
+        }
+
+        .data-table th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 6px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 8pt;
+        }
+
+        .data-table td {
+            padding: 4px 6px;
+            border-bottom: 1px solid #ddd;
+            font-size: 7pt; /* Compact rows */
+            vertical-align: top;
+            word-wrap: break-word;
+            white-space: normal; /* Force wrapping */
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        /* Status Colors */
+        .status-activo { color: #2E7D32; font-weight: bold; }
+        .status-inactivo { color: #c62828; font-weight: bold; }
+        .status-agotado { color: #ef6c00; font-weight: bold; }
+
+        /* Specific Column Styles */
+        .col-serial { 
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
+        /* Wrap inner content */
+        td div {
+            width: 100%;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Content -->
+    <div id="header_content">
+        <table class="header-table">
+            <tr>
+                <td width="90">
+                    {% if logo_url %}
+                    <img src="{{ logo_url }}" class="logo-img">
+                    {% endif %}
+                </td>
+                <td>
+                    <h1>Tienda Naturista</h1>
+                    <h2>"Algo más para tu salud"</h2>
+                    <div class="meta-info">
+                        <strong>Reporte de Productos</strong> | {{ fecha_generacion|date:"d/m/Y H:i" }}
+                        {% if filtros_info %}
+                        <br><span style="color: #d32f2f;">{{ filtros_info }}</span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Footer Content -->
+    <div id="footer_content">
+        Página <pdf:pagenumber> de <pdf:pagecount>
+    </div>
+
+    <!-- Main Content -->
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th width="13%">Serial</th>
+                <th width="18%">Nombre</th>
+                <th width="12%">Categoría</th>
+                <th width="12%">Patología</th>
+                <th width="11%">Ubicación</th>
+                <th width="5%">IVA</th>
+                <th width="10%">Precio</th>
+                <th width="5%">Min</th>
+                <th width="5%">Act</th>
+                <th width="7%">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in productos %}
+            <tr>
+                <td><div class="col-serial">{{ producto.serial_display }}</div></td>
+                <td><div>{{ producto.nombre_pro }}</div></td>
+                <td><div>{{ producto.categoria.nombre|default:"" }}</div></td>
+                <td><div>{{ producto.patologia.nombre|default:"" }}</div></td>
+                <td>{{ producto.ubicacion|default:"" }}</td>
+                <td>{{ producto.sujeto_iva|yesno:"Sí,No" }}</td>
+                <td>${{ producto.precio_venta }}</td>
+                <td>{{ producto.stock_minimo }}</td>
+                <td>{{ producto.stock_actual }}</td>
+                <td>
+                    <span class="status-{{ producto.estado }}">
+                        {{ producto.get_estado_display }}
+                    </span>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="10" style="text-align: center; padding: 20px;">
+                    No se encontraron productos con los filtros seleccionados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div style="margin-top: 20px; text-align: right; color: #666; font-size: 9pt;">
+        <strong>Total de productos:</strong> {{ productos|length }}
+    </div>
+
+</body>
+</html>

@@ -21,6 +21,9 @@ import re
 import logging
 from django.urls import reverse
 from usuarios.utils import can_manage_products, can_print_reports
+from django.template.loader import render_to_string
+from django.conf import settings
+import os
 
 # Helper function to generate proper Content-Disposition header
 def get_pdf_content_disposition(filename):
@@ -289,7 +292,7 @@ def generar_pdf_productos(request):
                 'lote__cantidad_disponible',
                 filter=Q(lote__estado='activo')
             )
-        ).order_by('nombre_pro')
+        ).select_related('categoria', 'patologia').order_by('nombre_pro')
         
         # Aplicar filtros
         if query:
@@ -304,6 +307,8 @@ def generar_pdf_productos(request):
             productos = productos.filter(sujeto_iva=sujeto_iva)
         if serial:  # Nuevo filtro por serial
             productos = productos.filter(serial__icontains=serial)
+            
+
 
         # Diccionarios para las opciones
         SUJETO_IVA_DICT = {
@@ -384,6 +389,14 @@ def generar_pdf_productos(request):
         # Crear respuesta HTTP para productos encontrados
         response = HttpResponse(content_type='application/pdf')
         
+        # PROCESAMIENTO MANUAL DE SERIALES LARGOS - Moved here after exists() check
+        productos_list = []
+        for p in productos:
+            s = p.serial
+            p.serial_display = " ".join([s[i:i+10] for i in range(0, len(s), 10)])
+            productos_list.append(p)
+        productos = productos_list
+        
         # Nombre del archivo con filtros aplicados
         filename_parts = ["listado_productos"]
         if query:
@@ -411,27 +424,9 @@ def generar_pdf_productos(request):
         filename = "_".join(filename_parts) + ".pdf"
         response['Content-Disposition'] = get_pdf_content_disposition(filename)
         
-        # Crear el objeto PDF
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
-        
-        # Configuración inicial
-        p.setTitle("Listado de Productos - Tienda Naturista")
-        
-        # Encabezado
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
-        
-        p.setFont("Helvetica", 10)
-        fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-        
         # Información de filtros aplicados
-        filtros_info = "Listado Completo de Productos"
+        filtros_info = None
         if query or categoria_nombre or patologia_nombre or estado or sujeto_iva or serial:
-            filtros_info = "Productos Filtrados - "
             filtros = []
             if query:
                 filtros.append(f"Búsqueda: '{query}'")
@@ -445,150 +440,39 @@ def generar_pdf_productos(request):
             if sujeto_iva:
                 sujeto_iva_display = SUJETO_IVA_DICT.get(sujeto_iva, sujeto_iva)
                 filtros.append(f"Sujeto a IVA: {sujeto_iva_display}")
-            if serial:  # Nuevo filtro por serial
+            if serial:
                 filtros.append(f"Serial: {serial}")
-            filtros_info += ", ".join(filtros)
+            filtros_info = "Filtros: " + ", ".join(filtros)
         
-        p.drawString(1*inch, height-1.6*inch, f"{filtros_info} - {fecha_actual}")
+        # Obtener url del logo 
+        logo_url = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
         
-        # Línea separadora
-        p.line(1*inch, height-1.7*inch, 7.5*inch, height-1.7*inch)
+        context = {
+            'productos': productos,
+            'fecha_generacion': datetime.now(),
+            'filtros_info': filtros_info,
+            'logo_url': logo_url,
+        }
         
-        # Configurar posición inicial para la tabla
-        y_position = height - 2.2*inch
-        line_height = 0.25*inch
+        # Renderizar template a string
+        html_string = render_to_string('productos/reporte_pdf.html', context)
         
-        # Encabezados de tabla - Sin ID, centrados
-        p.setFont("Helvetica-Bold", 7)
-        p.drawCentredString(0.8*inch, y_position, "SERIAL")
-        p.drawCentredString(1.85*inch, y_position, "NOMBRE")
-        p.drawCentredString(3.0*inch, y_position, "CATEGORÍA")
-        p.drawCentredString(4.0*inch, y_position, "PATOLOGÍA")
-        p.drawCentredString(5.05*inch, y_position, "UBICACIÓN")
-        p.drawCentredString(5.8*inch, y_position, "IVA")
-        p.drawCentredString(6.3*inch, y_position, "PRECIO")
-        p.drawCentredString(6.85*inch, y_position, "ST.MIN")
-        p.drawCentredString(7.35*inch, y_position, "ST.ACT")
-        p.drawCentredString(7.85*inch, y_position, "ESTADO")
+        # Generar PDF
+        from xhtml2pdf import pisa
+        import io
         
-        y_position -= line_height
-        p.line(0.4*inch, y_position, 8.1*inch, y_position)
-        y_position -= 0.1*inch
+        result = io.BytesIO()
+        pdf = pisa.pisaDocument(io.BytesIO(html_string.encode("UTF-8")), result)
         
-        # Datos de productos
-        p.setFont("Helvetica", 6)
+        if not pdf.err:
+            response.write(result.getvalue())
+            return response
         
-        for producto in productos:
-            if y_position < 1*inch:
-                p.showPage()
-                y_position = height - 1*inch
-                p.setFont("Helvetica", 6)
-                
-                # Encabezados en nueva página - Sin ID, centrados
-                p.setFont("Helvetica-Bold", 7)
-                p.drawCentredString(0.8*inch, y_position, "SERIAL")
-                p.drawCentredString(1.85*inch, y_position, "NOMBRE")
-                p.drawCentredString(3.0*inch, y_position, "CATEGORÍA")
-                p.drawCentredString(4.0*inch, y_position, "PATOLOGÍA")
-                p.drawCentredString(5.05*inch, y_position, "UBICACIÓN")
-                p.drawCentredString(5.8*inch, y_position, "IVA")
-                p.drawCentredString(6.3*inch, y_position, "PRECIO")
-                p.drawCentredString(6.85*inch, y_position, "ST.MIN")
-                p.drawCentredString(7.35*inch, y_position, "ST.ACT")
-                p.drawCentredString(7.85*inch, y_position, "ESTADO")
-                
-                y_position -= line_height
-                p.line(0.4*inch, y_position, 8.1*inch, y_position)
-                y_position -= 0.1*inch
-                p.setFont("Helvetica", 6)
-            
-            # Truncar nombres largos
-            nombre = producto.nombre_pro
-            if len(nombre) > 25:
-                nombre = nombre[:22] + "..."
-            
-            # Serial completo - sin truncar
-            serial_display = producto.serial
-            
-            categoria_display = producto.categoria.nombre if producto.categoria else ""
-            # Mostrar completo - sin truncar
-            
-            patologia_display = producto.patologia.nombre if producto.patologia else ""
-            # Mostrar completo - sin truncar
-            
-            ubicacion_display = producto.ubicacion or ""
-            if len(ubicacion_display) > 12:
-                ubicacion_display = ubicacion_display[:12] + "..."
-            
-            # Stock actual (puede ser None si no hay lotes activos)
-            stock_actual = producto.stock_actual or 0
-            
-            # Datos centrados - Sin ID
-            p.drawCentredString(0.8*inch, y_position, serial_display)
-            p.drawCentredString(1.85*inch, y_position, nombre)
-            p.drawCentredString(3.0*inch, y_position, categoria_display)
-            p.drawCentredString(4.0*inch, y_position, patologia_display)
-            p.drawCentredString(5.05*inch, y_position, ubicacion_display)
-            p.drawCentredString(5.8*inch, y_position, "SI" if producto.sujeto_iva == 'si' else "NO")
-            p.drawCentredString(6.3*inch, y_position, f"${producto.precio_venta}")
-            p.drawCentredString(6.85*inch, y_position, str(producto.stock_minimo))
-            p.drawCentredString(7.35*inch, y_position, str(stock_actual))
-            
-            # Estado con colores
-            estado_display = producto.get_estado_display()
-            if producto.estado == 'activo':
-                p.setFillColorRGB(0, 0.5, 0)  # Verde
-            elif producto.estado == 'inactivo':
-                p.setFillColorRGB(0.8, 0, 0)  # Rojo
-            else:  # agotado
-                p.setFillColorRGB(0.9, 0.5, 0)  # Naranja
-            
-            p.drawCentredString(7.85*inch, y_position, estado_display)
-            p.setFillColorRGB(0, 0, 0)  # Volver a negro
-            
-            y_position -= line_height
-        
-        # Totales
-        p.setFont("Helvetica-Bold", 10)
-        y_position -= 0.3*inch
-        p.drawString(0.4*inch, y_position, f"Total de productos: {productos.count()}")
-        
-        # Información adicional sobre filtros
-        if query or categoria_nombre or patologia_nombre or estado or sujeto_iva or serial:
-            y_position -= 0.2*inch
-            p.setFont("Helvetica-Oblique", 8)
-            p.drawString(0.4*inch, y_position, f"Filtros aplicados: {filtros_info.replace('Productos Filtrados - ', '')}")
-        
-        # Pie de página
-        p.setFont("Helvetica-Oblique", 8)
-        p.drawString(0.4*inch, 0.5*inch, "Sistema de Gestión - Tienda Naturista")
-        
-        p.showPage()
-        p.save()
-        
-        return response
+        return HttpResponse(f"Error al generar PDF: {pdf.err}", status=500)
         
     except Exception as e:
         logger.error(f"Error al generar PDF de productos: {str(e)}")
-        
-        # Crear PDF de error
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = get_pdf_content_disposition('error.pdf')
-        
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
-        
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-2*inch, "Error al generar el PDF")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-2.5*inch, "Ocurrió un error inesperado al generar el listado.")
-        p.drawString(1*inch, height-3*inch, "Por favor, intente nuevamente.")
-        
-        p.showPage()
-        p.save()
-        
-        return response
+        return HttpResponse(f"Error al generar PDF: {str(e)}", status=500)
     
 def lista_categorias_json(request):
     """Devuelve lista de categorías en formato JSON"""
