@@ -171,6 +171,7 @@
 
     <div class="ticket-header">
         <h1>TIENDA NATURISTA</h1>
+        <h1 style="font-size: 8px; margin-top: 2px;">ALGO MÁS PARA TU SALUD</h1>
         <div class="subtitle">Ticket de Venta</div>
     </div>
 
@@ -178,6 +179,9 @@
         <div class="info-row">
             <span>#: {{ venta.ID_Ventas }}</span>
             <span>{{ fecha_formateada }}</span>
+        </div>
+        <div class="info-row">
+            <span>Tasa: Bs {{ tasa_venta|floatformat:2 }}</span>
         </div>
         <div class="info-row">
             <span>Cli: {{ venta.Cedula.nombre }} {{ venta.Cedula.apellido }}</span>

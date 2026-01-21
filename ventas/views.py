@@ -1159,6 +1159,10 @@ def ver_ticket_58mm(request, venta_id):
         # Reutilizar el contexto existente del modelo
         context = venta.get_html_context()
         
+        # Asegurar que la tasa esté en el contexto
+        if 'tasa_venta' not in context:
+            context['tasa_venta'] = venta.get_tasa_venta()
+        
         # Renderizar template específico para 58mm
         return render(request, 'ventas/ticket_58mm.html', context)
         
