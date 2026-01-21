@@ -5,6 +5,7 @@ from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.db.models import Sum, Q, F
 from django.contrib import messages
+from django.core.paginator import Paginator
 from decimal import Decimal
 from datetime import datetime, date
 import pytz
@@ -215,8 +216,17 @@ def historial_cierres(request):
             dif_usd=F('Real_Efectivo_USD') - F('Sistema_Efectivo_USD')
         ).filter(Q(dif_bs__lt=0) | Q(dif_usd__lt=0))
     
+    # Ordenar por fecha descendente
+    cierres = cierres.order_by('-Fecha_Cierre')
+    
+    # Paginación: 8 items por página
+    paginator = Paginator(cierres, 8)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
     context = {
-        'cierres': cierres,
+        'cierres': page_obj,
+        'page_obj': page_obj,
         'fecha_desde': fecha_desde,
         'fecha_hasta': fecha_hasta,
         'fecha_desde_obj': fecha_desde_obj,

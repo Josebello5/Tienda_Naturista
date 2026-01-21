@@ -121,34 +121,37 @@
                         <td style="text-align: center; font-family: 'Roboto Mono', monospace;">
                             <div class="mb-1">
                                 {% if cierre.diferencia_bs > 0 %}
-                                <span class="text-primary fw-bold">
-                                    Bs +{{ cierre.diferencia_bs|formato_venezolano }}
-                                </span>
-                                {% elif cierre.diferencia_bs < 0 %} <span class="text-danger fw-bold">
-                                    Bs {{ cierre.diferencia_bs|formato_venezolano }}
+                                    <span class="text-primary fw-bold">
+                                        Bs +{{ cierre.diferencia_bs|formato_venezolano }}
                                     </span>
-                                    {% else %}
+                                {% elif cierre.diferencia_bs < 0 %}
+                                    <span class="text-danger fw-bold">
+                                        Bs {{ cierre.diferencia_bs|formato_venezolano }}
+                                    </span>
+                                {% else %}
                                     <span class="text-success fw-bold">
                                         Bs {{ cierre.diferencia_bs|formato_venezolano }}
                                     </span>
-                                    {% endif %}
+                                {% endif %}
                             </div>
 
                             <div class="small">
                                 {% if cierre.diferencia_usd > 0 %}
-                                <span class="text-primary fw-bold">
-                                    Ref +{{ cierre.diferencia_usd|formato_venezolano }}
-                                </span>
-                                {% elif cierre.diferencia_usd < 0 %} <span class="text-danger fw-bold">
-                                    Ref {{ cierre.diferencia_usd|formato_venezolano }}
+                                    <span class="text-primary fw-bold">
+                                        Ref +{{ cierre.diferencia_usd|formato_venezolano }}
                                     </span>
-                                    {% else %}
+                                {% elif cierre.diferencia_usd < 0 %}
+                                    <span class="text-danger fw-bold">
+                                        Ref {{ cierre.diferencia_usd|formato_venezolano }}
+                                    </span>
+                                {% else %}
                                     <span class="text-success fw-bold">
                                         Ref {{ cierre.diferencia_usd|formato_venezolano }}
                                     </span>
-                                    {% endif %}
+                                {% endif %}
                             </div>
                         </td>
+
                         <td style="text-align: center;">
                             {% if cierre.Notas %}
                             <button class="btn-ver-nota" data-nota="{{ cierre.Notas }}"
@@ -191,6 +194,42 @@
                 </tbody>
             </table>
         </div>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <div class="pagination-wrapper">
+            {% if page_obj.has_previous %}
+            <button class="pagination-btn"
+                onclick="window.location.href='?page={{ page_obj.previous_page_number }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}'">
+                Anterior
+            </button>
+            {% else %}
+            <button class="pagination-btn" disabled>Anterior</button>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <button class="pagination-btn active">{{ num }}</button>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} 
+                <a href="?page={{ num }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}">
+                    <button class="pagination-btn">{{ num }}</button>
+                </a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <button class="pagination-btn"
+                onclick="window.location.href='?page={{ page_obj.next_page_number }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}'">
+                Siguiente
+            </button>
+            {% else %}
+            <button class="pagination-btn" disabled>Siguiente</button>
+            {% endif %}
+
+            <span class="pagination-info">
+                {{ page_obj.start_index }}-{{ page_obj.end_index }} de {{ page_obj.paginator.count }}
+            </span>
+        </div>
+        {% endif %}
     </div>
 </div>
 
