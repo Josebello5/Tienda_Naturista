@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Count, F, ExpressionWrapper, DecimalField
-from django.db.models.functions import Coalesce
+from django.db.models import Sum, F, FloatField, Count, ExpressionWrapper, DecimalField, Q
+from django.db.models.functions import Coalesce, TruncMonth, TruncDate, TruncWeek
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.http import HttpResponse, JsonResponse
@@ -818,6 +818,41 @@ def reporte_ventas_tiempo(request):
         else:
             fecha_final = timezone.now().date()
             fecha_inicio = fecha_final - timedelta(days=30)
+            
+        # --- LÓGICA DE DATOS PARA TABLA ---
+        # Determinar campo de truncamiento de fecha
+        trunc_func = TruncMonth('Fecha_Venta')
+        if periodo == 'dia':
+            trunc_func = TruncDate('Fecha_Venta')
+        elif periodo == 'semana':
+            trunc_func = TruncWeek('Fecha_Venta')
+            
+        # Determinar campo de precio según moneda
+        if moneda == 'bs':
+            campo_precio = F('Total')  # Total en Bs
+        else:
+            # Aproximación para USD: Total / Tasa
+            campo_precio = F('Total') / F('Tasa_Venta')
+
+        datos_tiempo = (
+            Venta.objects
+            .filter(
+                Fecha_Venta__date__range=[fecha_inicio, fecha_final],
+                anulada=False
+            )
+            .annotate(periodo_fecha=trunc_func)
+            .values('periodo_fecha')
+            .annotate(
+                total_ventas=Sum(
+                    ExpressionWrapper(
+                        campo_precio,
+                        output_field=DecimalField(max_digits=15, decimal_places=2)
+                    )
+                ),
+                cantidad_transacciones=Count('ID_Ventas')
+            )
+            .order_by('periodo_fecha')
+        )
         
         context = {
             'titulo': f'Ventas por {periodo.capitalize()}',
@@ -826,7 +861,9 @@ def reporte_ventas_tiempo(request):
             'moneda': moneda,
             'periodo': periodo,
             'fecha_generacion': timezone.now(),
-            'chart_image': chart_image
+            'chart_image': chart_image,
+            'datos': datos_tiempo,           # Datos para la tabla
+            'tipo_reporte': 'ventas_tiempo'  # Identificador para template
         }
         
         # Usar template apropiado según si hay imagen o no
@@ -859,13 +896,30 @@ def reporte_top_productos(request):
         else:
             fecha_final = timezone.now().date()
             fecha_inicio = fecha_final - timedelta(days=30)
+            
+        # --- LÓGICA DE DATOS PARA TABLA ---
+        top_productos = (
+            DetalleVenta.objects
+            .filter(
+                ID_Ventas__Fecha_Venta__date__range=[fecha_inicio, fecha_final],
+                ID_Ventas__anulada=False
+            )
+            .values(
+                'ID_lote__id_producto__ID_producto', 
+                'ID_lote__id_producto__nombre_pro'
+            )
+            .annotate(total_cantidad=Sum('Cantidad'))
+            .order_by('-total_cantidad')[:limit]
+        )
         
         context = {
             'titulo': 'Top Productos',
             'fecha_ini': fecha_inicio,
             'fecha_fin': fecha_final,
             'fecha_generacion': timezone.now(),
-            'chart_image': chart_image
+            'chart_image': chart_image,
+            'datos': top_productos,           # Datos para la tabla
+            'tipo_reporte': 'top_productos'   # Identificador para template
         }
         
         # Usar template apropiado según si hay imagen o no
@@ -952,14 +1006,46 @@ def reporte_ventas_categoria(request):
             }
             template = 'estadisticas/reporte_pdf.html'
         else:
-            # Modo gráfico - usar imagen
+            # Modo gráfico - usar imagen PERO TAMBIÉN PASAR DATOS
+            # Reutilizamos la misma lógica de query para tener los datos en la tabla
+            if moneda == 'bs':
+                campo_precio = F('Precio_Unitario')
+            else:
+                campo_precio = F('Precio_Unitario') / F('ID_Tasa__valor')
+                
+            query = (
+                DetalleVenta.objects
+                .filter(
+                    ID_Ventas__Fecha_Venta__date__range=[fecha_inicio, fecha_final],
+                    ID_Ventas__anulada=False
+                )
+            )
+            
+            # Sin filtro de búsqueda en modo gráfico puro, pero calculamos totales
+            ventas_categoria = (
+                query
+                .values('ID_lote__id_producto__categoria__nombre')
+                .annotate(
+                    total=Sum(
+                        ExpressionWrapper(
+                            F('Cantidad') * campo_precio,
+                            output_field=DecimalField(max_digits=15, decimal_places=2)
+                        )
+                    ),
+                    total_cantidad=Sum('Cantidad')
+                )
+                .order_by('-total')
+            )
+
             context = {
                 'titulo': 'Ventas por Categoría',
                 'fecha_ini': fecha_inicio,
                 'fecha_fin': fecha_final,
                 'moneda': moneda,
                 'fecha_generacion': timezone.now(),
-                'chart_image': chart_image
+                'chart_image': chart_image,
+                'datos': ventas_categoria,         # Datos para la tabla
+                'tipo_reporte': 'ventas_categoria' # Identificador para template
             }
             template = 'estadisticas/reporte_chart_pdf.html' if chart_image else 'estadisticas/reporte_pdf.html'
         

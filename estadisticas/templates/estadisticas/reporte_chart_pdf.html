@@ -78,13 +78,15 @@
         /* Chart Styles */
         .chart-container {
             text-align: center;
-            margin-top: 30px;
+            margin-top: 10px;
+            margin-bottom: 15px;
             page-break-inside: avoid;
         }
 
         .chart-container img {
             max-width: 90%;
             height: auto;
+            max-height: 400px;
             border: 1px solid #ddd;
             border-radius: 4px;
             padding: 10px;
@@ -92,6 +94,47 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
+        /* Table Styles (Green Theme) */
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            font-size: 9pt;
+        }
+
+        table.data-table th, table.data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        table.data-table th {
+            background-color: #e8f5e9; /* Light Green */
+            color: #2e7d32;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 8pt;
+        }
+
+        table.data-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        /* Pagination & Print Rules */
+        thead {
+            display: table-header-group;
+        }
+
+        tfoot {
+            display: table-footer-group;
+        }
+
+        tr {
+            page-break-inside: avoid;
+        }
+
+        /* Utilities */
         .text-right { text-align: right; }
         .text-center { text-align: center; }
 
@@ -110,6 +153,16 @@
             font-size: 8pt;
             border: 1px solid #a5d6a7;
             margin-left: 5px;
+        }
+
+        .section-title {
+            color: #2e7d32;
+            border-bottom: 1px solid #a5d6a7;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 11pt;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -165,9 +218,62 @@
     </div>
     {% else %}
     <div style="text-align: center; padding: 100px; color: #999;">
-        <h2><i class="fas fa-chart-bar"></i></h2>
+        <h2><i class="fas fa-image"></i></h2>
         <p>No se pudo generar la visualización del gráfico.</p>
     </div>
+    {% endif %}
+
+    <!-- Data Table Section -->
+    {% if datos %}
+    <div class="section-title">Detalle de Datos</div>
+    
+    <table class="data-table">
+        <thead>
+            <tr>
+                <!-- Encabezados Dinámicos -->
+                {% if tipo_reporte == 'ventas_tiempo' %}
+                    <th>Fecha / Período</th>
+                    <th class="text-center">Transacciones</th>
+                    <th class="text-right">Total ({% if moneda == 'usd' %}USD{% else %}Bs{% endif %})</th>
+                
+                {% elif tipo_reporte == 'top_productos' %}
+                    <th width="50">#</th>
+                    <th>Producto</th>
+                    <th>ID Producto</th>
+                    <th class="text-center">Cantidad Vendida</th>
+                
+                {% elif tipo_reporte == 'ventas_categoria' %}
+                    <th>Categoría</th>
+                    <th class="text-center">Cantidad Total</th>
+                    <th class="text-right">Total Ventas ({% if moneda == 'usd' %}USD{% else %}Bs{% endif %})</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in datos %}
+            <tr>
+                {% if tipo_reporte == 'ventas_tiempo' %}
+                    <td>
+                        {{ item.periodo_fecha|date:"d/m/Y" }}
+                    </td>
+                    <td class="text-center">{{ item.cantidad_transacciones }}</td>
+                    <td class="text-right">{{ item.total_ventas|floatformat:2|intcomma }}</td>
+                
+                {% elif tipo_reporte == 'top_productos' %}
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.ID_lote__id_producto__nombre_pro }}</td>
+                    <td>{{ item.ID_lote__id_producto__ID_producto }}</td>
+                    <td class="text-center">{{ item.total_cantidad }}</td>
+                
+                {% elif tipo_reporte == 'ventas_categoria' %}
+                    <td>{{ item.ID_lote__id_producto__categoria__nombre }}</td>
+                    <td class="text-center">{{ item.total_cantidad|floatformat:0 }}</td>
+                    <td class="text-right">{{ item.total|floatformat:2|intcomma }}</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     {% endif %}
 
 </body>
