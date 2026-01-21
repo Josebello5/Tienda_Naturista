@@ -483,8 +483,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         contactoProveedorInput.addEventListener('input', function () {
-            // CONVERTIR A MAYÚSCULAS Y SOLO 25 CARACTERES MÁXIMO - SIN RESTRICCIONES DE TIPO
-            this.value = this.value.toUpperCase().slice(0, 25);
+            // CONVERTIR A MAYÚSCULAS Y SOLO 20 CARACTERES MÁXIMO - SIN RESTRICCIONES DE TIPO
+            this.value = this.value.toUpperCase().slice(0, 20);
             const valor = this.value.trim();
 
             // Campo opcional
@@ -492,8 +492,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 this.classList.remove('is-invalid', 'is-valid');
                 errorContactoProveedor.textContent = '';
                 errorContactoProveedor.style.display = 'none';
-            } else if (valor.length > 25) {
-                mostrarErrorCampo(this, errorContactoProveedor, 'Máximo 25 caracteres.');
+            } else if (valor.length > 20) {
+                mostrarErrorCampo(this, errorContactoProveedor, 'Máximo 20 caracteres.');
             } else {
                 this.classList.remove('is-invalid');
                 this.classList.add('is-valid');

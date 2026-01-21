@@ -204,9 +204,9 @@ document.addEventListener('DOMContentLoaded', function () {
             return true;
         }
 
-        // SOLO validar longitud máxima de 25 caracteres
-        if (valor.length > 25) {
-            setInvalid(contactoProveedorInput, errorContactoProveedor, "Máximo 25 caracteres.");
+        // SOLO validar longitud máxima de 20 caracteres
+        if (valor.length > 20) {
+            setInvalid(contactoProveedorInput, errorContactoProveedor, "Máximo 20 caracteres.");
             return false;
         }
 
@@ -397,8 +397,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (contactoProveedorInput) {
         contactoProveedorInput.addEventListener('input', function () {
-            // CONVERTIR A MAYÚSCULAS Y LIMITAR A 25 CARACTERES - SIN RESTRICCIONES DE CARACTERES
-            this.value = this.value.toUpperCase().slice(0, 25);
+            // CONVERTIR A MAYÚSCULAS Y LIMITAR A 20 CARACTERES - SIN RESTRICCIONES DE CARACTERES
+            this.value = this.value.toUpperCase().slice(0, 20);
             validarContactoProveedorTiempoReal();
         });
     }
@@ -575,7 +575,7 @@ document.addEventListener('DOMContentLoaded', function () {
         costoUnitarioInput.addEventListener('keypress', function (e) {
             const char = String.fromCharCode(e.keyCode || e.which);
             const currentValue = this.value;
-            
+
             // Permitir números y coma
             if (!/^[0-9,]$/.test(char)) {
                 e.preventDefault();
@@ -592,20 +592,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         costoUnitarioInput.addEventListener('input', function () {
-           // Solo validación en tiempo real, sin reemplazo agresivo
-           // Permitimos que el usuario escriba libremente números y una coma
-           let val = this.value;
-           
-           // Si hay más de una coma, dejar solo la primera
-           const parts = val.split(',');
-           if (parts.length > 2) {
-               this.value = parts[0] + ',' + parts.slice(1).join('');
-           }
-           
+            // Solo validación en tiempo real, sin reemplazo agresivo
+            // Permitimos que el usuario escriba libremente números y una coma
+            let val = this.value;
+
+            // Si hay más de una coma, dejar solo la primera
+            const parts = val.split(',');
+            if (parts.length > 2) {
+                this.value = parts[0] + ',' + parts.slice(1).join('');
+            }
+
             validarCostoUnitario();
         });
-        
-        costoUnitarioInput.addEventListener('blur', function() {
+
+        costoUnitarioInput.addEventListener('blur', function () {
             validarCostoUnitario();
         });
     }

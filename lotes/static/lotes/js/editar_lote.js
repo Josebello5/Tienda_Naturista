@@ -1,7 +1,7 @@
 // editar_lote.js - Versión corregida con todas las validaciones en tiempo real
 document.addEventListener('DOMContentLoaded', function () {
     console.log('=== INICIANDO SCRIPT EDITAR LOTE CON VALIDACIONES EN TIEMPO REAL ===');
-    
+
     // Referencias a elementos del DOM
     const form = document.getElementById('loteForm');
     const productoInput = document.getElementById('producto');
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const proveedorInput = document.getElementById('proveedor');
     const idProveedorInput = document.getElementById('id_proveedor');
     const sugerenciasProveedorContainer = document.getElementById('sugerencias-proveedor');
-    
+
     // Elementos del modal de proveedor
     const modalProveedor = document.getElementById('modalProveedor');
     const btnAgregarProveedor = document.getElementById('btnAgregarProveedor');
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const errorProveedor = document.getElementById('error-proveedor');
 
     // ===== FUNCIONES DE MANEJO DE ESTADOS =====
-    
+
     function setInvalid(input, errorDiv, message) {
         input.classList.add('is-invalid');
         input.classList.remove('is-valid');
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (errorExistente) {
             errorExistente.remove();
         }
-        
+
         const errorContainer = document.createElement('div');
         errorContainer.id = 'error-general';
         errorContainer.className = 'alert alert-error';
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div style="margin-top: 5px; font-size: 0.9em;">${mensaje}</div>
             </div>
         `;
-        
+
         const formBody = document.querySelector('.form-body');
         const messagesContainer = document.querySelector('.messages-container');
         if (messagesContainer) {
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const firstChild = formBody.firstChild;
             formBody.insertBefore(errorContainer, firstChild);
         }
-        
+
         errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
@@ -83,17 +83,17 @@ document.addEventListener('DOMContentLoaded', function () {
             setInvalid(nombreProveedorInput, errorNombreProveedor, "El nombre del proveedor es obligatorio.");
             return false;
         }
-        
+
         if (!/^[A-Z0-9.]+$/.test(valor)) {
             setInvalid(nombreProveedorInput, errorNombreProveedor, "Solo se permiten letras, números y puntos.");
             return false;
         }
-        
+
         if (valor.length > 20) {
             setInvalid(nombreProveedorInput, errorNombreProveedor, "Máximo 20 caracteres.");
             return false;
         }
-        
+
         setValid(nombreProveedorInput, errorNombreProveedor);
         return true;
     }
@@ -101,25 +101,25 @@ document.addEventListener('DOMContentLoaded', function () {
     // Validación en tiempo real para contacto de proveedor (en el modal) - CORREGIDA
     function validarContactoProveedorTiempoReal() {
         const valor = contactoProveedorInput.value.trim();
-        
+
         // Campo opcional, si está vacío es válido
         if (valor === '') {
             setValid(contactoProveedorInput, errorContactoProveedor);
             return true;
         }
-        
-        // SOLO validar longitud máxima de 25 caracteres
-        if (valor.length > 25) {
-            setInvalid(contactoProveedorInput, errorContactoProveedor, "Máximo 25 caracteres.");
+
+        // SOLO validar longitud máxima de 20 caracteres
+        if (valor.length > 20) {
+            setInvalid(contactoProveedorInput, errorContactoProveedor, "Máximo 20 caracteres.");
             return false;
         }
-        
+
         setValid(contactoProveedorInput, errorContactoProveedor);
         return true;
     }
 
     // ===== BÚSQUEDA DE PRODUCTOS CON SUGERENCIAS - CORREGIDA =====
-    
+
     function mostrarSugerenciasProductos(query) {
         if (!sugerenciasProductoContainer) return;
 
@@ -161,11 +161,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 `;
                 sugerencia.setAttribute('data-producto-id', producto.id);
                 sugerencia.setAttribute('data-producto-nombre', producto.nombre);
-                
-                sugerencia.addEventListener('click', function() {
+
+                sugerencia.addEventListener('click', function () {
                     const productoId = this.getAttribute('data-producto-id');
                     const productoNombre = this.getAttribute('data-producto-nombre');
-                    
+
                     productoInput.value = productoNombre;
                     idProductoInput.value = productoId;
                     sugerenciasProductoContainer.style.display = 'none';
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ===== BÚSQUEDA DE PROVEEDORES CON SUGERENCIAS =====
-    
+
     function mostrarSugerenciasProveedores(query) {
         if (!sugerenciasProveedorContainer) return;
 
@@ -212,8 +212,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     </button>
                 </div>
             `;
-            
-            agregarProveedor.addEventListener('click', function() {
+
+            agregarProveedor.addEventListener('click', function () {
                 abrirModalProveedor(query);
             });
 
@@ -229,11 +229,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 `;
                 sugerencia.setAttribute('data-proveedor-id', proveedor.id);
                 sugerencia.setAttribute('data-proveedor-nombre', proveedor.nombre);
-                
-                sugerencia.addEventListener('click', function() {
+
+                sugerencia.addEventListener('click', function () {
                     const proveedorId = this.getAttribute('data-proveedor-id');
                     const proveedorNombre = this.getAttribute('data-proveedor-nombre');
-                    
+
                     proveedorInput.value = proveedorNombre;
                     idProveedorInput.value = proveedorId;
                     sugerenciasProveedorContainer.style.display = 'none';
@@ -248,13 +248,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ===== MODAL PARA AGREGAR NUEVO PROVEEDOR =====
-    
+
     function abrirModalProveedor(nombreProveedor = '') {
         nombreProveedorInput.value = nombreProveedor.toUpperCase();
         contactoProveedorInput.value = '';
         errorNombreProveedor.style.display = 'none';
         modalProveedor.style.display = 'flex';
-        
+
         setTimeout(() => {
             nombreProveedorInput.focus();
         }, 100);
@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Event listeners para el modal de proveedor
     if (btnAgregarProveedor) {
-        btnAgregarProveedor.addEventListener('click', function() {
+        btnAgregarProveedor.addEventListener('click', function () {
             abrirModalProveedor();
         });
     }
@@ -277,13 +277,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (btnCerrarModalProveedor) {
         btnCerrarModalProveedor.addEventListener('click', cerrarModalProveedor);
     }
-    
+
     if (btnCancelarProveedor) {
         btnCancelarProveedor.addEventListener('click', cerrarModalProveedor);
     }
 
     if (modalProveedor) {
-        modalProveedor.addEventListener('click', function(e) {
+        modalProveedor.addEventListener('click', function (e) {
             if (e.target === modalProveedor) {
                 cerrarModalProveedor();
             }
@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Validaciones en tiempo real en el modal - CORREGIDAS
     if (nombreProveedorInput) {
-        nombreProveedorInput.addEventListener('input', function() {
+        nombreProveedorInput.addEventListener('input', function () {
             // SOLO PERMITE LETRAS, NÚMEROS Y PUNTOS - MÁXIMO 20 CARACTERES
             this.value = this.value.toUpperCase().replace(/[^A-Z0-9.]/g, '').slice(0, 20);
             validarNombreProveedorTiempoReal();
@@ -309,22 +309,22 @@ document.addEventListener('DOMContentLoaded', function () {
             contactoProveedorInput.parentNode.appendChild(errorContactoProveedor);
         }
 
-        contactoProveedorInput.addEventListener('input', function() {
-            // CONVERTIR A MAYÚSCULAS Y LIMITAR A 25 CARACTERES - SIN RESTRICCIONES DE CARACTERES
-            this.value = this.value.toUpperCase().slice(0, 25);
+        contactoProveedorInput.addEventListener('input', function () {
+            // CONVERTIR A MAYÚSCULAS Y LIMITAR A 20 CARACTERES - SIN RESTRICCIONES DE CARACTERES
+            this.value = this.value.toUpperCase().slice(0, 20);
             validarContactoProveedorTiempoReal();
         });
     }
 
     if (btnGuardarProveedor) {
-        btnGuardarProveedor.addEventListener('click', function() {
+        btnGuardarProveedor.addEventListener('click', function () {
             const nombreValido = validarNombreProveedorTiempoReal();
             const contactoValido = validarContactoProveedorTiempoReal();
 
             if (nombreValido && contactoValido) {
                 const nombre = nombreProveedorInput.value.trim();
                 const contacto = contactoProveedorInput.value.trim();
-                
+
                 // Crear proveedor via AJAX
                 fetch(CREAR_PROVEEDOR_URL, {
                     method: 'POST',
@@ -332,67 +332,67 @@ document.addEventListener('DOMContentLoaded', function () {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': getCSRFToken()
                     },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         nombre: nombre,
-                        contacto: contacto 
+                        contacto: contacto
                     })
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Agregar el nuevo proveedor a la lista local
-                        if (window.proveedoresData) {
-                            window.proveedoresData.push({
-                                id: data.proveedor.id,
-                                nombre: data.proveedor.nombre
-                            });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Agregar el nuevo proveedor a la lista local
+                            if (window.proveedoresData) {
+                                window.proveedoresData.push({
+                                    id: data.proveedor.id,
+                                    nombre: data.proveedor.nombre
+                                });
+                            }
+
+                            // Actualizar el campo de proveedor
+                            proveedorInput.value = data.proveedor.nombre;
+                            idProveedorInput.value = data.proveedor.id;
+                            setValid(proveedorInput, errorProveedor);
+
+                            cerrarModalProveedor();
+
+                            // Ocultar sugerencias
+                            if (sugerenciasProveedorContainer) {
+                                sugerenciasProveedorContainer.style.display = 'none';
+                            }
+
+                            // Mostrar mensaje de éxito
+                            if (typeof mostrarModalExito === 'function') {
+                                mostrarModalExito('¡Éxito!', data.message);
+                            }
+                        } else {
+                            setInvalid(nombreProveedorInput, errorNombreProveedor, data.error);
                         }
-                        
-                        // Actualizar el campo de proveedor
-                        proveedorInput.value = data.proveedor.nombre;
-                        idProveedorInput.value = data.proveedor.id;
-                        setValid(proveedorInput, errorProveedor);
-                        
-                        cerrarModalProveedor();
-                        
-                        // Ocultar sugerencias
-                        if (sugerenciasProveedorContainer) {
-                            sugerenciasProveedorContainer.style.display = 'none';
-                        }
-                        
-                        // Mostrar mensaje de éxito
-                        if (typeof mostrarModalExito === 'function') {
-                            mostrarModalExito('¡Éxito!', data.message);
-                        }
-                    } else {
-                        setInvalid(nombreProveedorInput, errorNombreProveedor, data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    setInvalid(nombreProveedorInput, errorNombreProveedor, 'Error de conexión');
-                });
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        setInvalid(nombreProveedorInput, errorNombreProveedor, 'Error de conexión');
+                    });
             }
         });
     }
 
     // ===== EVENT LISTENERS PARA BÚSQUEDA =====
-    
+
     // Búsqueda de productos
     if (productoInput) {
-        productoInput.addEventListener('input', function(e) {
+        productoInput.addEventListener('input', function (e) {
             mostrarSugerenciasProductos(e.target.value);
         });
 
-        productoInput.addEventListener('focus', function() {
+        productoInput.addEventListener('focus', function () {
             if (this.value) {
                 mostrarSugerenciasProductos(this.value);
             }
         });
 
         // Ocultar sugerencias al hacer clic fuera
-        document.addEventListener('click', function(e) {
-            if (productoInput && !productoInput.contains(e.target) && 
+        document.addEventListener('click', function (e) {
+            if (productoInput && !productoInput.contains(e.target) &&
                 sugerenciasProductoContainer && !sugerenciasProductoContainer.contains(e.target)) {
                 sugerenciasProductoContainer.style.display = 'none';
             }
@@ -401,21 +401,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Búsqueda de proveedores - CON VALIDACIONES APLICADAS
     if (proveedorInput) {
-        proveedorInput.addEventListener('input', function(e) {
+        proveedorInput.addEventListener('input', function (e) {
             // APLICAR VALIDACIONES AL TIPEAR EN EL CAMPO DE BÚSQUEDA DE PROVEEDOR
             this.value = this.value.toUpperCase().replace(/[^A-Z0-9.]/g, '').slice(0, 20);
             mostrarSugerenciasProveedores(e.target.value);
         });
 
-        proveedorInput.addEventListener('focus', function() {
+        proveedorInput.addEventListener('focus', function () {
             if (this.value) {
                 mostrarSugerenciasProveedores(this.value);
             }
         });
 
         // Ocultar sugerencias al hacer clic fuera
-        document.addEventListener('click', function(e) {
-            if (proveedorInput && !proveedorInput.contains(e.target) && 
+        document.addEventListener('click', function (e) {
+            if (proveedorInput && !proveedorInput.contains(e.target) &&
                 sugerenciasProveedorContainer && !sugerenciasProveedorContainer.contains(e.target)) {
                 sugerenciasProveedorContainer.style.display = 'none';
             }
@@ -423,10 +423,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ===== VALIDACIONES EN TIEMPO REAL =====
-    
+
     // Validación para cantidad (solo números)
     if (cantidadInput) {
-        cantidadInput.addEventListener('input', function() {
+        cantidadInput.addEventListener('input', function () {
             this.value = this.value.replace(/[^0-9]/g, '');
             validarCantidad();
         });
@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function () {
         costoUnitarioInput.addEventListener('keypress', function (e) {
             const char = String.fromCharCode(e.keyCode || e.which);
             const currentValue = this.value;
-            
+
             // Permitir números y coma
             if (!/^[0-9,]$/.test(char)) {
                 e.preventDefault();
@@ -455,26 +455,26 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         costoUnitarioInput.addEventListener('input', function () {
-           // Solo validación en tiempo real, sin reemplazo agresivo
-           // Permitimos que el usuario escriba libremente números y una coma
-           let val = this.value;
-           
-           // Si hay más de una coma, dejar solo la primera
-           const parts = val.split(',');
-           if (parts.length > 2) {
-               this.value = parts[0] + ',' + parts.slice(1).join('');
-           }
-           
+            // Solo validación en tiempo real, sin reemplazo agresivo
+            // Permitimos que el usuario escriba libremente números y una coma
+            let val = this.value;
+
+            // Si hay más de una coma, dejar solo la primera
+            const parts = val.split(',');
+            if (parts.length > 2) {
+                this.value = parts[0] + ',' + parts.slice(1).join('');
+            }
+
             validarCostoUnitario();
         });
-        
-        costoUnitarioInput.addEventListener('blur', function() {
+
+        costoUnitarioInput.addEventListener('blur', function () {
             validarCostoUnitario();
         });
     }
 
     // ===== FUNCIONES DE VALIDACIÓN =====
-    
+
     function validarProducto() {
         const val = idProductoInput ? idProductoInput.value : '';
         if (!val) {
@@ -495,39 +495,39 @@ document.addEventListener('DOMContentLoaded', function () {
             setInvalid(cantidadInput, errorCantidad, "La cantidad debe ser un número entero mayor a 0.");
             return false;
         }
-        
+
         // Validar que no sea menor que la cantidad disponible
         const loteActual = window.loteActual || {};
         if (loteActual.cantidad_disponible && parseInt(val, 10) < parseInt(loteActual.cantidad_disponible, 10)) {
             setInvalid(cantidadInput, errorCantidad, `No puede reducir la cantidad a menos de ${loteActual.cantidad_disponible} unidades disponibles.`);
             return false;
         }
-        
+
         setValid(cantidadInput, errorCantidad);
         return true;
     }
 
     function validarCostoUnitario() {
         const val = costoUnitarioInput.value.trim();
-        
+
         if (val === '') {
             setInvalid(costoUnitarioInput, errorCosto, "El costo unitario es obligatorio.");
             return false;
         }
-        
+
         // Regex para validar formato con coma (ej: 12,50 o 100)
         if (!/^\d+(,\d{0,2})?$/.test(val)) {
             setInvalid(costoUnitarioInput, errorCosto, "Formato inválido. Use números y coma decimal (ej: 25,50)");
             return false;
         }
-        
+
         // Convertir a número para validar valor positivo
         const numericValue = parseFloat(val.replace(',', '.'));
         if (isNaN(numericValue) || numericValue <= 0) {
             setInvalid(costoUnitarioInput, errorCosto, "El costo unitario debe ser mayor a cero.");
             return false;
         }
-        
+
         setValid(costoUnitarioInput, errorCosto);
         return true;
     }
@@ -543,30 +543,30 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ===== VALIDACIÓN FINAL AL ENVIAR =====
-    
+
     if (form) {
         form.addEventListener('submit', function (e) {
             console.log('=== VALIDANDO FORMULARIO EDICIÓN ===');
-            
 
-            
+
+
             const validaciones = [
                 validarProducto(),
                 validarCantidad(),
                 validarCostoUnitario(),
                 validarProveedor()
             ];
-            
+
             const esValido = validaciones.every(result => result === true);
-            
+
             console.log('Resultado validaciones:', validaciones);
 
             if (!esValido) {
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 mostrarErrorGeneral('Por favor, corrija los errores marcados en rojo antes de enviar el formulario.');
-                
+
                 const campos = [productoInput, cantidadInput, costoUnitarioInput, proveedorInput];
                 for (let campo of campos) {
                     if (campo && campo.classList.contains('is-invalid')) {
