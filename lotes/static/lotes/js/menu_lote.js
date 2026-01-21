@@ -93,92 +93,185 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ===== FUNCIÓN PARA REGRESAR A PÁGINA 1 Y APLICAR FILTROS =====
-    function aplicarFiltrosYRegresarPagina1() {
+    // ===== CONSTRUIR PARÁMETROS DE FILTRO =====
+    function construirParamsFiltro() {
         const params = new URLSearchParams();
-
-        // Agregar filtros activos
         const query = searchInput ? searchInput.value.trim() : '';
         const estado = estadoSelect ? estadoSelect.value : '';
 
+        // Mantener filtros de fecha si existen en la URL actual
+        const currentParams = new URLSearchParams(window.location.search);
+        
         if (query) params.append('q', query);
         if (productoSeleccionado) params.append('producto', productoSeleccionado);
         if (proveedorSeleccionado) params.append('proveedor', proveedorSeleccionado);
         if (estado) params.append('estado', estado);
+        
+        // Conservar fechas
+        if (currentParams.has('fecha_recibimiento_desde')) params.append('fecha_recibimiento_desde', currentParams.get('fecha_recibimiento_desde'));
+        if (currentParams.has('fecha_recibimiento_hasta')) params.append('fecha_recibimiento_hasta', currentParams.get('fecha_recibimiento_hasta'));
+        if (currentParams.has('fecha_vencimiento_desde')) params.append('fecha_vencimiento_desde', currentParams.get('fecha_vencimiento_desde'));
+        if (currentParams.has('fecha_vencimiento_hasta')) params.append('fecha_vencimiento_hasta', currentParams.get('fecha_vencimiento_hasta'));
+        
+        return params;
+    }
 
-        // Siempre regresar a página 1 (no agregar parámetro page)
+    // ===== FUNCIÓN PARA REGRESAR A PÁGINA 1 Y APLICAR FILTROS (RECARGA COMPLETA) =====
+    function aplicarFiltrosYRegresarPagina1() {
+        const params = construirParamsFiltro();
         const nuevaURL = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
         window.location.href = nuevaURL;
     }
 
-    // ===== BÚSQUEDA POR CÓDIGO EN TIEMPO REAL (CLIENT-SIDE) =====
+    // ===== BÚSQUEDA AJAX (LIVE SEARCH) =====
     if (searchInput) {
+        // Evento Input: Búsqueda AJAX
         searchInput.addEventListener('input', function () {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
-                filtrarLotesEnTiempoReal();
-            }, 200); // Filtrado rápido en tiempo real
+                buscarLotesAjax();
+            }, 300); // Debounce de 300ms
+        });
+
+        // Evento Enter: Recarga completa
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                aplicarFiltrosYRegresarPagina1();
+            }
         });
     }
 
-    // Función para filtrar lotes en tiempo real sin recargar la página
-    function filtrarLotesEnTiempoReal() {
-        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
-        const rows = tableBody.querySelectorAll('tr');
-        let visibleRows = 0;
-
-        rows.forEach(row => {
-            if (row.classList.contains('empty-row') || row.classList.contains('no-resultados')) {
-                row.style.display = 'none';
-                return;
+    function buscarLotesAjax() {
+        const params = construirParamsFiltro();
+        
+        // Agregar header para identificar request AJAX
+        fetch(`${window.location.pathname}?${params.toString()}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
             }
-
-            const btnDetalles = row.querySelector('.btn-ver-detalles');
-            const codigoLote = btnDetalles ? btnDetalles.getAttribute('data-codigo').toLowerCase() : '';
-
-            if (!query || codigoLote.includes(query)) {
-                row.style.display = '';
-                visibleRows++;
-            } else {
-                row.style.display = 'none';
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.lotes) {
+                renderizarTabla(data.lotes);
             }
-        });
-
-        // Mostrar/ocultar mensaje de no resultados
-        const emptyRow = tableBody.querySelector('.empty-row:not(.no-resultados)');
-        if (visibleRows === 0 && query) {
-            mostrarMensajeNoResultados();
-            if (emptyRow) emptyRow.style.display = 'none';
-        } else {
-            ocultarMensajeNoResultados();
-            if (emptyRow && visibleRows === 0) {
-                emptyRow.style.display = '';
-            }
-        }
+        })
+        .catch(error => console.error('Error en búsqueda AJAX:', error));
     }
 
-    function mostrarMensajeNoResultados() {
-        let mensajeNoResultados = tableBody.querySelector('.no-resultados');
-        if (!mensajeNoResultados) {
-            mensajeNoResultados = document.createElement('tr');
-            mensajeNoResultados.className = 'empty-row no-resultados';
-            mensajeNoResultados.innerHTML = `
+    function renderizarTabla(lotes) {
+        tableBody.innerHTML = '';
+        
+        if (lotes.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.className = 'empty-row no-resultados';
+            emptyRow.innerHTML = `
                 <td colspan="7">
                     <i class="fas fa-search"></i>
                     <h3>No se encontraron lotes</h3>
                     <p>Intenta con otros términos de búsqueda</p>
                 </td>
             `;
-            tableBody.appendChild(mensajeNoResultados);
+            tableBody.appendChild(emptyRow);
+            return;
         }
-        mensajeNoResultados.style.display = '';
-    }
 
-    function ocultarMensajeNoResultados() {
-        const mensajeNoResultados = tableBody.querySelector('.no-resultados');
-        if (mensajeNoResultados) {
-            mensajeNoResultados.style.display = 'none';
-        }
+        lotes.forEach(lote => {
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-producto-id', lote.producto_id);
+            tr.setAttribute('data-lote-id', lote.id);
+            tr.setAttribute('data-estado', lote.estado_raw);
+            tr.setAttribute('data-proveedor-id', lote.proveedor_id);
+
+            // Determinar clases de estado
+            let statusClass = 'status-empty';
+            let iconClass = 'fa-lock'; // Por defecto
+            let toggleClass = 'fa-toggle-off'; // Por defecto
+
+            if (lote.estado_raw === 'activo') {
+                statusClass = 'status-active';
+                toggleClass = 'fa-toggle-on';
+            } else if (lote.estado_raw === 'inactivo') {
+                statusClass = 'status-inactive';
+                toggleClass = 'fa-toggle-off';
+            } else if (lote.estado_raw === 'vencido') {
+                statusClass = 'status-expired';
+            } 
+
+            // Verificar si es editable (no vencido ni agotado)
+            const esEditable = lote.estado_raw !== 'vencido' && lote.estado_raw !== 'agotado';
+            const esActivable = ['activo', 'inactivo'].includes(lote.estado_raw);
+
+            // Construir botones de acción
+            let accionesHTML = `
+                <!-- Botón Ver Detalles -->
+                <button class="btn-action btn-ver-detalles" title="Ver Detalles" 
+                    data-codigo="${lote.codigo}"
+                    data-proveedor="${lote.proveedor}" 
+                    data-costo-total="${lote.costo_total.replace('$', '')}"
+                    data-producto="${lote.producto}">
+                    <i class="fas fa-eye"></i>
+                </button>
+            `;
+
+            if (esEditable) {
+                accionesHTML += `
+                    <button class="btn-action btn-edit-costo" title="Editar Costo Unitario" data-lote-id="${lote.id}">
+                        <i class="fas fa-dollar-sign"></i>
+                    </button>
+                    <!-- URL dinámica para editar -->
+                    <a href="/lotes/editar/${lote.id}/" class="btn-action btn-editar-lote" title="Editar Lote">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                `;
+            } else {
+                accionesHTML += `
+                    <button class="btn-action btn-estado-fijo" title="No se puede editar costo" disabled style="opacity: 0.5;">
+                        <i class="fas fa-ban"></i>
+                    </button>
+                    <button class="btn-action btn-estado-fijo" title="No se puede editar lote" disabled style="opacity: 0.5;">
+                        <i class="fas fa-ban"></i>
+                    </button>
+                `;
+            }
+
+            if (esActivable) {
+                accionesHTML += `
+                    <button class="btn-action btn-cambiar-estado" title="Cambiar Estado" 
+                        data-lote-id="${lote.id}"
+                        data-estado-actual="${lote.estado_raw}">
+                        <i class="fas ${toggleClass}"></i>
+                    </button>
+                `;
+            } else {
+                accionesHTML += `
+                    <button class="btn-action btn-estado-fijo" title="Estado calculado automáticamente" disabled style="opacity: 0.5;">
+                        <i class="fas fa-lock"></i>
+                    </button>
+                `;
+            }
+
+            tr.innerHTML = `
+                <td>${lote.producto}</td>
+                <td>${lote.cantidad}</td>
+                <td class="centered editable-costo" data-lote-id="${lote.id}" data-costo-actual="${lote.costo_unitario.replace('$', '')}">
+                    ${lote.costo_unitario}
+                </td>
+                <td>${lote.fecha_recibimiento}</td>
+                <td>${lote.fecha_vencimiento}</td>
+                <td>
+                    <span class="status ${statusClass}">
+                        ${lote.estado}
+                    </span>
+                </td>
+                <td class="actions">
+                    ${accionesHTML}
+                </td>
+            `;
+            
+            tableBody.appendChild(tr);
+        });
     }
 
     // ===== FILTRO POR ESTADO =====
