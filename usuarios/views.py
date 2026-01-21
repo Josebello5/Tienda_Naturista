@@ -88,12 +88,18 @@ def custom_logout(request):
     response['Expires'] = '0'
     return response
 
+# Importaciones para reportes y utilidades
 from django.db.models import Q
-from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from datetime import datetime
-from django.http import HttpResponse
+from urllib.parse import quote
+# Nuevas importaciones para PDF moderno
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+import io
+from django.conf import settings
 
 @owner_required
 def menu_configuracion(request):
@@ -104,6 +110,26 @@ def menu_configuracion(request):
 def get_pdf_content_disposition(filename):
     from urllib.parse import quote
     return f'inline; filename="{filename}"; filename*=UTF-8\'\'{quote(filename)}'
+
+def generar_pdf_generico(template_src, context_dict, filename):
+    """Función auxiliar para generar PDFs usando xhtml2pdf (Local para evitar ciclos)"""
+    # Agregar logo_url si no existe
+    if 'logo_url' not in context_dict:
+        import os
+        from django.conf import settings
+        context_dict['logo_url'] = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
+        
+    html_string = render_to_string(template_src, context_dict)
+    result = io.BytesIO()
+    
+    pdf = pisa.pisaDocument(io.BytesIO(html_string.encode("UTF-8")), result)
+    
+    if not pdf.err:
+        response = HttpResponse(result.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        return response
+    
+    return HttpResponse(f"Error al generar PDF: {pdf.err}", status=500)
 
 @login_required
 def generar_pdf_usuarios(request):
@@ -130,90 +156,17 @@ def generar_pdf_usuarios(request):
             is_active = estado_filter == 'True'
             usuarios = usuarios.filter(is_active=is_active)
 
-        response = HttpResponse(content_type='application/pdf')
-        filename = f"listado_usuarios_{query}{'_' + rol_filter if rol_filter else ''}.pdf" 
-        response['Content-Disposition'] = get_pdf_content_disposition(filename)
-
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
-
-        # Header
-        p.setTitle("Listado de Usuarios - Tienda Naturista")
+        context = {
+            'titulo': 'Listado de Usuarios',
+            'usuarios': usuarios,
+            'fecha_generacion': datetime.now(),
+            'query': query,
+            'rol_filter': rol_filter,
+            'estado_filter': estado_filter,
+        }
         
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
-        
-        p.setFont("Helvetica", 10)
-        fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-        
-        filtros_parts = []
-        if query: filtros_parts.append(f"Búsqueda: '{query}'")
-        if rol_filter: filtros_parts.append(f"Rol: '{rol_filter}'")
-        if estado_filter: filtros_parts.append(f"Estado: '{'Activo' if estado_filter == 'True' else 'Inactivo'}'")
-        
-        filtros_info = " - ".join(filtros_parts) if filtros_parts else "Listado Completo"
-        p.drawString(1*inch, height-1.6*inch, f"{filtros_info} - {fecha_actual}")
-        
-        p.line(1*inch, height-1.7*inch, 7.5*inch, height-1.7*inch)
-
-        # Table Header
-        y_position = height - 2.2*inch
-        line_height = 0.25*inch
-
-        p.setFont("Helvetica-Bold", 8)
-        p.drawString(0.5*inch, y_position, "CÉDULA")
-        p.drawString(1.5*inch, y_position, "NOMBRE")
-        p.drawString(3.0*inch, y_position, "APELLIDO")
-        p.drawString(4.5*inch, y_position, "EMAIL")
-        p.drawString(6.5*inch, y_position, "ROL")
-        p.drawString(7.2*inch, y_position, "ESTADO")
-
-        y_position -= line_height
-        p.line(0.4*inch, y_position, 8.0*inch, y_position)
-        y_position -= 0.1*inch
-
-        # Data
-        p.setFont("Helvetica", 8)
-        
-        for usuario in usuarios:
-            if y_position < 1*inch:
-                p.showPage()
-                y_position = height - 1*inch
-                # Re-draw header on new page? Or just simple table header
-                p.setFont("Helvetica-Bold", 8)
-                p.drawString(0.5*inch, y_position, "CÉDULA")
-                p.drawString(1.5*inch, y_position, "NOMBRE")
-                p.drawString(3.0*inch, y_position, "APELLIDO")
-                p.drawString(4.5*inch, y_position, "EMAIL")
-                p.drawString(6.5*inch, y_position, "ROL")
-                p.drawString(7.2*inch, y_position, "ESTADO")
-                y_position -= line_height
-                p.line(0.4*inch, y_position, 8.0*inch, y_position)
-                y_position -= 0.1*inch
-                p.setFont("Helvetica", 8)
-
-            p.drawString(0.5*inch, y_position, str(usuario.cedula))
-            p.drawString(1.5*inch, y_position, usuario.first_name[:15])
-            p.drawString(3.0*inch, y_position, usuario.last_name[:15])
-            p.drawString(4.5*inch, y_position, usuario.email[:25])
-            
-            # Obtener nombre del rol desde el grupo
-            user_groups = usuario.groups.all()
-            rol_name = user_groups[0].name if user_groups else "Sin Asignar"
-            
-            p.drawString(6.5*inch, y_position, rol_name)
-            
-            estado = "Activo" if usuario.is_active else "Inactivo"
-            p.drawString(7.2*inch, y_position, estado)
-            
-            y_position -= line_height
-
-        p.showPage()
-        p.save()
-        return response
+        filename = f"listado_usuarios_{datetime.now().strftime('%Y%m%d')}.pdf"
+        return generar_pdf_generico('usuarios/reporte_usuarios_pdf.html', context, filename)
 
     except Exception as e:
         return HttpResponse(f"Error generando PDF: {str(e)}", status=500)
