@@ -139,8 +139,15 @@ def descargar_recibo_cierre(request, cierre_id):
     cierre = get_object_or_404(CierreCaja, ID_Cierre=cierre_id)
     
     try:
+        import os
+        from django.conf import settings
+        
         # Generar el HTML del recibo
         context = cierre.get_html_context()
+        
+        # Agregar logo URL
+        context['logo_url'] = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
+        
         html_string = render_to_string('cierre_caja/recibo_cierre_pdf.html', context)
         
         # Crear buffer para el PDF
@@ -298,18 +305,19 @@ def parse_decimal_venezuelan(value):
 
 
 def generar_reporte_cierres(request):
-    """Genera reporte PDF del historial de cierres usando reportlab (Separado Bs y Ref)"""
+    """Genera reporte PDF del historial de cierres usando xhtml2pdf con template HTML"""
     try:
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.units import inch
+        import os
+        from django.conf import settings
+        from xhtml2pdf import pisa
+        import io
         
         # Filtros
         fecha_desde = request.GET.get('fecha_desde', None)
         fecha_hasta = request.GET.get('fecha_hasta', None)
         estado = request.GET.get('estado', '')
         
-        cierres = CierreCaja.objects.all()
+        cierres = CierreCaja.objects.select_related('Usuario').prefetch_related('Usuario__groups').all()
         
         filtros_texto = []
         
@@ -352,64 +360,26 @@ def generar_reporte_cierres(request):
         # Ordenar por fecha descendente
         cierres = cierres.order_by('-Fecha_Cierre')
         
-        # Configurar PDF
-        response = HttpResponse(content_type='application/pdf')
-        filename = f"reporte_cierres_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        # Función para formatear números en formato venezolano
+        def fmt(val):
+            return f"{val:,.2f}".replace('.', '#').replace(',', '.').replace('#', ',')
         
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
+        def get_estado(dif):
+            if dif == 0:
+                return 'cuadre'
+            elif dif > 0:
+                return 'sobra'
+            else:
+                return 'falta'
         
-        # --- HEADER ---
-        def draw_header(c, page_filters=None):
-            c.setFont("Helvetica-Bold", 16)
-            c.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
-            c.setFont("Helvetica", 12)
-            c.drawString(1*inch, height-1.3*inch, "Historial de Cierres de Caja")
-            c.setFont("Helvetica", 10)
-            fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-            c.drawString(1*inch, height-1.6*inch, f"Generado: {fecha_actual}")
-            
-            if page_filters:
-                c.setFont("Helvetica-Oblique", 9)
-                c.drawString(1*inch, height-1.9*inch, " | ".join(page_filters))
-            
-            c.line(1*inch, height-2.1*inch, 7.5*inch, height-2.1*inch)
-            
-            # Encabezados de tabla
-            y_cols = height - 2.4*inch
-            c.setFont("Helvetica-Bold", 9)
-            c.drawString(0.5*inch, y_cols, "FECHA")
-            c.drawString(1.5*inch, y_cols, "USUARIO")
-            c.drawString(3.0*inch, y_cols, "TOTAL SISTEMA")
-            c.drawString(4.5*inch, y_cols, "TOTAL REAL")
-            c.drawString(6.0*inch, y_cols, "DIFERENCIA")
-            c.line(0.5*inch, y_cols-0.1*inch, 7.5*inch, y_cols-0.1*inch)
-            return y_cols - 0.3*inch
-
-        y = draw_header(p, filtros_texto)
-        
-        # --- BODY ---
-        p.setFont("Helvetica", 8)
-        
-        # Acumuladores
+        # Preparar datos para el template
+        cierres_data = []
         tot_sis_bs = Decimal('0')
         tot_sis_usd = Decimal('0')
         tot_real_bs = Decimal('0')
         tot_real_usd = Decimal('0')
-        tot_dif_bs = Decimal('0')
-        tot_dif_usd = Decimal('0')
-        
-        def fmt(val, prefix=""):
-            s = f"{val:,.2f}".replace('.', '#').replace(',', '.').replace('#', ',')
-            return f"{prefix} {s}"
         
         for cierre in cierres:
-            if y < 1.5*inch:
-                p.showPage()
-                y = draw_header(p, filtros_texto)
-                p.setFont("Helvetica", 8)
-            
             # Calcular subtotales por moneda
             sis_bs = (cierre.Sistema_Efectivo_Bs + cierre.Sistema_Transferencia + 
                       cierre.Sistema_Pago_Movil + cierre.Sistema_Tarjeta + 
@@ -429,95 +399,86 @@ def generar_reporte_cierres(request):
             tot_sis_usd += sis_usd
             tot_real_bs += real_bs
             tot_real_usd += real_usd
-            tot_dif_bs += dif_bs
-            tot_dif_usd += dif_usd
             
-            # Datos básicos
-            fecha_str = cierre.Fecha_Cierre.strftime("%d/%m/%Y")
-            usuario_str = cierre.Usuario.username if cierre.Usuario else "N/A"
-            
-            # Dibujar Fecha y Usuario (centrados verticalmente en el bloque de 2 líneas)
-            p.setFillColorRGB(0, 0, 0)
-            p.drawString(0.5*inch, y - 6, fecha_str)
-            p.drawString(1.5*inch, y - 6, usuario_str[:15])
-            
-            # Columna Sistema
-            p.drawRightString(4.0*inch, y, fmt(sis_bs, "Bs"))
-            p.drawRightString(4.0*inch, y - 10, fmt(sis_usd, "Ref $"))
-            
-            # Columna Real
-            p.drawRightString(5.5*inch, y, fmt(real_bs, "Bs"))
-            p.drawRightString(5.5*inch, y - 10, fmt(real_usd, "Ref $"))
-            
-            # Columna Diferencia (Bs)
-            if dif_bs == 0:
-                p.setFillColorRGB(0, 0.5, 0) # Verde
-            elif dif_bs > 0:
-                p.setFillColorRGB(0, 0, 1) # Azul
+            # Determinar rol del usuario
+            rol = cierre.Usuario.groups.first().name if cierre.Usuario and cierre.Usuario.groups.exists() else ''
+            if rol == 'Dueño':
+                rol_class = 'dueno'
+                inicial = 'D'
+            elif rol == 'Administrador':
+                rol_class = 'admin'
+                inicial = 'A'
+            elif rol == 'Cajero':
+                rol_class = 'cajero'
+                inicial = 'C'
             else:
-                p.setFillColorRGB(0.8, 0, 0) # Rojo
-            p.drawRightString(7.0*inch, y, fmt(dif_bs, "Bs"))
+                rol_class = 'default'
+                inicial = cierre.Usuario.username[0].upper() if cierre.Usuario else '?'
             
-            # Columna Diferencia (USD)
-            if dif_usd == 0:
-                p.setFillColorRGB(0, 0.5, 0) # Verde
-            elif dif_usd > 0:
-                p.setFillColorRGB(0, 0, 1) # Azul
-            else:
-                p.setFillColorRGB(0.8, 0, 0) # Rojo
-            p.drawRightString(7.0*inch, y - 10, fmt(dif_usd, "Ref $"))
-            
-            p.setFillColorRGB(0, 0, 0) # Reset color
-            p.setLineWidth(0.5)
-            p.setStrokeColorRGB(0.9, 0.9, 0.9)
-            p.line(0.5*inch, y - 15, 7.5*inch, y - 15)
-            
-            y -= 0.35*inch
-
-        # --- FOOTER TOTALS ---
-        y -= 0.1*inch
-        p.setStrokeColorRGB(0, 0, 0)
-        p.line(0.5*inch, y, 7.5*inch, y)
-        y -= 0.2*inch
+            cierres_data.append({
+                'fecha': cierre.Fecha_Cierre.strftime('%d/%m/%Y'),
+                'usuario': cierre.Usuario.username if cierre.Usuario else 'N/A',
+                'rol_class': rol_class,
+                'inicial': inicial,
+                'sistema_bs': fmt(sis_bs),
+                'sistema_usd': fmt(sis_usd),
+                'real_bs': fmt(real_bs),
+                'real_usd': fmt(real_usd),
+                'dif_bs': dif_bs,
+                'dif_usd': dif_usd,
+                'dif_bs_fmt': fmt(dif_bs),
+                'dif_usd_fmt': fmt(dif_usd),
+                'estado_bs': get_estado(dif_bs),
+                'estado_usd': get_estado(dif_usd),
+                'notas': cierre.Notas or '',
+            })
         
-        p.setFont("Helvetica-Bold", 8)
-        p.drawString(0.5*inch, y-5, "TOTALES:")
+        # Calcular totales
+        tot_dif_bs = tot_real_bs - tot_sis_bs
+        tot_dif_usd = tot_real_usd - tot_sis_usd
         
-        def draw_total_pair(x_pos, val_bs, val_usd):
-            # Bs
-            p.setFillColorRGB(0, 0, 0)
-            p.drawRightString(x_pos, y, fmt(val_bs, "Bs"))
-            # USD
-            p.setFillColorRGB(0, 0, 0)
-            p.drawRightString(x_pos, y - 10, fmt(val_usd, "Ref $"))
-
-        draw_total_pair(4.0*inch, tot_sis_bs, tot_sis_usd)
-        draw_total_pair(5.5*inch, tot_real_bs, tot_real_usd)
+        # Logo URL
+        logo_url = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
         
-        # Diferencia Totales con color
-        # Bs
-        if tot_dif_bs == 0:
-            p.setFillColorRGB(0, 0.5, 0)
-        elif tot_dif_bs > 0:
-            p.setFillColorRGB(0, 0, 1)
-        else:
-            p.setFillColorRGB(0.8, 0, 0)
-        p.drawRightString(7.0*inch, y, fmt(tot_dif_bs, "Bs"))
+        # Filtros info
+        filtros_info = " | ".join(filtros_texto) if filtros_texto else None
         
-        # USD
-        if tot_dif_usd == 0:
-            p.setFillColorRGB(0, 0.5, 0)
-        elif tot_dif_usd > 0:
-            p.setFillColorRGB(0, 0, 1)
-        else:
-            p.setFillColorRGB(0.8, 0, 0)
-        p.drawRightString(7.0*inch, y - 10, fmt(tot_dif_usd, "Ref $"))
+        context = {
+            'cierres': cierres_data,
+            'fecha_generacion': datetime.now(),
+            'filtros_info': filtros_info,
+            'logo_url': logo_url,
+            'total_sistema_bs': fmt(tot_sis_bs),
+            'total_sistema_usd': fmt(tot_sis_usd),
+            'total_real_bs': fmt(tot_real_bs),
+            'total_real_usd': fmt(tot_real_usd),
+            'total_dif_bs': tot_dif_bs,
+            'total_dif_usd': tot_dif_usd,
+            'total_dif_bs_fmt': fmt(tot_dif_bs),
+            'total_dif_usd_fmt': fmt(tot_dif_usd),
+            'total_estado_bs': get_estado(tot_dif_bs),
+            'total_estado_usd': get_estado(tot_dif_usd),
+        }
         
-        p.showPage()
-        p.save()
+        # Renderizar template a string
+        html_string = render_to_string('cierre_caja/reporte_historial_pdf.html', context)
         
-        return response
-
+        # Configurar PDF
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"historial_cierres_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        # Generar PDF
+        result = io.BytesIO()
+        pdf = pisa.pisaDocument(io.BytesIO(html_string.encode("UTF-8")), result)
+        
+        if not pdf.err:
+            response.write(result.getvalue())
+            return response
+        
+        return HttpResponse(f"Error al generar PDF: {pdf.err}", status=500)
+        
     except Exception as e:
         print(f"Error generando reporte de cierres: {e}")
         return HttpResponse(f"Error generando reporte: {str(e)}", status=500)
+
