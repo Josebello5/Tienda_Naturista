@@ -452,111 +452,46 @@ def eliminar_proveedor(request, id_proveedor):
         return JsonResponse({'success': False, 'error': str(e)})
 
 def imprimir_proveedores(request):
-    """Generar PDF con listado de proveedores"""
+    """Generar PDF con listado de proveedores usando xhtml2pdf"""
     try:
+        query = request.GET.get('q', '')
         proveedores = Proveedor.objects.all().order_by('nombre')
         
+        if query:
+            proveedores = proveedores.filter(
+                Q(nombre__icontains=query) |
+                Q(contacto__icontains=query)
+            )
+        
+        # Logo path
+        logo_url = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
+        
+        # Render HTML
+        context = {
+            'proveedores': proveedores,
+            'logo_url': logo_url,
+            'request': request,
+        }
+        
+        html_string = render_to_string('lotes/proveedores_pdf.html', context)
+        
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="listado_proveedores.pdf"'
+        response['Content-Disposition'] = 'inline; filename="listado_proveedores.pdf"'
         
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
+        # Create PDF
+        pisa_status = pisa.CreatePDF(
+            io.BytesIO(html_string.encode("UTF-8")),
+            dest=response
+        )
         
-        # Configuración inicial
-        p.setTitle("Listado de Proveedores - Tienda Naturista")
-        
-        # Encabezado
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
-        
-        p.setFont("Helvetica", 10)
-        fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-        p.drawString(1*inch, height-1.6*inch, f"Listado de Proveedores - {fecha_actual}")
-        
-        # Línea separadora
-        p.line(1*inch, height-1.7*inch, 7.5*inch, height-1.7*inch)
-        
-        # Configurar posición inicial para la tabla
-        y_position = height - 2.2*inch
-        line_height = 0.25*inch
-        
-        # Encabezados de tabla
-        p.setFont("Helvetica-Bold", 10)
-        p.drawString(1*inch, y_position, "NOMBRE")
-        p.drawString(3.5*inch, y_position, "CONTACTO")
-        p.drawString(5.5*inch, y_position, "FECHA CREACIÓN")
-        
-        y_position -= line_height
-        p.line(1*inch, y_position, 7.5*inch, y_position)
-        y_position -= 0.1*inch
-        
-        # Datos de proveedores
-        p.setFont("Helvetica", 9)
-        
-        for proveedor in proveedores:
-            if y_position < 1*inch:
-                p.showPage()
-                y_position = height - 1*inch
-                
-                # Encabezados en nueva página
-                p.setFont("Helvetica-Bold", 10)
-                p.drawString(1*inch, y_position, "NOMBRE")
-                p.drawString(3.5*inch, y_position, "CONTACTO")
-                p.drawString(5.5*inch, y_position, "FECHA CREACIÓN")
-                
-                y_position -= line_height
-                p.line(1*inch, y_position, 7.5*inch, y_position)
-                y_position -= 0.1*inch
-                p.setFont("Helvetica", 9)
+        if pisa_status.err:
+            return HttpResponse('We had some errors <pre>' + html_string + '</pre>')
             
-            p.drawString(1*inch, y_position, proveedor.nombre)
-            
-            # Truncar contacto si es muy largo
-            contacto_display = proveedor.contacto or ""
-            if len(contacto_display) > 30:
-                contacto_display = contacto_display[:27] + "..."
-            p.drawString(3.5*inch, y_position, contacto_display)
-            
-            p.drawString(5.5*inch, y_position, proveedor.fecha_creacion.strftime('%d/%m/%Y %H:%M'))
-            
-            y_position -= line_height
-        
-        # Total
-        p.setFont("Helvetica-Bold", 10)
-        y_position -= 0.3*inch
-        p.drawString(1*inch, y_position, f"Total de proveedores: {proveedores.count()}")
-        
-        # Pie de página
-        p.setFont("Helvetica-Oblique", 8)
-        p.drawString(1*inch, 0.5*inch, "Sistema de Gestión - Tienda Naturista")
-        
-        p.showPage()
-        p.save()
-        
         return response
         
     except Exception as e:
-        logger.error(f"Error al generar PDF de proveedores: {str(e)}")
-        
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="error.pdf"'
-        
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
-        
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-2*inch, "Error al generar el PDF")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-2.5*inch, "Ocurrió un error inesperado al generar el listado.")
-        
-        p.showPage()
-        p.save()
-        
-        return response
+        logger.error(f"Error al generar PDF de proveedores con xhtml2pdf: {str(e)}")
+        return HttpResponse(f"Error generando PDF: {str(e)}")
 
 
 @role_required('Dueño', 'Administrador')

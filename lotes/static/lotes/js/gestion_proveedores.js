@@ -343,9 +343,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Guardar proveedor
     document.getElementById('btnGuardarProveedor')?.addEventListener('click', guardarProveedor);
 
-    // Imprimir proveedores
+    // Imprimir proveedores con filtro
     document.getElementById('btnImprimirProveedores')?.addEventListener('click', () => {
-        window.open(IMPRIMIR_PROVEEDORES_URL, '_blank');
+        const searchInput = document.getElementById('searchProveedores');
+        const query = searchInput ? searchInput.value.trim() : '';
+        const url = query ? `${IMPRIMIR_PROVEEDORES_URL}?q=${encodeURIComponent(query)}` : IMPRIMIR_PROVEEDORES_URL;
+        window.open(url, '_blank');
     });
 
     // Cerrar modales al hacer clic fuera
