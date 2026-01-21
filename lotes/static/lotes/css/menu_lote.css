@@ -1854,3 +1854,20 @@ th:nth-child(7) { width: 160px !important; }
     max-width: 1000px !important;
     width: 95vw !important;
 }
+
+/* ===== VALIDACIÓN DE FECHAS EN TIEMPO REAL ===== */
+.fecha-invalida {
+    color: #999 !important;
+    border-color: #e74c3c !important;
+    background-color: #fee !important;
+}
+
+.fecha-invalida::-webkit-datetime-edit {
+    color: #999 !important;
+}
+
+.modal-footer .btn:disabled {
+    background-color: #ccc !important;
+    cursor: not-allowed !important;
+    opacity: 0.6 !important;
+}

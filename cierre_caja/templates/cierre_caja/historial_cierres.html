@@ -117,38 +117,36 @@
                             <div>Bs {{ cierre.total_real_bs|formato_venezolano }}</div>
                             <div class="text-muted small">Ref {{ cierre.total_real_usd|formato_venezolano }}</div>
                         </td>
-                        
+
                         <td style="text-align: center; font-family: 'Roboto Mono', monospace;">
                             <div class="mb-1">
                                 {% if cierre.diferencia_bs > 0 %}
-                                    <span class="text-primary fw-bold">
-                                        Bs +{{ cierre.diferencia_bs|formato_venezolano }}
+                                <span class="text-primary fw-bold">
+                                    Bs +{{ cierre.diferencia_bs|formato_venezolano }}
+                                </span>
+                                {% elif cierre.diferencia_bs < 0 %} <span class="text-danger fw-bold">
+                                    Bs {{ cierre.diferencia_bs|formato_venezolano }}
                                     </span>
-                                {% elif cierre.diferencia_bs < 0 %}
-                                    <span class="text-danger fw-bold">
-                                        Bs {{ cierre.diferencia_bs|formato_venezolano }}
-                                    </span>
-                                {% else %}
+                                    {% else %}
                                     <span class="text-success fw-bold">
                                         Bs {{ cierre.diferencia_bs|formato_venezolano }}
                                     </span>
-                                {% endif %}
+                                    {% endif %}
                             </div>
 
                             <div class="small">
                                 {% if cierre.diferencia_usd > 0 %}
-                                    <span class="text-primary fw-bold">
-                                        Ref +{{ cierre.diferencia_usd|formato_venezolano }}
+                                <span class="text-primary fw-bold">
+                                    Ref +{{ cierre.diferencia_usd|formato_venezolano }}
+                                </span>
+                                {% elif cierre.diferencia_usd < 0 %} <span class="text-danger fw-bold">
+                                    Ref {{ cierre.diferencia_usd|formato_venezolano }}
                                     </span>
-                                {% elif cierre.diferencia_usd < 0 %}
-                                    <span class="text-danger fw-bold">
-                                        Ref {{ cierre.diferencia_usd|formato_venezolano }}
-                                    </span>
-                                {% else %}
+                                    {% else %}
                                     <span class="text-success fw-bold">
                                         Ref {{ cierre.diferencia_usd|formato_venezolano }}
                                     </span>
-                                {% endif %}
+                                    {% endif %}
                             </div>
                         </td>
                         <td style="text-align: center;">
@@ -367,10 +365,23 @@
             return [year, month, day].join('-');
         }
 
-        // Validación
+        // Validación y sincronización min/max
         function validarFechas() {
             const desde = fechaDesdeInput.value;
             const hasta = fechaHastaInput.value;
+
+            // Sincronizar restricciones min/max para grises en el calendario
+            if (desde) {
+                fechaHastaInput.setAttribute('min', desde);
+            } else {
+                fechaHastaInput.removeAttribute('min');
+            }
+
+            if (hasta) {
+                fechaDesdeInput.setAttribute('max', hasta);
+            } else {
+                fechaDesdeInput.removeAttribute('max');
+            }
 
             if (desde && hasta && desde > hasta) {
                 fechaError.style.display = 'block';

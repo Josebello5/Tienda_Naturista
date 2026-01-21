@@ -454,11 +454,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         inputLoteId.value = loteId;
-        
+
         // Formatear para mostrar con coma
         let displayCosto = parseFloat(costoActual).toFixed(2).replace('.', ',');
         inputCosto.value = displayCosto;
-        
+
         modal.style.display = 'flex';
         inputCosto.focus();
         inputCosto.select();
@@ -466,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Limpiar listeners anteriores para evitar duplicados si la función se llama varias veces
         const newInputCosto = inputCosto.cloneNode(true);
         inputCosto.parentNode.replaceChild(newInputCosto, inputCosto);
-        
+
         // Re-asignar referencia
         const inputCostoRef = document.getElementById('nuevoCostoUnitario');
 
@@ -474,7 +474,7 @@ document.addEventListener('DOMContentLoaded', function () {
         inputCostoRef.addEventListener('keypress', function (e) {
             const char = String.fromCharCode(e.keyCode || e.which);
             const currentValue = this.value;
-            
+
             // Permitir números y coma
             if (!/^[0-9,]$/.test(char)) {
                 e.preventDefault();
@@ -491,11 +491,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         inputCostoRef.addEventListener('input', function () {
-           let val = this.value;
-           const parts = val.split(',');
-           if (parts.length > 2) {
-               this.value = parts[0] + ',' + parts.slice(1).join('');
-           }
+            let val = this.value;
+            const parts = val.split(',');
+            if (parts.length > 2) {
+                this.value = parts[0] + ',' + parts.slice(1).join('');
+            }
         });
         // ==========================================================
 
@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function () {
             let val = inputCostoRef.value.trim();
             // Reemplazar coma por punto para validar/enviar
             val = val.replace(',', '.');
-            
+
             const costo = parseFloat(val);
             if (isNaN(costo) || costo <= 0) {
                 mostrarModalError('Error', 'Por favor, ingrese un costo válido mayor a 0');
@@ -618,6 +618,36 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let filtroFechaTipo = ''; // 'recibimiento' o 'vencimiento'
 
+    // ===== VALIDACIÓN DE FECHAS EN TIEMPO REAL (GRISES EN CALENDARIO) =====
+    // Función para sincronizar las restricciones min/max entre los campos de fecha
+    function sincronizarRestriccionesFechas() {
+        if (inputFechaDesde && inputFechaHasta) {
+            // Si "desde" tiene valor, establecer min en "hasta"
+            if (inputFechaDesde.value) {
+                inputFechaHasta.setAttribute('min', inputFechaDesde.value);
+            } else {
+                inputFechaHasta.removeAttribute('min');
+            }
+
+            // Si "hasta" tiene valor, establecer max en "desde"
+            if (inputFechaHasta.value) {
+                inputFechaDesde.setAttribute('max', inputFechaHasta.value);
+            } else {
+                inputFechaDesde.removeAttribute('max');
+            }
+        }
+    }
+
+    // Cuando "desde" cambia, sincronizar restricciones
+    if (inputFechaDesde) {
+        inputFechaDesde.addEventListener('change', sincronizarRestriccionesFechas);
+    }
+
+    // Cuando "hasta" cambia, sincronizar restricciones
+    if (inputFechaHasta) {
+        inputFechaHasta.addEventListener('change', sincronizarRestriccionesFechas);
+    }
+
     function abrirModalFiltroFecha(tipo) {
         filtroFechaTipo = tipo;
         if (modalTitulo) {
@@ -636,8 +666,15 @@ document.addEventListener('DOMContentLoaded', function () {
             hasta = params.get('fecha_vencimiento_hasta');
         }
 
+        // Limpiar restricciones anteriores antes de asignar nuevos valores
+        if (inputFechaDesde) inputFechaDesde.removeAttribute('max');
+        if (inputFechaHasta) inputFechaHasta.removeAttribute('min');
+
         if (inputFechaDesde) inputFechaDesde.value = desde || '';
         if (inputFechaHasta) inputFechaHasta.value = hasta || '';
+
+        // Sincronizar restricciones después de llenar los valores
+        sincronizarRestriccionesFechas();
 
         if (modalFiltroFechas) {
             modalFiltroFechas.style.display = 'flex';

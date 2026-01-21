@@ -131,11 +131,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     /**
-     * Validar fechas en tiempo real
+     * Validar fechas en tiempo real y sincronizar restricciones min/max
      */
     function validarFechas() {
         const desde = fechaDesde.value;
         const hasta = fechaHasta.value;
+
+        // Sincronizar restricciones min/max para grises en el calendario
+        if (desde) {
+            fechaHasta.setAttribute('min', desde);
+        } else {
+            fechaHasta.removeAttribute('min');
+        }
+
+        if (hasta) {
+            fechaDesde.setAttribute('max', hasta);
+        } else {
+            fechaDesde.removeAttribute('max');
+        }
 
         if (desde && hasta) {
             const fechaDesdeObj = new Date(desde);
@@ -228,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const tieneProductosConIva = fila.hasAttribute('data-tiene-iva')
                 ? fila.getAttribute('data-tiene-iva') === 'true'
                 : true;
-            
+
             // VERIFICAR SI ESTÁ ANULADA PARA EXCLUIR DE LOS MONTOS
             const esAnulada = fila.getAttribute('data-anulada') === 'si';
 
@@ -550,43 +563,43 @@ document.addEventListener('DOMContentLoaded', function () {
         const successModalTitle = document.getElementById('successModalTitle');
         const successModalMessage = document.getElementById('successModalMessage');
         const closeSuccessModal = document.getElementById('closeSuccessModal');
-        
+
         if (successModal) {
             if (successModalMessage) successModalMessage.textContent = mensaje;
-            
+
             successModal.classList.add('active');
-            
-            const closeModal = function() {
+
+            const closeModal = function () {
                 successModal.classList.remove('active');
             };
-            
+
             // Configurar botón cerrar
             closeSuccessModal.onclick = closeModal;
-            
+
             // Cerrar al hacer click fuera
-            successModal.onclick = function(e) {
+            successModal.onclick = function (e) {
                 if (e.target === successModal) {
                     closeModal();
                 }
             };
         } else {
-             // Fallback si no existe el modal
+            // Fallback si no existe el modal
             let mensajesContainer = document.querySelector('.messages-container');
             if (!mensajesContainer) {
                 mensajesContainer = document.createElement('div');
                 mensajesContainer.className = 'messages-container';
                 document.querySelector('.welcome-card').after(mensajesContainer);
             }
-    
+
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-success';
             alertDiv.innerHTML = `
                 <i class="fas fa-check-circle"></i>
                 ${mensaje}
             `;
-    
+
             mensajesContainer.appendChild(alertDiv);
-    
+
             setTimeout(() => {
                 if (alertDiv.parentNode) {
                     alertDiv.remove();
@@ -982,7 +995,7 @@ document.addEventListener('DOMContentLoaded', function () {
         actualizarResumenTotales();
         // Actualizar moneda en tabla
         actualizarMonedaEnTabla();
-        
+
         // NUEVO: Actualizar paginación después de filtrar
         if (typeof window.actualizarPaginacionVentas === 'function') {
             window.paginaActualVentas = 1; // Resetear a página 1
@@ -1198,11 +1211,11 @@ document.addEventListener('DOMContentLoaded', function () {
     actualizarSaldosPendientesBs();
 
     // ===== PAGINACIÓN DEL LADO DEL CLIENTE =====
-    
+
     const REGISTROS_POR_PAGINA = 10;
     window.paginaActualVentas = 1;
     let totalPaginasVentas = 1;
-    
+
     const paginationContainer = document.getElementById('paginationContainer');
     const paginationInfo = document.getElementById('paginationInfo');
     const paginationNumbers = document.getElementById('paginationNumbers');
@@ -1210,24 +1223,24 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnAnteriorP = document.getElementById('btnAnteriorP');
     const btnSiguienteP = document.getElementById('btnSiguienteP');
     const btnUltimaP = document.getElementById('btnUltimaP');
-    
+
     /**
      * Actualiza la paginación basándose en las filas visibles POR FILTROS
      */
-    window.actualizarPaginacionVentas = function() {
+    window.actualizarPaginacionVentas = function () {
         // Obtener solo filas que pasaron los filtros (data-filtro-visible="true")
         const todasLasFilas = tableBody.querySelectorAll('tr:not(.empty-row):not(.no-resultados)');
         const filasVisibles = Array.from(todasLasFilas).filter(fila => {
             return fila.getAttribute('data-filtro-visible') === 'true';
         });
-        
+
         const totalRegistros = filasVisibles.length;
-        
+
         console.log(`Paginación: ${totalRegistros} registros visibles después de filtrar`);
-        
+
         // Calcular total de páginas
         totalPaginasVentas = Math.ceil(totalRegistros / REGISTROS_POR_PAGINA);
-        
+
         // Si solo hay una página o menos, ocultar paginación
         if (totalPaginasVentas <= 1) {
             if (paginationContainer) {
@@ -1239,12 +1252,12 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             return;
         }
-        
+
         // Mostrar contenedor de paginación
         if (paginationContainer) {
             paginationContainer.style.display = 'block';
         }
-        
+
         // Asegurarse de que la página actual esté en rango
         if (window.paginaActualVentas > totalPaginasVentas) {
             window.paginaActualVentas = totalPaginasVentas;
@@ -1252,16 +1265,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.paginaActualVentas < 1) {
             window.paginaActualVentas = 1;
         }
-        
+
         // Actualizar información de página
         if (paginationInfo) {
             paginationInfo.textContent = `Mostrando página ${window.paginaActualVentas} de ${totalPaginasVentas} (Total: ${totalRegistros} registros)`;
         }
-        
+
         // Mostrar solo las filas de la página actual
         const inicio = (window.paginaActualVentas - 1) * REGISTROS_POR_PAGINA;
         const fin = inicio + REGISTROS_POR_PAGINA;
-        
+
         filasVisibles.forEach((fila, index) => {
             if (index >= inicio && index < fin) {
                 fila.style.display = '';
@@ -1269,11 +1282,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 fila.style.display = 'none';
             }
         });
-        
+
         // Actualizar botones de navegación
         actualizarBotonesPaginacion();
     };
-    
+
     /**
      * Actualiza el estado de los botones de navegación
      */
@@ -1288,7 +1301,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 btnAnteriorP.style.display = 'inline-flex';
             }
         }
-        
+
         // Botones siguiente/última
         if (btnSiguienteP && btnUltimaP) {
             if (window.paginaActualVentas >= totalPaginasVentas) {
@@ -1299,15 +1312,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 btnUltimaP.style.display = 'inline-flex';
             }
         }
-        
+
         // Actualizar números de página
         if (paginationNumbers) {
             paginationNumbers.innerHTML = '';
-            
+
             // Mostrar números de página (página actual ± 2)
             let inicio = Math.max(1, window.paginaActualVentas - 2);
             let fin = Math.min(totalPaginasVentas, window.paginaActualVentas + 2);
-            
+
             // Ajustar si estamos al principio o al final
             if (window.paginaActualVentas <= 3) {
                 fin = Math.min(5, totalPaginasVentas);
@@ -1315,7 +1328,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (window.paginaActualVentas >= totalPaginasVentas - 2) {
                 inicio = Math.max(1, totalPaginasVentas - 4);
             }
-            
+
             for (let i = inicio; i <= fin; i++) {
                 if (i === window.paginaActualVentas) {
                     const span = document.createElement('span');
@@ -1336,21 +1349,21 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }
-    
+
     /**
      * Navega a una página específica
      */
     function irAPaginaVentas(numeroPagina) {
         window.paginaActualVentas = numeroPagina;
         window.actualizarPaginacionVentas();
-        
+
         // Hacer scroll suave a la parte superior de la tabla
         const tabla = document.getElementById('dataTable');
         if (tabla) {
             tabla.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
-    
+
     // Event listeners para botones de navegación
     if (btnPrimeraP) {
         btnPrimeraP.addEventListener('click', (e) => {
@@ -1358,51 +1371,51 @@ document.addEventListener('DOMContentLoaded', function () {
             irAPaginaVentas(1);
         });
     }
-    
+
     if (btnAnteriorP) {
         btnAnteriorP.addEventListener('click', (e) => {
             e.preventDefault();
             irAPaginaVentas(Math.max(1, window.paginaActualVentas - 1));
         });
     }
-    
+
     if (btnSiguienteP) {
         btnSiguienteP.addEventListener('click', (e) => {
             e.preventDefault();
             irAPaginaVentas(Math.min(totalPaginasVentas, window.paginaActualVentas + 1));
         });
     }
-    
+
     if (btnUltimaP) {
         btnUltimaP.addEventListener('click', (e) => {
             e.preventDefault();
             irAPaginaVentas(totalPaginasVentas);
         });
     }
-    
+
     // Inicializar todas las filas como visibles por defecto (solo si no tienen el atributo ya)
     setTimeout(() => {
         console.log('=== INICIALIZANDO PAGINACIÓN ===');
         console.log('tableBody existe:', !!tableBody);
         console.log('paginationContainer existe:', !!paginationContainer);
-        
+
         if (!tableBody) {
             console.error('ERROR: tableBody no encontrado. La paginación no puede inicializarse.');
             return;
         }
-        
+
         if (!paginationContainer) {
             console.error('ERROR: paginationContainer no encontrado. La paginación no puede inicializarse.');
             return;
         }
-        
+
         const todasLasFilas = tableBody.querySelectorAll('tr:not(.empty-row):not(.no-resultados)');
         console.log('Número total de filas encontradas:', todasLasFilas.length);
-        
+
         // CRÍTICO: No sobrescribir atributos ya establecidos por el filtro
         let filasConAtributo = 0;
         let filasSinAtributo = 0;
-        
+
         todasLasFilas.forEach(fila => {
             if (!fila.hasAttribute('data-filtro-visible')) {
                 // Solo marcar como visible si NO tiene el atributo
@@ -1412,9 +1425,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 filasConAtributo++;
             }
         });
-        
+
         console.log(`Filas con atributo ya establecido: ${filasConAtributo}, sin atributo: ${filasSinAtributo}`);
-        
+
         console.log('Llamando a actualizarPaginacionVentas...');
         window.actualizarPaginacionVentas();
         console.log('Sistema de paginación de ventas inicializado - 10 registros por página');
