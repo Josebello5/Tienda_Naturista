@@ -1,138 +1,207 @@
+{% load static %}
+{% load humanize %}
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8">
     <title>{{ titulo }}</title>
     <style>
         @page {
             size: letter;
-            margin: 2cm;
+            /* Margins define the content area */
+            margin-top: 3.5cm;
+            margin-bottom: 2cm;
+            margin-left: 1.5cm;
+            margin-right: 1.5cm;
+
+            @frame header_frame {           /* Header in top margin */
+                -pdf-frame-content: header_content;
+                left: 1.5cm; width: 18.59cm; top: 1cm; height: 2.5cm;
+            }
+            @frame footer_frame {           /* Footer in bottom margin */
+                -pdf-frame-content: footer_content;
+                left: 1.5cm; width: 18.59cm; top: 26cm; height: 1cm;
+            }
         }
 
         body {
-            font-family: Helvetica, Arial, sans-serif;
-            font-size: 10pt;
+            font-family: Helvetica, sans-serif;
+            font-size: 9pt;
             color: #333;
         }
 
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+        /* Header Styles */
+        #header_content {
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 5px;
+            margin-bottom: 0px;
         }
 
-        .header h1 {
-            color: #27ae60;
+        .header-table {
+            width: 100%;
+            border: none;
+            margin-bottom: 0;
+        }
+        
+        .header-table td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .logo-img {
+            width: 60px;
+            height: 60px;
+        }
+
+        h1 {
+            color: #1b5e20; /* Darker Green */
             font-size: 16pt;
             margin: 0;
             text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 12pt;
+            margin: 5px 0 0 0;
+            font-weight: normal;
         }
 
         .meta-info {
-            width: 100%;
-            margin-bottom: 20px;
-            font-size: 9pt;
+            font-size: 8pt;
+            color: #444;
+            margin-top: 5px;
         }
 
-        table {
+        /* Data Table Styles */
+        .data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-top: 10px;
+            table-layout: fixed;
         }
 
-        th {
-            background-color: #f2f2f2;
+        /* Ensure table header repeats on new pages */
+        thead {
+            display: table-header-group;
+        }
+
+        tfoot {
+            display: table-footer-group;
+        }
+
+        /* Prevent rows from splitting across pages */
+        tr {
+            page-break-inside: avoid;
+        }
+
+        .data-table th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 6px;
             text-align: left;
-            padding: 8px;
-            border-bottom: 1px solid #ddd;
             font-weight: bold;
+            font-size: 8pt;
         }
 
-        td {
-            padding: 8px;
-            border-bottom: 1px solid #eee;
+        .data-table td {
+            padding: 5px 6px;
+            border-bottom: 1px solid #ddd;
+            font-size: 8pt;
+            vertical-align: top;
+            word-wrap: break-word; 
         }
 
-        .text-right {
-            text-align: right;
-        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .rank-col { width: 50px; text-align: center; }
 
-        .text-center {
-            text-align: center;
-        }
-
-        .footer {
-            margin-top: 30px;
+        .page-number {
             text-align: center;
             font-size: 8pt;
-            color: #999;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
+            color: #666;
         }
-
-        .rank-col {
-            width: 50px;
-            text-align: center;
-        }
+        
+        .status-low { color: #e74c3c; font-weight: bold; }
+        .status-ok { color: #27ae60; }
     </style>
 </head>
-
 <body>
-    <div class="header">
-        <h1>Tienda Naturista</h1>
-        <p>{{ titulo }}</p>
+    <!-- Header Content -->
+    <div id="header_content">
+        <table class="header-table">
+            <tr>
+                <td width="80">
+                    {% if logo_url %}
+                    <img src="{{ logo_url }}" class="logo-img">
+                    {% endif %}
+                </td>
+                <td>
+                    <h1>Tienda Naturista</h1>
+                    <h2>{{ titulo }}</h2>
+                    <div class="meta-info">
+                        Generado: {% now "d/m/Y H:i" %} | 
+                        Rango: {{ fecha_ini|date:"d/m/Y" }} - {{ fecha_fin|date:"d/m/Y" }}
+                        {% if filtro_busqueda %} | Búsqueda: "{{ filtro_busqueda }}"{% endif %}
+                    </div>
+                </td>
+            </tr>
+        </table>
     </div>
 
-    <table class="meta-info">
-        <tr>
-            <td><strong>Desde:</strong> {{ fecha_ini|date:"d/m/Y" }}</td>
-            <td class="text-right"><strong>Hasta:</strong> {{ fecha_fin|date:"d/m/Y" }}</td>
-        </tr>
-        <tr>
-            <td><strong>Generado el:</strong> {{ fecha_generacion|date:"d/m/Y H:i" }}</td>
-            <td class="text-right"></td>
-        </tr>
-    </table>
+    <!-- Footer Content -->
+    <div id="footer_content">
+        <div class="page-number">
+            Sistema de Gestión - Tienda Naturista | Página <pdf:pagenumber> de <pdf:pagecount>
+        </div>
+    </div>
 
-    <table>
+    <!-- Main Content -->
+    <table class="data-table">
         <thead>
             <tr>
                 {% if tipo_reporte == 'productos' %}
                 <th class="rank-col">#</th>
-                <th>Producto</th>
-                <th>ID</th>
+                <th width="40%">Producto</th>
+                <th width="30%">ID</th>
                 <th class="text-right">Total Vendido</th>
+                
                 {% elif tipo_reporte == 'clientes' %}
                 <th class="rank-col">#</th>
-                <th>Cliente</th>
-                <th>Cédula</th>
-                <th class="text-center">Compras</th>
-                <th class="text-right">Total Gastado</th>
+                <th width="35%">Cliente</th>
+                <th width="20%">Cédula</th>
+                <th width="15%" class="text-center">Compras</th>
+                <th width="20%" class="text-right">Total Gastado ({% if moneda == 'usd' %}USD{% else %}Bs{% endif %})</th>
+                
                 {% elif tipo_reporte == 'vencimiento' %}
-                <th>Producto</th>
-                <th>Lote</th>
-                <th class="text-center">Disponible</th>
-                <th class="text-right">Fecha Vencimiento</th>
+                <th width="35%">Producto</th>
+                <th width="20%">Lote</th>
+                <th width="15%" class="text-center">Disponible</th>
+                <th width="20%" class="text-right">Fecha Vencimiento</th>
+                
                 {% elif tipo_reporte == 'ventas_tiempo' %}
-                <th>Fecha / Período</th>
-                <th class="text-right">Total ({% if moneda == 'usd' %}USD{% else %}Bs{% endif %})</th>
+                <th width="60%">Fecha / Período</th>
+                <th width="30%" class="text-right">Total ({% if moneda == 'usd' %}USD{% else %}Bs{% endif %})</th>
+                
                 {% elif tipo_reporte == 'top_productos_chart' %}
                 <th class="rank-col">#</th>
-                <th>Producto</th>
+                <th width="60%">Producto</th>
                 <th class="text-right">Cantidad Vendida</th>
+                
                 {% elif tipo_reporte == 'categorias' %}
                 <th class="rank-col">#</th>
-                <th>Categoría</th>
-                <th class="text-center">Cant. Productos</th>
-                <th class="text-right">Total Ventas ({% if moneda == 'usd' %}USD{% else %}Bs{% endif %})</th>
+                <th width="40%">Categoría</th>
+                <th width="20%" class="text-center">Cant. Productos</th>
+                <th width="25%" class="text-right">Total Ventas ({% if moneda == 'usd' %}USD{% else %}Bs{% endif %})</th>
+                
                 {% elif tipo_reporte == 'bajo_stock' %}
                 <th class="rank-col">#</th>
-                <th>Producto</th>
-                <th>ID</th>
-                <th class="text-center">Stock Actual</th>
-                <th class="text-center">Stock Mínimo</th>
+                <th width="40%">Producto</th>
+                <th width="20%">ID</th>
+                <th width="15%" class="text-center">Stock Actual</th>
+                <th width="15%" class="text-center">Stock Mínimo</th>
                 {% endif %}
             </tr>
         </thead>
@@ -144,52 +213,54 @@
                 <td>{{ item.ID_lote__id_producto__nombre_pro }}</td>
                 <td>{{ item.ID_lote__id_producto__ID_producto }}</td>
                 <td class="text-right">{{ item.total_cantidad }}</td>
+                
                 {% elif tipo_reporte == 'clientes' %}
                 <td class="rank-col">{{ forloop.counter }}</td>
                 <td>{{ item.Cedula__nombre }} {{ item.Cedula__apellido }}</td>
                 <td>{{ item.Cedula__cedula }}</td>
                 <td class="text-center">{{ item.total_compras }}</td>
-                <td class="text-right">{% if moneda == 'usd' %}${% else %}Bs{% endif %} {{ item.total_gastado|floatformat:2 }}</td>
+                <td class="text-right">{% if moneda == 'usd' %}${% else %}Bs{% endif %} {{ item.total_gastado|floatformat:2|intcomma }}</td>
+                
                 {% elif tipo_reporte == 'vencimiento' %}
                 <td>{{ item.id_producto.nombre_pro }}</td>
                 <td>{{ item.codigo_lote }}</td>
                 <td class="text-center">{{ item.cantidad_disponible }}</td>
                 <td class="text-right">{{ item.fecha_vencimiento|date:"d/m/Y" }}</td>
+                
                 {% elif tipo_reporte == 'ventas_tiempo' %}
                 <td>
                     {% if periodo == 'mes' %}{{ item.fecha|date:"F Y" }}
                     {% elif periodo == 'semana' %}Semana del {{ item.fecha|date:"d/m/Y" }}
                     {% else %}{{ item.fecha|date:"d/m/Y" }}{% endif %}
                 </td>
-                <td class="text-right">{% if moneda == 'usd' %}${% else %}Bs{% endif %} {{ item.total|floatformat:2 }}</td>
+                <td class="text-right">{% if moneda == 'usd' %}${% else %}Bs{% endif %} {{ item.total|floatformat:2|intcomma }}</td>
+                
                 {% elif tipo_reporte == 'top_productos_chart' %}
                 <td class="rank-col">{{ forloop.counter }}</td>
                 <td>{{ item.ID_lote__id_producto__nombre_pro }}</td>
                 <td class="text-right">{{ item.total_cantidad }}</td>
+                
                 {% elif tipo_reporte == 'categorias' %}
                 <td class="rank-col">{{ forloop.counter }}</td>
                 <td>{{ item.ID_lote__id_producto__categoria__nombre }}</td>
                 <td class="text-center">{{ item.total_cantidad }}</td>
-                <td class="text-right">{% if moneda == 'usd' %}${% else %}Bs{% endif %} {{ item.total|floatformat:2 }}</td>
+                <td class="text-right">{% if moneda == 'usd' %}${% else %}Bs{% endif %} {{ item.total|floatformat:2|intcomma }}</td>
+                
                 {% elif tipo_reporte == 'bajo_stock' %}
                 <td class="rank-col">{{ forloop.counter }}</td>
                 <td>{{ item.nombre_pro }}</td>
                 <td>{{ item.pk }}</td>
-                <td class="text-center" style="color: #e74c3c; font-weight: bold;">{{ item.total_stock }}</td>
+                <td class="text-center status-low">{{ item.total_stock }}</td>
                 <td class="text-center">{{ item.stock_minimo }}</td>
                 {% endif %}
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" class="text-center">No hay datos para este rango de fechas.</td>
+                <td colspan="5" class="text-center" style="padding: 20px;">No se encontraron datos para este reporte.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
-    <div class="footer">
-        Reporte generado por Sistema de Gestión - Tienda Naturista
-    </div>
 </body>
-
 </html>

@@ -1,148 +1,174 @@
+{% load static %}
+{% load humanize %}
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8">
     <title>{{ titulo }}</title>
     <style>
         @page {
             size: letter landscape;
-            margin: 1.5cm;
+            /* Margins define the content area */
+            margin-top: 3.5cm;
+            margin-bottom: 2cm;
+            margin-left: 1.5cm;
+            margin-right: 1.5cm;
+
+            @frame header_frame {           /* Header in top margin */
+                -pdf-frame-content: header_content;
+                left: 1.5cm; width: 24.94cm; top: 1cm; height: 2.5cm;
+            }
+            @frame footer_frame {           /* Footer in bottom margin */
+                -pdf-frame-content: footer_content;
+                left: 1.5cm; width: 24.94cm; top: 20cm; height: 1cm;
+            }
         }
 
         body {
-            font-family: Helvetica, Arial, sans-serif;
-            font-size: 10pt;
+            font-family: Helvetica, sans-serif;
+            font-size: 9pt;
             color: #333;
         }
 
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #27ae60;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
+        /* Header Styles */
+        #header_content {
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 5px;
+            margin-bottom: 0px;
         }
 
-        .header h1 {
-            color: #27ae60;
-            font-size: 18pt;
-            margin: 0 0 5px 0;
-            text-transform: uppercase;
+        .header-table {
+            width: 100%;
+            border: none;
+            margin-bottom: 0;
+        }
+        
+        .header-table td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
         }
 
-        .header h2 {
-            color: #555;
-            font-size: 12pt;
+        .logo-img {
+            width: 60px;
+            height: 60px;
+        }
+
+        h1 {
+            color: #1b5e20; /* Darker Green */
+            font-size: 16pt;
             margin: 0;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 12pt;
+            margin: 5px 0 0 0;
             font-weight: normal;
         }
 
         .meta-info {
-            width: 100%;
-            margin-bottom: 15px;
-            font-size: 9pt;
-            background-color: #f8f8f8;
-            padding: 10px;
-            border-radius: 4px;
+            font-size: 8pt;
+            color: #444;
+            margin-top: 5px;
         }
 
-        .meta-info table {
-            width: 100%;
-            border: none;
-        }
-
-        .meta-info td {
-            padding: 3px 5px;
-            border: none;
-        }
-
+        /* Chart Styles */
         .chart-container {
             text-align: center;
-            margin: 20px 0;
+            margin-top: 30px;
+            page-break-inside: avoid;
         }
 
         .chart-container img {
-            max-width: 100%;
+            max-width: 90%;
             height: auto;
             border: 1px solid #ddd;
             border-radius: 4px;
-            padding: 5px;
+            padding: 10px;
             background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .footer {
-            margin-top: 20px;
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        .page-number {
             text-align: center;
             font-size: 8pt;
-            color: #999;
-            border-top: 1px solid #eee;
-            padding-top: 8px;
+            color: #666;
         }
-
-        .text-right {
-            text-align: right;
-        }
-
+        
         .filter-badge {
             display: inline-block;
             background-color: #e8f5e9;
-            color: #27ae60;
-            padding: 3px 8px;
+            color: #2e7d32;
+            padding: 2px 6px;
             border-radius: 3px;
-            font-size: 9pt;
-            margin: 2px;
+            font-size: 8pt;
+            border: 1px solid #a5d6a7;
+            margin-left: 5px;
         }
     </style>
 </head>
-
 <body>
-    <div class="header">
-        <h1>Tienda Naturista</h1>
-        <h2>{{ titulo }}</h2>
-    </div>
-
-    <div class="meta-info">
-        <table>
+    <!-- Header Content -->
+    <div id="header_content">
+        <table class="header-table">
             <tr>
-                <td><strong>Período:</strong> {{ fecha_ini|date:"d/m/Y" }} - {{ fecha_fin|date:"d/m/Y" }}</td>
-                <td class="text-right"><strong>Generado el:</strong> {{ fecha_generacion|date:"d/m/Y H:i" }}</td>
-            </tr>
-            {% if moneda %}
-            <tr>
-                <td><strong>Moneda:</strong> 
-                    <span class="filter-badge">{% if moneda == 'usd' %}USD ($){% else %}Bolívares (Bs){% endif %}</span>
+                <td width="80">
+                    {% if logo_url %}
+                    <img src="{{ logo_url }}" class="logo-img">
+                    {% endif %}
                 </td>
-                <td class="text-right"></td>
-            </tr>
-            {% endif %}
-            {% if periodo %}
-            <tr>
-                <td><strong>Agrupación:</strong> 
-                    <span class="filter-badge">
-                        {% if periodo == 'dia' %}Por Día
-                        {% elif periodo == 'semana' %}Por Semana
-                        {% else %}Por Mes{% endif %}
-                    </span>
+                <td>
+                    <h1>Tienda Naturista</h1>
+                    <h2>{{ titulo }}</h2>
+                    <div class="meta-info">
+                        Generado: {% now "d/m/Y H:i" %} | 
+                        Período: {{ fecha_ini|date:"d/m/Y" }} - {{ fecha_fin|date:"d/m/Y" }}
+                    </div>
                 </td>
-                <td class="text-right"></td>
+                <td class="text-right" style="vertical-align: bottom;">
+                     {% if moneda %}
+                        <div style="margin-bottom: 3px;">
+                            Moneda: <span class="filter-badge">{% if moneda == 'usd' %}USD ($){% else %}Bolívares (Bs){% endif %}</span>
+                        </div>
+                    {% endif %}
+                    {% if periodo %}
+                        <div>
+                            Agrupación: <span class="filter-badge">
+                                {% if periodo == 'dia' %}Por Día
+                                {% elif periodo == 'semana' %}Por Semana
+                                {% else %}Por Mes{% endif %}
+                            </span>
+                        </div>
+                    {% endif %}
+                </td>
             </tr>
-            {% endif %}
         </table>
     </div>
 
+    <!-- Footer Content -->
+    <div id="footer_content">
+        <div class="page-number">
+            Sistema de Gestión - Tienda Naturista | Página <pdf:pagenumber> de <pdf:pagecount>
+        </div>
+    </div>
+
+    <!-- Main Content -->
     {% if chart_image %}
     <div class="chart-container">
         <img src="{{ chart_image }}" alt="Gráfico de {{ titulo }}" />
     </div>
     {% else %}
-    <div style="text-align: center; padding: 40px; color: #999;">
-        <p>No se pudo generar el gráfico</p>
+    <div style="text-align: center; padding: 100px; color: #999;">
+        <h2><i class="fas fa-chart-bar"></i></h2>
+        <p>No se pudo generar la visualización del gráfico.</p>
     </div>
     {% endif %}
 
-    <div class="footer">
-        Reporte generado por Sistema de Gestión - Tienda Naturista
-    </div>
 </body>
-
 </html>

@@ -520,6 +520,8 @@ def reporte_bajo_stock(request):
         fecha_ini_str = request.GET.get('fecha_ini')
         fecha_fin_str = request.GET.get('fecha_fin')
         
+        from django.db.models import Q
+        
         # Simular fechas para el template (hoy por defecto)
         fecha_ini = timezone.now().date()
         fecha_fin = timezone.now().date()
@@ -580,6 +582,12 @@ def reporte_bajo_stock(request):
 
 def generar_pdf_generico(template_src, context_dict, filename):
     """Función auxiliar para generar PDFs usando xhtml2pdf"""
+    # Agregar logo_url si no existe
+    if 'logo_url' not in context_dict:
+        import os
+        from django.conf import settings
+        context_dict['logo_url'] = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
+        
     html_string = render_to_string(template_src, context_dict)
     result = io.BytesIO()
     
@@ -587,7 +595,7 @@ def generar_pdf_generico(template_src, context_dict, filename):
     
     if not pdf.err:
         response = HttpResponse(result.getvalue(), content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Disposition'] = f'inline; filename="{filename}"' # Changed to inline for better preview
         return response
     
     return HttpResponse(f"Error al generar PDF: {pdf.err}", status=500)
