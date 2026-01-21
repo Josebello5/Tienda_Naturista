@@ -3,62 +3,238 @@ document.addEventListener('DOMContentLoaded', function () {
         const path = window.location.pathname;
         let steps = [];
 
+        // Helper function to check visibility
+        const isVisible = (selector) => {
+            const el = document.querySelector(selector);
+            return el && (el.offsetParent !== null || window.getComputedStyle(el).display !== 'none');
+        };
+
         // ---------------------------------------------------------
-        // TOUR: PRODUCTOS
+        // TOUR: PRODUCTOS (MENU Y MODALES)
         // ---------------------------------------------------------
-        if (path.includes('/productos/')) {
+        if (path.includes('/productos/menu/')) {
+            // -- MODAL: Gestión de Categorías --
+            if (isVisible('#modalCategorias') && document.querySelector('#modalCategorias').style.display !== 'none') {
+                steps = [
+                    {
+                        element: document.querySelector('#modalCategorias .modal-content'),
+                        intro: "🏷️ <b>Gestión de Categorías</b>: Aquí puedes administrar las categorías para organizar tus productos.",
+                        position: 'left'
+                    },
+                    {
+                        element: document.querySelector('#searchCategorias'),
+                        intro: "🔍 <b>Buscar</b>: Encuentra una categoría específica rápidamente.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#btnAgregarCategoria'),
+                        intro: "➕ <b>Agregar</b>: Crea una nueva categoría para tus productos.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#tablaCategorias'),
+                        intro: "📋 <b>Listado</b>: Ve todas tus categorías registradas aquí.",
+                        position: 'top'
+                    }
+                ];
+            } 
+            // -- MODAL: Agregar/Editar Categoría --
+            else if (isVisible('#modalEditarCategoria') && document.querySelector('#modalEditarCategoria').style.display !== 'none') {
+                steps = [
+                    {
+                        element: document.querySelector('#modalEditarCategoria .modal-content'),
+                        intro: "✏️ <b>Editar Categoría</b>: Ingresa o modifica el nombre de la categoría.",
+                        position: 'left'
+                    },
+                    {
+                        element: document.querySelector('#nombreCategoria'),
+                        intro: "📝 <b>Nombre</b>: Escribe el nombre de la categoría (Solo letras).",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#btnGuardarCategoria'),
+                        intro: "💾 <b>Guardar</b>: Guarda los cambios realizados.",
+                        position: 'top'
+                    }
+                ];
+            }
+            // -- MODAL: Gestión de Patologías --
+            else if (isVisible('#modalPatologias') && document.querySelector('#modalPatologias').style.display !== 'none') {
+                steps = [
+                     {
+                        element: document.querySelector('#modalPatologias .modal-content'),
+                        intro: "⚕️ <b>Gestión de Patologías</b>: Administra las condiciones de salud asociadas a tus productos.",
+                        position: 'left'
+                    },
+                     {
+                        element: document.querySelector('#searchPatologias'),
+                        intro: "🔍 <b>Buscar</b>: Filtra las patologías registradas.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#btnAgregarPatologia'),
+                        intro: "➕ <b>Agregar</b>: Registra una nueva patología.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#tablaPatologias'),
+                        intro: "📋 <b>Listado</b>: Tabla con todas las patologías del sistema.",
+                        position: 'top'
+                    }
+                ];
+            }
+            // -- MODAL: Agregar/Editar Patología --
+            else if (isVisible('#modalEditarPatologia') && document.querySelector('#modalEditarPatologia').style.display !== 'none') {
+                 steps = [
+                    {
+                        element: document.querySelector('#nombrePatologia'),
+                        intro: "📝 <b>Nombre</b>: Escribe el nombre de la patología.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#btnGuardarPatologia'),
+                        intro: "💾 <b>Guardar</b>: Confirma el registro.",
+                        position: 'top'
+                    }
+                ];
+            }
+            // -- MODAL: Gestión de Ubicaciones --
+            else if (isVisible('#modalUbicaciones') && document.querySelector('#modalUbicaciones').style.display !== 'none') {
+                 steps = [
+                     {
+                        element: document.querySelector('#modalUbicaciones .modal-content'),
+                        intro: "📍 <b>Ubicaciones</b>: Gestiona los estantes o lugares donde guardas la mercancía.",
+                        position: 'left'
+                    },
+                     {
+                        element: document.querySelector('#searchUbicaciones'),
+                        intro: "🔍 <b>Buscar</b>: Localiza rápidamente una ubicación física.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#btnAgregarUbicacion'),
+                        intro: "➕ <b>Agregar</b>: Define una nueva ubicación física.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#tablaUbicaciones'),
+                        intro: "📋 <b>Listado</b>: Muestra todas las ubicaciones y estantes registrados.",
+                        position: 'top'
+                    }
+                ];
+            }
+            // -- MODAL: Agregar/Editar Ubicación --
+             else if (isVisible('#modalEditarUbicacion') && document.querySelector('#modalEditarUbicacion').style.display !== 'none') {
+                 steps = [
+                    {
+                        element: document.querySelector('#nombreUbicacion'),
+                        intro: "📝 <b>Nombre</b>: Escribe la identificación del estante o lugar (Ej: Estante A-1).",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#btnGuardarUbicacion'),
+                        intro: "💾 <b>Guardar</b>: Registra la ubicación.",
+                        position: 'top'
+                    }
+                ];
+            }
+            // -- MENU PRINCIPAL PRODUCTOS (Default) --
+            else {
+                steps = [
+                    {
+                        element: document.querySelector('.welcome-card'),
+                        intro: "📦 <b>Módulo de Productos</b>: Aquí gestionas todo tu inventario centralizado.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#searchInput'),
+                        intro: "🔍 <b>Búsqueda</b>: Encuentra productos escribiendo su nombre o código serial.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('.filtros-container'),
+                        intro: "🚦 <b>Filtros</b>: Utiliza estos desplegables para filtrar por ubicación, categoría, patología o estado.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#addBtn'),
+                        intro: "➕ <b>Nuevo Producto</b>: Haz clic aquí para registrar un nuevo artículo en el sistema.",
+                        position: 'left'
+                    },
+                    {
+                        element: document.querySelector('#categoriasBtn'),
+                        intro: "🏷️ <b>Gestión</b>: Administra tus categorías, patologías y ubicaciones desde estos botones.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#printBtn'),
+                        intro: "🖨️ <b>Reportes</b>: Genera un PDF del inventario actual o filtrado.",
+                        position: 'left'
+                    },
+                    {
+                        element: document.querySelector('#dataTable thead'),
+                        intro: "📋 <b>Tabla</b>: Aquí verás la información clave como Precio, Stock y ubicación.",
+                        position: 'top'
+                    },
+                    {
+                        element: document.querySelector('.btn-edit-precio'),
+                        intro: "💲 <b>Edición Rápida</b>: Cambia el precio de venta directamente desde aquí sin entrar al formulario completo.",
+                        position: 'left'
+                    },
+                    {
+                        element: document.querySelector('.btn-cambiar-estado'),
+                        intro: "🔄 <b>Estado</b>: Activa o desactiva productos con un solo clic.",
+                        position: 'left'
+                    }
+                ];
+            }
+        }
+        // ---------------------------------------------------------
+        // TOUR: REGISTRAR PRODUCTO
+        // ---------------------------------------------------------
+        else if (path.includes('/productos/registrar') || path.includes('/productos/editar')) {
             steps = [
                 {
-                    element: document.querySelector('.welcome-card'),
-                    intro: "📦 <b>Módulo de Productos</b>: Aquí gestionas todo tu inventario centralizado.",
+                    element: document.querySelector('.form-header'),
+                    intro: "📝 <b>Formulario de Producto</b>: Completa los datos para registrar un ítem en el inventario.",
                     position: 'bottom'
                 },
                 {
-                    element: document.querySelector('#searchInput'),
-                    intro: "🔍 <b>Búsqueda</b>: Encuentra productos escribiendo su nombre o código serial.",
-                    position: 'bottom'
+                    element: document.querySelector('#serial'),
+                    intro: "🔢 <b>Serial</b>: Código único del producto (escaneado o manual).",
+                    position: 'right'
                 },
                 {
-                    element: document.querySelector('.filtros-container'),
-                    intro: "🚦 <b>Filtros</b>: Utiliza estos desplegables para filtrar por ubicación, categoría, patología o estado.",
-                    position: 'bottom'
+                    element: document.querySelector('#nombre_pro'),
+                    intro: "📦 <b>Nombre</b>: Título descriptivo del producto.",
+                    position: 'right'
                 },
                 {
-                    element: document.querySelector('#addBtn'),
-                    intro: "➕ <b>Nuevo Producto</b>: Haz clic aquí para registrar un nuevo artículo en el sistema.",
-                    position: 'left'
+                    element: document.querySelector('#categoria_busqueda'),
+                    intro: "🏷️ <b>Categoría</b>: Escribe para buscar una categoría existente. Si no existe, debes crearla primero en el menú.",
+                    position: 'right'
                 },
                 {
-                    element: document.querySelector('#categoriasBtn'),
-                    intro: "🏷️ <b>Gestión</b>: Administra tus categorías, patologías y ubicaciones desde estos botones.",
-                    position: 'bottom'
+                    element: document.querySelector('#precio_venta'),
+                    intro: "💲 <b>Precio</b>: Valor de venta al público (en Divisas según configuración).",
+                    position: 'right'
                 },
                 {
-                    element: document.querySelector('#printBtn'),
-                    intro: "🖨️ <b>Reportes</b>: Genera un PDF del inventario actual o filtrado.",
-                    position: 'left'
+                    element: document.querySelector('#stock_minimo'),
+                    intro: "⚠️ <b>Stock Mínimo</b>: Cantidad donde el sistema te avisará que se está agotando.",
+                    position: 'right'
                 },
                 {
-                    element: document.querySelector('#dataTable thead'),
-                    intro: "📋 <b>Tabla</b>: Aquí verás la información clave como Precio, Stock y ubicación.",
+                    element: document.querySelector('.btn-submit'),
+                    intro: "💾 <b>Guardar</b>: Finaliza el registro del producto.",
                     position: 'top'
-                },
-                {
-                    element: document.querySelector('.btn-edit-precio'),
-                    intro: "💲 <b>Edición Rápida</b>: Cambia el precio de venta directamente desde aquí sin entrar al formulario completo.",
-                    position: 'left'
-                },
-                {
-                    element: document.querySelector('.btn-cambiar-estado'),
-                    intro: "y <b>Estado</b>: Activa o desactiva productos con un solo clic.",
-                    position: 'left'
                 }
             ];
         }
         // ---------------------------------------------------------
-        // TOUR: CLIENTES 
+        // TOUR: CLIENTES (MENU)
         // ---------------------------------------------------------
-        else if (path.includes('/clientes/')) {
+        else if (path.includes('/clientes/menu')) {
             steps = [
                 {
                     element: document.querySelector('.welcome-card'),
@@ -98,23 +274,50 @@ document.addEventListener('DOMContentLoaded', function () {
             ];
         }
         // ---------------------------------------------------------
+        // TOUR: REGISTRAR CLIENTE
+        // ---------------------------------------------------------
+        else if (path.includes('/clientes/registrar') || path.includes('/clientes/editar')) {
+             steps = [
+                {
+                    element: document.querySelector('.form-header'),
+                    intro: "👤 <b>Datos del Cliente</b>: Ingresa la información personal y de contacto.",
+                    position: 'bottom'
+                },
+                {
+                    element: document.querySelector('#cedula_numero'),
+                    intro: "🆔 <b>Cédula</b>: Identificación única del cliente.",
+                    position: 'right'
+                },
+                {
+                    element: document.querySelector('#tipo_cliente'),
+                    intro: "⭐ <b>Tipo</b>: Define si es cliente Particular o Mayorista (puede afectar precios/créditos).",
+                    position: 'right'
+                },
+                {
+                    element: document.querySelector('#telefono_numero'),
+                    intro: "📱 <b>Contacto</b>: Número telefónico principal.",
+                    position: 'right'
+                },
+                {
+                    element: document.querySelector('.btn-submit'),
+                    intro: "💾 <b>Registrar</b>: Guarda al cliente en la base de datos.",
+                    position: 'top'
+                }
+            ];
+        }
+        // ---------------------------------------------------------
         // TOUR: VENTAS MENU (HISTORIAL)
         // ---------------------------------------------------------
         else if (path.includes('/ventas/menu')) {
             steps = [
                 {
                     element: document.querySelector('.welcome-card'),
-                    intro: "🛒 <b>Historial de Ventas</b>: Aquí visualizas todas las transacciones realizadas.",
+                    intro: "🛒 <b>Historial de Ventas</b>: Visualiza todas las transacciones realizadas.",
                     position: 'bottom'
                 },
                 {
                     element: document.querySelector('.resumen-totales'),
-                    intro: "📈 <b>Indicadores</b>: Resumen financiero rápido (Total ventas, IVA, Totales en divisas).",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('#searchInput'),
-                    intro: "🔍 <b>Buscador</b>: Rastrea ventas por número de recibo o datos del cliente.",
+                    intro: "📈 <b>Indicadores</b>: Resumen financiero rápido del día.",
                     position: 'bottom'
                 },
                 {
@@ -123,24 +326,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     position: 'left'
                 },
                 {
+                    element: document.querySelector('#searchInput'),
+                    intro: "🔍 <b>Buscador</b>: Rastrea ventas por recibo o cliente.",
+                    position: 'bottom'
+                },
+                {
                     element: document.querySelector('#monedaSelect'),
-                    intro: "💱 <b>Moneda</b>: Alterna la visualización de montos entre Bolívares y Dólares.",
+                    intro: "💱 <b>Moneda</b>: Alterna entre Bs y USD.",
                     position: 'left'
                 },
                 {
                     element: document.querySelector('#dataTable'),
-                    intro: "🧾 <b>Registro</b>: Detalle de cada venta con estado de pago y métodos utilizados.",
+                    intro: "🧾 <b>Registro</b>: Tabla de ventas.",
                     position: 'top'
-                },
-                {
-                    element: document.querySelector('.btn-ver'),
-                    intro: "👁️ <b>Comprobante</b>: Visualiza el recibo digital de la venta.",
-                    position: 'left'
-                },
-                {
-                    element: document.querySelector('.btn-devolucion'),
-                    intro: "↩️ <b>Anular Venta</b>: Permite cancelar una venta y revertir los cambios en inventario y caja (Solo Dueño).",
-                    position: 'left'
                 }
             ];
         }
@@ -148,105 +346,194 @@ document.addEventListener('DOMContentLoaded', function () {
         // TOUR: REGISTRAR VENTA (POS)
         // ---------------------------------------------------------
         else if (path.includes('/ventas/registrar')) {
-            steps = [
-                {
-                    element: document.querySelector('.venta-header'),
-                    intro: "⚡ <b>Punto de Venta</b>: Proceso de facturación rápido. Sigue el orden de los bloques.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('#cedulaCliente'),
-                    intro: "1️⃣ <b>Cliente</b>: Busca un cliente existente o registra uno nuevo si no aparece.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('#buscarProducto'),
-                    intro: "2️⃣ <b>Productos</b>: Escanea el código o escribe el nombre para agregar items al carrito.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('.radio-group'),
-                    intro: "3️⃣ <b>Tipo de Venta</b>: Elige entre Contado o Crédito (fiado).",
-                    position: 'right'
-                },
-                {
-                    element: document.querySelector('#btnAgregarMetodo'),
-                    intro: "4️⃣ <b>Pago</b>: Agrega uno o varios métodos de pago (Efectivo, Pago Móvil, etc.) hasta cubrir el total.",
-                    position: 'top'
-                },
-                {
-                    element: document.querySelector('.resumen'),
-                    intro: "📝 <b>Totales</b>: Verifica los montos finales en Bs y Divisas antes de procesar.",
-                    position: 'left'
-                },
-                {
-                    element: document.querySelector('#btnProcesarVenta'),
-                    intro: "✅ <b>Finalizar</b>: Una vez completado el pago, procesa la venta para generar el recibo.",
-                    position: 'top'
-                }
-            ];
+            // -- SUB-TOUR: REGISTRAR NUEVO CLIENTE (FORMULARIO DESPLEGADO) --
+            if (isVisible('#clienteFormContainer') && document.querySelector('#clienteFormContainer').style.display !== 'none') {
+                 steps = [
+                    {
+                        element: document.querySelector('#clienteFormContainer'),
+                        intro: "👤 <b>Nuevo Cliente Rápido</b>: Registra al cliente sin salir de la venta.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#formClienteVenta #cedula_numero'),
+                        intro: "🆔 <b>Identificación</b>: Cédula del cliente.",
+                        position: 'right'
+                    },
+                    {
+                        element: document.querySelector('#formClienteVenta #nombre'),
+                        intro: "📝 <b>Datos Personales</b>: Nombre y Apellido.",
+                        position: 'right'
+                    },
+                    {
+                        element: document.querySelector('#btnRegistrarCliente'),
+                        intro: "✅ <b>Registrar y Usar</b>: Guarda el cliente y lo asigna automáticamente a esta venta.",
+                        position: 'top'
+                    }
+                ];
+            } 
+            // -- TOUR POS NORMAL --
+            else {
+                steps = [
+                    {
+                        element: document.querySelector('.venta-header'),
+                        intro: "⚡ <b>Punto de Venta</b>: Proceso de facturación rápido.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#cedulaCliente'),
+                        intro: "1️⃣ <b>Cliente</b>: Busca un cliente. Si no existe, aparecerá opción para registrarlo.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#buscarProducto'),
+                        intro: "2️⃣ <b>Productos</b>: Escanea o busca items para el carrito.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('.radio-group'),
+                        intro: "3️⃣ <b>Condición</b>: Contado o Crédito.",
+                        position: 'right'
+                    },
+                    {
+                        element: document.querySelector('#btnAgregarMetodo'),
+                        intro: "4️⃣ <b>Pago</b>: Registra los métodos de pago.",
+                        position: 'top'
+                    },
+                    {
+                        element: document.querySelector('#btnProcesarVenta'),
+                        intro: "✅ <b>Finalizar</b>: Genera la factura.",
+                        position: 'top'
+                    }
+                ];
+            }
         }
         // ---------------------------------------------------------
-        // TOUR: LOTES (BATCHES)
+        // TOUR: LOTES MENU
         // ---------------------------------------------------------
-        else if (path.includes('/lotes/')) {
-            steps = [
-                {
-                    element: document.querySelector('.welcome-card'),
-                    intro: "🏗️ <b>Gestión de Lotes</b>: Aquí controlas las entradas de mercancía, fechas de vencimiento y costos.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('#searchInput'),
-                    intro: "🔍 <b>Búsqueda Avanzada</b>: Filtra por código de lote, nombre de producto o proveedor.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('#btnFiltroVencimiento'),
-                    intro: "📅 <b>Alerta de Vencimiento</b>: Encuentra rápidamente qué lotes están por caducar.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('#addBtn'),
-                    intro: "➕ <b>Nuevo Lote</b>: Registra la entrada de nueva mercancía al inventario.",
-                    position: 'left'
-                },
-                {
-                    element: document.querySelector('#proveedoresBtn'),
-                    intro: "🚛 <b>Proveedores</b>: Administra tu base de datos de proveedores y contactos.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('#dataTable thead'),
-                    intro: "📋 <b>Inventario de Lotes</b>: Visualiza cantidades, costos unitarios y estados de cada lote.",
-                    position: 'top'
-                },
-                {
-                    element: document.querySelector('.btn-ver-detalles'),
-                    intro: "👁️ <b>Detalles</b>: Consulta la información completa del lote, incluyendo costos totales y proveedor.",
-                    position: 'left'
-                },
-                {
-                    element: document.querySelector('.btn-edit-costo'),
-                    intro: "💲 <b>Costo Unitario</b>: Ajusta el costo de adquisición si hubo errores (solo en lotes activos).",
-                    position: 'left'
-                },
-                {
-                    element: document.querySelector('.btn-editar-lote'),
-                    intro: "✏️ <b>Editar Lote</b>: Modifica datos como la fecha de vencimiento o cantidad (si está permitido).",
-                    position: 'left'
-                },
-                {
-                    element: document.querySelector('.btn-cambiar-estado'),
-                    intro: "🔄 <b>Cambiar Estado</b>: Activa o desactiva un lote manualmente para pausar su venta.",
-                    position: 'left'
-                },
-                {
-                    element: document.querySelector('.status'),
-                    intro: "🚦 <b>Estado</b>: El sistema marca automáticamente si un lote está Vencido o Agotado.",
-                    position: 'left'
-                }
-            ];
+        else if (path.includes('/lotes/menu')) {
+            // -- MODAL: GESTIÓN DE PROVEEDORES --
+            if (isVisible('#modalProveedores') && document.querySelector('#modalProveedores').style.display !== 'none') {
+                 steps = [
+                     {
+                        element: document.querySelector('#modalProveedores .modal-content'),
+                        intro: "🚚 <b>Gestión de Proveedores</b>: Administra las empresas que te surten mercancía.",
+                        position: 'left'
+                    },
+                    {
+                        element: document.querySelector('#searchProveedores'),
+                        intro: "🔍 <b>Buscar</b>: Filtra la lista de proveedores.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#btnAgregarProveedor'),
+                        intro: "➕ <b>Agregar</b>: Registra un nuevo proveedor.",
+                        position: 'bottom'
+                    }
+                 ];
+            }
+             // -- MODAL: EDITAR PROVEEDOR --
+            else if (isVisible('#modalEditarProveedor') && document.querySelector('#modalEditarProveedor').style.display !== 'none') {
+                 steps = [
+                     {
+                        element: document.querySelector('#nombreProveedor'),
+                        intro: "📝 <b>Empresa</b>: Nombre del proveedor.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#btnGuardarProveedor'),
+                        intro: "💾 <b>Guardar</b>: Confirma los datos.",
+                        position: 'top'
+                    }
+                 ];
+            }
+            // -- DEFAULT LOTES MENU --
+            else {
+                steps = [
+                    {
+                        element: document.querySelector('.welcome-card'),
+                        intro: "🏗️ <b>Control de Lotes</b>: Gestión de inventario entrante y vencimientos.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#btnFiltroVencimiento'),
+                        intro: "📅 <b>Vencimientos</b>: Alerta rápida de productos por caducar.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#addBtn'),
+                        intro: "➕ <b>Entrada</b>: Registra nuevo lote de mercancía.",
+                        position: 'left'
+                    },
+                    {
+                        element: document.querySelector('#proveedoresBtn'),
+                        intro: "🚛 <b>Proveedores</b>: Base de datos de proveedores.",
+                        position: 'bottom'
+                    }
+                ];
+            }
+        }
+        // ---------------------------------------------------------
+        // TOUR: REGISTRAR LOTE
+        // ---------------------------------------------------------
+        else if (path.includes('/lotes/registrar')) {
+             // -- MODAL PROVEEDOR (DESDE FORMULARIO) --
+            if (isVisible('#modalProveedor') && document.querySelector('#modalProveedor').style.display !== 'none') {
+                steps = [
+                    {
+                        element: document.querySelector('#modalProveedor .modal-content'),
+                        intro: "🚚 <b>Nuevo Proveedor</b>: Registra un proveedor al vuelo.",
+                        position: 'left'
+                    },
+                    {
+                        element: document.querySelector('#nombreProveedor'),
+                        intro: "📝 <b>Nombre</b>: Nombre de la empresa o distribuidor.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#btnGuardarProveedor'),
+                        intro: "💾 <b>Guardar</b>: Lo guarda y lo selecciona automáticamente.",
+                        position: 'top'
+                    }
+                ];
+            } else {
+                steps = [
+                    {
+                        element: document.querySelector('.form-header'),
+                        intro: "📦 <b>Entrada de Inventario</b>: Registra los detalles del lote recibido.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#producto'),
+                        intro: "🔍 <b>Producto</b>: Busca el producto al que pertenece este lote.",
+                        position: 'right'
+                    },
+                    {
+                        element: document.querySelector('#codigo_lote'),
+                        intro: "🔢 <b>Código Lote</b>: Identificador único del lote (impreso en empaque).",
+                        position: 'right'
+                    },
+                    {
+                        element: document.querySelector('#proveedor'),
+                        intro: "🚛 <b>Proveedor</b>: Quién suministró la mercancía. Puedes crear uno nuevo con botón (+).",
+                        position: 'right'
+                    },
+                    {
+                        element: document.querySelector('#btnAgregarProveedor'),
+                        intro: "➕ <b>Nuevo</b>: Atajo para crear proveedor.",
+                        position: 'left'
+                    },
+                    {
+                        element: document.querySelector('#fecha_recibimiento'),
+                        intro: "📅 <b>Fecha de Recibimiento</b>: Cuándo llegó la mercancía al almacén.",
+                        position: 'right'
+                    },
+                    {
+                        element: document.querySelector('#fecha_vencimiento'),
+                        intro: "📅 <b>Vencimiento</b>: Fecha crítica para el control de pérdidas.",
+                        position: 'right'
+                    }
+                ];
+            }
         }
         // ---------------------------------------------------------
         // TOUR: CUENTAS PENDIENTES (MENU)
@@ -255,120 +542,72 @@ document.addEventListener('DOMContentLoaded', function () {
             steps = [
                 {
                     element: document.querySelector('.welcome-card'),
-                    intro: "💸 <b>Cuentas por Cobrar</b>: Gestión centralizada de créditos y deudas de clientes.",
+                    intro: "💸 <b>Cuentas por Cobrar</b>: Gestión de créditos.",
                     position: 'bottom'
                 },
                 {
                     element: document.querySelector('.resumen-totales'),
-                    intro: "📊 <b>Resumen Global</b>: Visualiza el total de dinero pendiente por cobrar en Bs y Divisas.",
+                    intro: "📊 <b>Deuda Total</b>: Cuánto dinero hay en la calle.",
                     position: 'bottom'
                 },
                 {
                     element: document.querySelector('.panel-deudas-clientes'),
-                    intro: "⚠️ <b>Top Deudores</b>: Acceso rápido a los 5 clientes con mayor deuda acumulada.",
+                    intro: "⚠️ <b>Top Deudores</b>: Clientes con mayor mora.",
                     position: 'right'
-                },
-                {
-                    element: document.querySelector('#searchInput'),
-                    intro: "🔍 <b>Búsqueda</b>: Encuentra clientes con deuda por nombre o cédula.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('#estadoPagoSelect'),
-                    intro: "📅 <b>Filtro de Antigüedad</b>: Identifica deudas críticas (> 30 días) o recientes.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('#btnGenerarReporte'),
-                    intro: "🖨️ <b>Reporte General</b>: Genera un PDF de todas las cuentas por cobrar para control administrativo.",
-                    position: 'left'
-                },
-                {
-                    element: document.querySelector('#dataTable'),
-                    intro: "📋 <b>Listado de Clientes</b>: Tabla detallada con el saldo pendiente y días de mora de cada cliente.",
-                    position: 'top'
-                },
-                {
-                    element: document.querySelector('.btn-abonar'),
-                    intro: "💵 <b>Abonar</b>: Haz clic aquí para registrar pagos o ver el detalle de ventas de este cliente.",
-                    position: 'left'
                 }
             ];
         }
         // ---------------------------------------------------------
-        // TOUR: GESTIONAR ABONOS (DETALLE CLIENTE)
-        // ---------------------------------------------------------
-        else if (path.includes('/cuentas_pendientes/gestionar-abono')) {
-            steps = [
-                {
-                    element: document.querySelector('.welcome-card'),
-                    intro: "👤 <b>Gestión Individual</b>: Aquí administras los pagos específicos de este cliente.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('.resumen-totales'),
-                    intro: "💰 <b>Estado de Cuenta</b>: Resumen de lo que debe este cliente específico.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('#dataTable'),
-                    intro: "🧾 <b>Ventas Pendientes</b>: Selecciona una o varias ventas usando las casillas ☑️ para abonar a ellas.",
-                    position: 'top'
-                },
-                {
-                    element: document.querySelector('#btnPagarSeleccionadas'),
-                    intro: "✅ <b>Procesar Pago</b>: Una vez seleccionadas las ventas, usa este botón para registrar el abono.",
-                    position: 'left'
-                }
-            ];
-        }
-        // ---------------------------------------------------------
-        // TOUR: CIERRE DE CAJA
-        // ---------------------------------------------------------
-        // ---------------------------------------------------------
-        // TOUR: CIERRE DE CAJA
+        // TOUR: CIERRE DE CAJA (MENU)
         // ---------------------------------------------------------
         else if (path.includes('/cierre_caja/menu')) {
-            steps = [
+             steps = [
                 {
                     element: document.querySelector('.welcome-card'),
-                    intro: "💵 <b>Cierre Diario</b>: Proceso de conciliación entre lo que dice el sistema y lo que tienes en caja físicamente.",
+                    intro: "💵 <b>Cierre Diario</b>: Arqueo de caja.",
                     position: 'bottom'
-                },
-                {
-                    element: document.querySelector('.date-selector'),
-                    intro: "📅 <b>Fecha</b>: Selecciona el día que deseas cerrar. Por defecto es la fecha actual.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('.cierre-table thead'),
-                    intro: "📊 <b>Tabla de Conciliación</b>: Compara columna por columna.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('.amount-system'),
-                    intro: "🖥️ <b>Sistema</b>: Muestra cuánto se vendió según el software.",
-                    position: 'right'
                 },
                 {
                     element: document.querySelector('.amount-input'),
-                    intro: "💰 <b>Real (Caja)</b>: Ingresa aquí cuánto dinero tienes FÍSICAMENTE en tus manos.",
+                    intro: "💰 <b>Real</b>: Ingresa lo que cuentas físicamente.",
                     position: 'left'
                 },
                 {
                     element: document.querySelector('.difference-display'),
-                    intro: "⚖️ <b>Diferencia</b>: El sistema calculará si falta o sobra dinero automáticamente.",
+                    intro: "⚖️ <b>Diferencia</b>: El sistema compara real vs esperado.",
+                    position: 'left'
+                }
+            ];
+        }
+        // ---------------------------------------------------------
+        // TOUR: HISTORIAL DE CIERRES
+        // ---------------------------------------------------------
+        else if (path.includes('/cierre_caja/historial')) {
+            steps = [
+                {
+                    element: document.querySelector('.welcome-card'),
+                    intro: "📜 <b>Historial de Cierres</b>: Consulta todos los arqueos de caja realizados anteriormente.",
+                    position: 'bottom'
+                },
+                {
+                    element: document.querySelector('#filterForm'),
+                    intro: "📅 <b>Filtros</b>: Busca cierres por rango de fechas o estado (Faltante/Sobrante/Exacto).",
+                    position: 'bottom'
+                },
+                {
+                    element: document.querySelector('.table-container'),
+                    intro: "📋 <b>Tabla de Registros</b>: Muestra detalladamente los montos del sistema vs. reales.",
+                    position: 'top'
+                },
+                {
+                    element: document.querySelector('.btn-ver-detalles') || document.querySelector('.btn-editar'),
+                    intro: "👁️ <b>Ver Detalle</b>: Consulta el recibo completo en pantalla.",
                     position: 'left'
                 },
                 {
-                    element: document.querySelector('.notes-input'),
-                    intro: "📝 <b>Notas</b>: Escribe cualquier justificación si hay diferencias de dinero.",
-                    position: 'top'
-                },
-                {
-                    element: document.querySelector('.btn-save'),
-                    intro: "💾 <b>Guardar Cierre</b>: Finaliza el día. Una vez guardado, se genera un recibo inalterable.",
-                    position: 'top'
+                    element: document.querySelector('.btn-edit-precio') || document.querySelector('a[href*="descargar-recibo"]'),
+                    intro: "💾 <b>Descargar PDF</b>: Guarda una copia digital del cierre.",
+                    position: 'left'
                 }
             ];
         }
@@ -379,162 +618,83 @@ document.addEventListener('DOMContentLoaded', function () {
             steps = [
                 {
                     element: document.querySelector('.welcome-card'),
-                    intro: "📈 <b>Panel de Control</b>: Visión general del rendimiento de tu negocio.",
+                    intro: "📈 <b>Estadísticas</b>: Análisis del negocio.",
                     position: 'bottom'
                 },
                 {
                     element: document.querySelector('.stats-grid'),
-                    intro: "📊 <b>Indicadores Clave</b>: Aquí verás 4 tarjetas con información vital: Top Productos, Top Clientes, Productos Por Vencer y Top Categorías.",
+                    intro: "📊 <b>KPIs</b>: Indicadores principales.",
                     position: 'bottom'
-                },
-                {
-                    element: document.querySelector('.btn-filter-date'),
-                    intro: "🗓️ <b>Filtros</b>: Cada tarjeta tiene su propio filtro de fechas.",
-                    position: 'left'
-                },
-                {
-                    element: document.querySelector('.btn-icon-card[href*="reporte"]'),
-                    intro: "🖨️ <b>Reportes PDF</b>: Descarga reportes detallados de cada sección individualmente.",
-                    position: 'left'
-                },
-                {
-                    element: document.querySelector('.btn-toggle-moneda'),
-                    intro: "💱 <b>Moneda</b>: Alterna entre Bolívares y Dólares para ver tus ingresos.",
-                    position: 'left'
                 },
                 {
                     element: document.querySelector('.charts-section'),
-                    intro: "📉 <b>Gráficos Interactivos</b>: Visualización avanzada de tendencias.",
+                    intro: "📉 <b>Gráficos</b>: Tendencias visuales.",
                     position: 'top'
-                },
-                {
-                    element: document.querySelector('.chart-tabs'),
-                    intro: "📑 <b>Pestañas</b>: Navega entre análisis de Ventas, Productos y Categorías.",
-                    position: 'top'
-                },
-                {
-                    element: document.querySelector('.quick-filters'),
-                    intro: "⚡ <b>Filtros Rápidos</b>: Visualiza Hoy, Semana, Mes o Año con un solo clic.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('.btn-print-chart'),
-                    intro: "🖼️ <b>Exportar</b>: Imprime el gráfico actual tal como lo ves en pantalla.",
-                    position: 'left'
                 }
             ];
         }
         // ---------------------------------------------------------
-        // TOUR: CONFIGURACIÓN
+        // TOUR: CONFIGURACIÓN / USUARIOS
         // ---------------------------------------------------------
         else if (path.includes('/configuracion/')) {
-            steps = [
-                {
-                    element: document.querySelector('.welcome-card'),
-                    intro: "⚙️ <b>Panel de Administración</b>: Gestión de usuarios y roles del sistema.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('.filtros-container'),
-                    intro: "🔍 <b>Filtros Avanzados</b>: Encuentra usuarios por nombre, rol (Dueño, Admin, Cajero) o estado.",
-                    position: 'bottom'
-                },
-                {
-                    element: document.querySelector('.btn-primary[href*="crear-usuario"]'),
-                    intro: "➕ <b>Nuevo Usuario</b>: Crea nuevas cuentas de acceso para tu personal.",
-                    position: 'left'
-                },
-                {
-                    element: document.querySelector('#dataTable'),
-                    intro: "👥 <b>Listado de Personal</b>: Visualiza todos los usuarios registrados, sus roles y estados.",
-                    position: 'top'
-                },
-                {
-                    element: document.querySelector('.btn-edit'),
-                    intro: "✏️ <b>Editar</b>: Modifica datos personales como nombre, email o rol asignado.",
-                    position: 'left'
-                },
-                {
-                    element: document.querySelector('.btn-toggle-status'),
-                    intro: "🔌 <b>Activar/Desactivar</b>: Bloquea o permite el acceso de un usuario al sistema sin eliminarlo.",
-                    position: 'left'
-                }
-            ];
+            // -- REGISTRAR USUARIO INTERNO --
+            if (path.includes('crear-usuario')) {
+                steps = [
+                     {
+                        element: document.querySelector('.register-header'),
+                        intro: "👤 <b>Nuevo Usuario</b>: Crea credenciales para personal.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('#rol'),
+                        intro: "🔑 <b>Rol</b>: Define permisos (Admin total, Cajero limitado, etc).",
+                        position: 'right'
+                    },
+                    {
+                        element: document.querySelector('#password1'),
+                        intro: "🔒 <b>Seguridad</b>: Asigna una contraseña segura.",
+                        position: 'right'
+                    }
+                ];
+            } else {
+                 steps = [
+                    {
+                        element: document.querySelector('.welcome-card'),
+                        intro: "⚙️ <b>Administración</b>: Usuarios y permisos.",
+                        position: 'bottom'
+                    },
+                    {
+                        element: document.querySelector('.btn-primary[href*="crear-usuario"]'),
+                        intro: "➕ <b>Nuevo</b>: Agregar personal.",
+                        position: 'left'
+                    }
+                ];
+            }
         }
-
         // ---------------------------------------------------------
-        // TOUR: DEFAULT (SIDEBAR / DASHBOARD)
+        // TOUR: DEFAULT
         // ---------------------------------------------------------
         else {
             steps = [
                 {
                     element: document.querySelector('.sidebar'),
-                    intro: "👋 ¡Hola! Bienvenido al sistema. Este es tu menú principal donde encontrarás todas las herramientas.",
-                    position: 'right'
-                },
-                {
-                    element: document.querySelector('a[href*="dashboard"]'),
-                    intro: "📊 <b>Panel de Control</b>: Aquí verás un resumen rápido de las ventas del día y estadísticas clave.",
-                    position: 'right'
-                },
-                {
-                    element: document.querySelector('a[href*="ventas"]'),
-                    intro: "🛒 <b>Ventas</b>: Punto de venta rápido. Úsalo para registrar las compras de tus clientes.",
-                    position: 'right'
-                },
-                {
-                    element: document.querySelector('a[href*="productos"]'),
-                    intro: "📦 <b>Productos</b>: Administra tu inventario, precios y categorías desde aquí.",
-                    position: 'right'
-                },
-                {
-                    element: document.querySelector('a[href*="clientes"]'),
-                    intro: "👥 <b>Clientes</b>: Registra a tus clientes fieles para seguimiento y créditos.",
-                    position: 'right'
-                },
-                {
-                    element: document.querySelector('a[href*="lotes"]'),
-                    intro: "🏗️ <b>Lotes</b>: Gestiona entradas de mercancía, fechas de vencimiento y proveedores.",
-                    position: 'right'
-                },
-                {
-                    element: document.querySelector('a[href*="cuentas_pendientes"]'),
-                    intro: "💸 <b>Cuentas por Cobrar</b>: Control de ventas a crédito, deudas de clientes y registro de abonos.",
-                    position: 'right'
-                },
-                {
-                    element: document.querySelector('a[href*="cierre_caja"]'),
-                    intro: "💰 <b>Cierre de Caja</b>: Al final del día, realiza el arqueo y cierre de ventas aquí.",
-                    position: 'right'
-                },
-                {
-                    element: document.querySelector('a[href*="estadisticas"]'),
-                    intro: "📈 <b>Estadísticas</b>: Visualiza gráficos y reportes detallados del rendimiento de tu negocio.",
-                    position: 'right'
-                },
-                {
-                    element: document.querySelector('a[href*="configuracion"]'),
-                    intro: "⚙️ <b>Configuración</b>: Administra usuarios, roles y permisos del sistema.",
-                    position: 'right'
-                },
-                {
-                    element: document.querySelector('.logout-form'),
-                    intro: "🔒 <b>Salir</b>: No olvides cerrar sesión cuando termines tu turno.",
+                    intro: "👋 ¡Hola! Usa el menú lateral para navegar.",
                     position: 'right'
                 },
                 {
                     element: document.querySelector('#tour-btn'),
-                    intro: "❓ <b>Ayuda</b>: El tour se adapta a la sección donde estés. ¡Pruébalo en Productos, Ventas o Lotes!",
+                    intro: "❓ <b>Ayuda</b>: Haz clic aquí en cada sección para ver un tour específico.",
                     position: 'right'
                 }
             ];
         }
 
-        // Filtramos pasos cuyos elementos no existen en la página actual (para evitar errores)
+        // Filtramos pasos cuyos elementos no existen en la página actual o no son visibles
+        // Nota: Para los modales, ya filtramos lógicamente arriba, pero esto limpia cualquier residuo
         steps = steps.filter(step => step.element !== null && step.element !== undefined);
 
         if (steps.length === 0) {
-            alert("No hay un tour disponible para esta sección aún. Intenta en el Panel Principal o Productos.");
+            alert("No hay un tour disponible para esta sección específica o estado visual.");
             return;
         }
 
