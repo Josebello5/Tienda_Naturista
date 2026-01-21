@@ -541,10 +541,10 @@
   const EDITAR_UBICACION_URL = "{% url 'productos:editar_ubicacion' 0 %}".replace('/0/', '/');
   const ELIMINAR_UBICACION_URL = "{% url 'productos:eliminar_ubicacion' 0 %}".replace('/0/', '/');
   const IMPRIMIR_UBICACIONES_URL = "{% url 'productos:imprimir_ubicaciones' %}";
-  
+
   // Pasar permisos del usuario al JavaScript
-  const PUEDE_GESTIONAR = {% if puede_gestionar %}true{% else %}false{% endif %};
-  const PUEDE_IMPRIMIR = {% if puede_imprimir %}true{% else %}false{% endif %};
+  const PUEDE_GESTIONAR = {% if puede_gestionar %}true{% else %} false{% endif %};
+  const PUEDE_IMPRIMIR = {% if puede_imprimir %}true{% else %} false{% endif %};
 
   // CORRECCIÓN: Detectar tanto registro como edición exitosa
   const urlParams = new URLSearchParams(window.location.search);

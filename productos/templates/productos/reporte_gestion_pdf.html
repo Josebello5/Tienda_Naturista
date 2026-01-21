@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>{{ titulo_reporte }}</title>
+    <style>
+        @page {
+            size: letter portrait;
+            /* Margins define the content area */
+            margin-top: 3.5cm;
+            margin-bottom: 2cm;
+            margin-left: 2cm;
+            margin-right: 2cm;
+
+            @frame header_frame {
+                /* Header in top margin */
+                -pdf-frame-content: header_content;
+                left: 2cm;
+                width: 17.59cm;
+                top: 0.5cm;
+                height: 3cm;
+            }
+
+            @frame footer_frame {
+                /* Footer in bottom margin */
+                -pdf-frame-content: footer_content;
+                left: 2cm;
+                width: 17.59cm;
+                top: 26cm;
+                height: 1cm;
+            }
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 10pt;
+            color: #333;
+        }
+
+        /* Header Styles */
+        #header_content {
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Header Layout Table */
+        .header-table {
+            width: 100%;
+            border: none;
+            margin-bottom: 0;
+        }
+
+        .header-table td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .logo-img {
+            width: 60px;
+            height: 60px;
+        }
+
+        h1 {
+            color: #1b5e20;
+            font-size: 16pt;
+            margin: 0;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 12pt;
+            margin: 3px 0 0 0;
+            font-weight: normal;
+        }
+
+        .meta-info {
+            font-size: 9pt;
+            color: #444;
+            margin-top: 5px;
+        }
+
+        /* Data Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .data-table th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+
+        .data-table td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            font-size: 9pt;
+            vertical-align: top;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header Content -->
+    <div id="header_content">
+        <table class="header-table">
+            <tr>
+                <td width="80">
+                    {% if logo_url %}
+                    <img src="{{ logo_url }}" class="logo-img">
+                    {% endif %}
+                </td>
+                <td>
+                    <h1>Tienda Naturista</h1>
+                    <h2>"Algo más para tu salud"</h2>
+                    <div class="meta-info">
+                        <strong>{{ titulo_reporte }}</strong> | {{ fecha_generacion|date:"d/m/Y H:i" }}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Footer Content -->
+    <div id="footer_content">
+        <div style="text-align: left; font-size: 8pt;">
+            Página <pdf:pagenumber> de <pdf:pagecount>
+        </div>
+        <div style="text-align: right; color: #666; font-size: 8pt; margin-top: -10px;">
+            Sistema de Gestión - Tienda Naturista
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th width="40%">NOMBRE</th>
+                <th width="30%">N° PRODUCTOS</th>
+                <th width="30%">FECHA CREACIÓN</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for elemento in elementos %}
+            <tr>
+                <td>{{ elemento.nombre }}</td>
+                <td>{{ elemento.num_productos }}</td>
+                <td>{{ elemento.fecha_creacion|date:"d/m/Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" style="text-align: center; padding: 20px;">
+                    No se encontraron registros.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 20px; text-align: right; color: #666; font-size: 10pt;">
+        <strong>Total:</strong> {{ elementos|length }}
+    </div>
+
+</body>
+
+</html>

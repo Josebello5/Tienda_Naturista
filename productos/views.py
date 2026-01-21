@@ -554,102 +554,35 @@ def imprimir_categorias(request):
     """Generar PDF con listado de categorías"""
     try:
         categorias = Categoria.objects.annotate(num_productos=Count('producto')).order_by('nombre')
+        logo_url = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
+        
+        context = {
+            'elementos': categorias,
+            'titulo_reporte': 'Listado de Categorías',
+            'fecha_generacion': datetime.now(),
+            'logo_url': logo_url,
+        }
+        
+        html_string = render_to_string('productos/reporte_gestion_pdf.html', context)
         
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = get_pdf_content_disposition('listado_categorias.pdf')
         
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
+        from xhtml2pdf import pisa
+        import io
         
-        # Configuración inicial
-        p.setTitle("Listado de Categorías - Tienda Naturista")
+        result = io.BytesIO()
+        pdf = pisa.pisaDocument(io.BytesIO(html_string.encode("UTF-8")), result)
         
-        # Encabezado
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
+        if not pdf.err:
+            response.write(result.getvalue())
+            return response
         
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
-        
-        p.setFont("Helvetica", 10)
-        fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-        p.drawString(1*inch, height-1.6*inch, f"Listado de Categorías - {fecha_actual}")
-        
-        # Línea separadora
-        p.line(1*inch, height-1.7*inch, 7.5*inch, height-1.7*inch)
-        
-        # Configurar posición inicial para la tabla
-        y_position = height - 2.2*inch
-        line_height = 0.25*inch
-        
-        # Encabezados de tabla
-        p.setFont("Helvetica-Bold", 10)
-        p.drawString(1*inch, y_position, "NOMBRE")
-        p.drawString(4*inch, y_position, "N° PRODUCTOS")
-        p.drawString(6*inch, y_position, "FECHA CREACIÓN")
-        
-        y_position -= line_height
-        p.line(0.5*inch, y_position, 8*inch, y_position)
-        y_position -= 0.25*inch
-        
-        # Datos de categorías
-        p.setFont("Helvetica", 9)
-        
-        for categoria in categorias:
-            if y_position < 1*inch:
-                p.showPage()
-                y_position = height - 1*inch
-                
-                # Encabezados en nueva página
-                p.setFont("Helvetica-Bold", 10)
-                p.drawString(1*inch, y_position, "NOMBRE")
-                p.drawString(4*inch, y_position, "N° PRODUCTOS")
-                p.drawString(6*inch, y_position, "FECHA CREACIÓN")
-                
-                y_position -= line_height
-                p.line(0.5*inch, y_position, 8*inch, y_position)
-                y_position -= 0.25*inch
-                p.setFont("Helvetica", 9)
-            
-            p.drawString(1*inch, y_position, categoria.nombre)
-            p.drawString(4*inch, y_position, str(categoria.num_productos))
-            p.drawString(6*inch, y_position, categoria.fecha_creacion.strftime('%d/%m/%Y %H:%M'))
-            
-            y_position -= line_height
-        
-        # Total
-        p.setFont("Helvetica-Bold", 10)
-        y_position -= 0.3*inch
-        p.drawString(1*inch, y_position, f"Total de categorías: {categorias.count()}")
-        
-        # Pie de página
-        p.setFont("Helvetica-Oblique", 8)
-        p.drawString(1*inch, 0.5*inch, "Sistema de Gestión - Tienda Naturista")
-        
-        p.showPage()
-        p.save()
-        
-        return response
+        return HttpResponse(f"Error al generar PDF: {pdf.err}", status=500)
         
     except Exception as e:
         logger.error(f"Error al generar PDF de categorías: {str(e)}")
-        
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = get_pdf_content_disposition('error.pdf')
-        
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
-        
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-2*inch, "Error al generar el PDF")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-2.5*inch, "Ocurrió un error inesperado al generar el listado.")
-        
-        p.showPage()
-        p.save()
-        
-        return response
+        return HttpResponse(f"Error al generar PDF: {str(e)}", status=500)
 
 # ===== VISTAS PARA PATOLOGÍAS =====
 
@@ -733,102 +666,35 @@ def imprimir_patologias(request):
     """Generar PDF con listado de patologías"""
     try:
         patologias = Patologia.objects.annotate(num_productos=Count('producto')).order_by('nombre')
+        logo_url = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
+        
+        context = {
+            'elementos': patologias,
+            'titulo_reporte': 'Listado de Patologías',
+            'fecha_generacion': datetime.now(),
+            'logo_url': logo_url,
+        }
+        
+        html_string = render_to_string('productos/reporte_gestion_pdf.html', context)
         
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = get_pdf_content_disposition('listado_patologias.pdf')
         
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
+        from xhtml2pdf import pisa
+        import io
         
-        # Configuración inicial
-        p.setTitle("Listado de Patologías - Tienda Naturista")
+        result = io.BytesIO()
+        pdf = pisa.pisaDocument(io.BytesIO(html_string.encode("UTF-8")), result)
         
-        # Encabezado
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
+        if not pdf.err:
+            response.write(result.getvalue())
+            return response
         
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
-        
-        p.setFont("Helvetica", 10)
-        fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-        p.drawString(1*inch, height-1.6*inch, f"Listado de Patologías - {fecha_actual}")
-        
-        # Línea separadora
-        p.line(1*inch, height-1.7*inch, 7.5*inch, height-1.7*inch)
-        
-        # Configurar posición inicial para la tabla
-        y_position = height - 2.2*inch
-        line_height = 0.25*inch
-        
-        # Encabezados de tabla
-        p.setFont("Helvetica-Bold", 10)
-        p.drawString(1*inch, y_position, "NOMBRE")
-        p.drawString(4*inch, y_position, "N° PRODUCTOS")
-        p.drawString(6*inch, y_position, "FECHA CREACIÓN")
-        
-        y_position -= line_height
-        p.line(0.5*inch, y_position, 8*inch, y_position)
-        y_position -= 0.25*inch
-        
-        # Datos de patologías
-        p.setFont("Helvetica", 9)
-        
-        for patologia in patologias:
-            if y_position < 1*inch:
-                p.showPage()
-                y_position = height - 1*inch
-                
-                # Encabezados en nueva página
-                p.setFont("Helvetica-Bold", 10)
-                p.drawString(1*inch, y_position, "NOMBRE")
-                p.drawString(4*inch, y_position, "N° PRODUCTOS")
-                p.drawString(6*inch, y_position, "FECHA CREACIÓN")
-                
-                y_position -= line_height
-                p.line(0.5*inch, y_position, 8*inch, y_position)
-                y_position -= 0.25*inch
-                p.setFont("Helvetica", 9)
-            
-            p.drawString(1*inch, y_position, patologia.nombre)
-            p.drawString(4*inch, y_position, str(patologia.num_productos))
-            p.drawString(6*inch, y_position, patologia.fecha_creacion.strftime('%d/%m/%Y %H:%M'))
-            
-            y_position -= line_height
-        
-        # Total
-        p.setFont("Helvetica-Bold", 10)
-        y_position -= 0.3*inch
-        p.drawString(1*inch, y_position, f"Total de patologías: {patologias.count()}")
-        
-        # Pie de página
-        p.setFont("Helvetica-Oblique", 8)
-        p.drawString(1*inch, 0.5*inch, "Sistema de Gestión - Tienda Naturista")
-        
-        p.showPage()
-        p.save()
-        
-        return response
+        return HttpResponse(f"Error al generar PDF: {pdf.err}", status=500)
         
     except Exception as e:
         logger.error(f"Error al generar PDF de patologías: {str(e)}")
-        
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = get_pdf_content_disposition('error.pdf')
-        
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
-        
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-2*inch, "Error al generar el PDF")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-2.5*inch, "Ocurrió un error inesperado al generar el listado.")
-        
-        p.showPage()
-        p.save()
-        
-        return response
+        return HttpResponse(f"Error al generar PDF: {str(e)}", status=500)
 
 
 # ===== VISTAS PARA UBICACIONES =====
@@ -934,98 +800,32 @@ def imprimir_ubicaciones(request):
             num_productos=Coalesce(Subquery(productos_por_ubicacion, output_field=IntegerField()), 0)
         ).order_by('nombre')
         
+        logo_url = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
+        
+        context = {
+            'elementos': ubicaciones,
+            'titulo_reporte': 'Listado de Ubicaciones',
+            'fecha_generacion': datetime.now(),
+            'logo_url': logo_url,
+        }
+        
+        html_string = render_to_string('productos/reporte_gestion_pdf.html', context)
+        
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = get_pdf_content_disposition('listado_ubicaciones.pdf')
         
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
+        from xhtml2pdf import pisa
+        import io
         
-        # Configuración inicial
-        p.setTitle("Listado de Ubicaciones - Tienda Naturista")
+        result = io.BytesIO()
+        pdf = pisa.pisaDocument(io.BytesIO(html_string.encode("UTF-8")), result)
         
-        # Encabezado
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
+        if not pdf.err:
+            response.write(result.getvalue())
+            return response
         
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
-        
-        p.setFont("Helvetica", 10)
-        fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-        p.drawString(1*inch, height-1.6*inch, f"Listado de Ubicaciones - {fecha_actual}")
-        
-        # Línea separadora
-        p.line(1*inch, height-1.7*inch, 7.5*inch, height-1.7*inch)
-        
-        # Configurar posición inicial para la tabla
-        y_position = height - 2.2*inch
-        line_height = 0.25*inch
-        
-        # Encabezados de tabla
-        p.setFont("Helvetica-Bold", 10)
-        p.drawString(1*inch, y_position, "NOMBRE")
-        p.drawString(4*inch, y_position, "N° PRODUCTOS")
-        p.drawString(6*inch, y_position, "FECHA CREACIÓN")
-        
-        y_position -= line_height
-        p.line(0.5*inch, y_position, 8*inch, y_position)
-        y_position -= 0.25*inch
-        
-        # Datos de ubicaciones
-        p.setFont("Helvetica", 9)
-        
-        for ubicacion in ubicaciones:
-            if y_position < 1*inch:
-                p.showPage()
-                y_position = height - 1*inch
-                
-                # Encabezados en nueva página
-                p.setFont("Helvetica-Bold", 10)
-                p.drawString(1*inch, y_position, "NOMBRE")
-                p.drawString(4*inch, y_position, "N° PRODUCTOS")
-                p.drawString(6*inch, y_position, "FECHA CREACIÓN")
-                
-                y_position -= line_height
-                p.line(0.5*inch, y_position, 8*inch, y_position)
-                y_position -= 0.25*inch
-                p.setFont("Helvetica", 9)
-            
-            p.drawString(1*inch, y_position, ubicacion.nombre)
-            p.drawString(4*inch, y_position, str(ubicacion.num_productos))
-            p.drawString(6*inch, y_position, ubicacion.fecha_creacion.strftime('%d/%m/%Y %H:%M'))
-            
-            y_position -= line_height
-        
-        # Total
-        p.setFont("Helvetica-Bold", 10)
-        y_position -= 0.3*inch
-        p.drawString(1*inch, y_position, f"Total de ubicaciones: {ubicaciones.count()}")
-        
-        # Pie de página
-        p.setFont("Helvetica-Oblique", 8)
-        p.drawString(1*inch, 0.5*inch, "Sistema de Gestión - Tienda Naturista")
-        
-        p.showPage()
-        p.save()
-        
-        return response
+        return HttpResponse(f"Error al generar PDF: {pdf.err}", status=500)
         
     except Exception as e:
         logger.error(f"Error al generar PDF de ubicaciones: {str(e)}")
-        
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = get_pdf_content_disposition('error.pdf')
-        
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
-        
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-2*inch, "Error al generar el PDF")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-2.5*inch, "Ocurrió un error inesperado al generar el listado.")
-        
-        p.showPage()
-        p.save()
-        
-        return response
+        return HttpResponse(f"Error al generar PDF: {str(e)}", status=500)

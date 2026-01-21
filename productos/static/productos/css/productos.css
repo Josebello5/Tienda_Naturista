@@ -1495,3 +1495,266 @@ td {
     max-width: 1000px !important;
     width: 95vw !important;
 }
+/* ===== ESTILOS TIPO REPORTE PARA GESTORES DE CATEGORÍAS, PATOLOGÍAS Y UBICACIONES ===== */
+
+/* Contenedor de tabla dentro de modales de gestión */
+#modalCategorias .table-container,
+#modalPatologias .table-container,
+#modalUbicaciones .table-container {
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+    overflow: visible;
+}
+
+/* Tablas de gestión estilo reporte */
+#tablaCategorias,
+#tablaPatologias,
+#tablaUbicaciones {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    min-width: auto;
+    border: 1px solid #ddd;
+}
+
+/* Encabezados verdes estilo reporte PDF */
+#tablaCategorias thead,
+#tablaPatologias thead,
+#tablaUbicaciones thead {
+    background: #4CAF50;
+}
+
+#tablaCategorias thead th,
+#tablaPatologias thead th,
+#tablaUbicaciones thead th {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+}
+
+/* Filas alternadas estilo reporte */
+#tablaCategorias tbody tr:nth-child(even),
+#tablaPatologias tbody tr:nth-child(even),
+#tablaUbicaciones tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#tablaCategorias tbody tr:nth-child(odd),
+#tablaPatologias tbody tr:nth-child(odd),
+#tablaUbicaciones tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+/* Celdas del cuerpo estilo reporte */
+#tablaCategorias tbody td,
+#tablaPatologias tbody td,
+#tablaUbicaciones tbody td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #ddd;
+    color: #333;
+    font-size: 0.9rem;
+    vertical-align: middle;
+}
+
+/* Efecto hover suave */
+#tablaCategorias tbody tr:hover,
+#tablaPatologias tbody tr:hover,
+#tablaUbicaciones tbody tr:hover {
+    background-color: #e8f5e9 !important;
+}
+
+/* Columna de acciones */
+#tablaCategorias td.actions,
+#tablaPatologias td.actions,
+#tablaUbicaciones td.actions {
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Ajuste de anchos de columnas para gestores */
+#tablaCategorias th:nth-child(1),
+#tablaCategorias td:nth-child(1),
+#tablaPatologias th:nth-child(1),
+#tablaPatologias td:nth-child(1),
+#tablaUbicaciones th:nth-child(1),
+#tablaUbicaciones td:nth-child(1) {
+    width: 60px;
+    text-align: center;
+}
+
+#tablaCategorias th:nth-child(2),
+#tablaCategorias td:nth-child(2),
+#tablaPatologias th:nth-child(2),
+#tablaPatologias td:nth-child(2),
+#tablaUbicaciones th:nth-child(2),
+#tablaUbicaciones td:nth-child(2) {
+    width: auto;
+}
+
+#tablaCategorias th:nth-child(3),
+#tablaCategorias td:nth-child(3),
+#tablaPatologias th:nth-child(3),
+#tablaPatologias td:nth-child(3),
+#tablaUbicaciones th:nth-child(3),
+#tablaUbicaciones td:nth-child(3) {
+    width: 150px;
+    text-align: center;
+}
+
+#tablaCategorias th:nth-child(4),
+#tablaCategorias td:nth-child(4),
+#tablaPatologias th:nth-child(4),
+#tablaPatologias td:nth-child(4),
+#tablaUbicaciones th:nth-child(4),
+#tablaUbicaciones td:nth-child(4) {
+    width: 120px;
+    text-align: center;
+}
+
+/* Botones de acción en estilo reporte */
+#tablaCategorias .btn-action,
+#tablaPatologias .btn-action,
+#tablaUbicaciones .btn-action {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 3px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+}
+
+/* Botón editar - azul */
+#tablaCategorias .btn-editar-categoria,
+#tablaPatologias .btn-editar-patologia,
+#tablaUbicaciones .btn-editar-ubicacion {
+    background-color: #2196F3;
+    color: white;
+}
+
+#tablaCategorias .btn-editar-categoria:hover,
+#tablaPatologias .btn-editar-patologia:hover,
+#tablaUbicaciones .btn-editar-ubicacion:hover {
+    background-color: #1976D2;
+    transform: scale(1.1);
+}
+
+/* Botón eliminar - rojo */
+#tablaCategorias .btn-eliminar-categoria,
+#tablaPatologias .btn-eliminar-patologia,
+#tablaUbicaciones .btn-eliminar-ubicacion {
+    background-color: #f44336;
+    color: white;
+}
+
+#tablaCategorias .btn-eliminar-categoria:hover,
+#tablaPatologias .btn-eliminar-patologia:hover,
+#tablaUbicaciones .btn-eliminar-ubicacion:hover {
+    background-color: #d32f2f;
+    transform: scale(1.1);
+}
+/* ===== ESTILOS PARA ENCABEZADO TIPO REFORTE EN MODALES ===== */
+.report-header-modal {
+    border-bottom: 3px solid #4CAF50;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.report-header-modal .logo-img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+}
+
+.report-header-modal .header-text h1 {
+    color: #1b5e20;
+    font-size: 1.4rem;
+    margin: 0;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+.report-header-modal .header-text h2 {
+    color: #333;
+    font-size: 1rem;
+    margin: 2px 0 0 0;
+    font-weight: normal;
+}
+
+.report-header-modal .meta-info {
+    font-size: 0.85rem;
+    color: #444;
+    margin-top: 5px;
+}
+
+/* ===== APLICAR ESTILO REPORTE A TABLA PRINCIPAL TAMBIÉN ===== */
+#dataTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    border: 1px solid #ddd;
+}
+
+#dataTable thead {
+    background: #4CAF50 !important; /* Forzar verde plano sobre gradiente anterior */
+}
+
+#dataTable thead th {
+    background-color: #4CAF50 !important;
+    color: white;
+    padding: 12px 15px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+}
+
+#dataTable tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+#dataTable tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
+
+#dataTable tbody tr:hover {
+    background-color: #e8f5e9 !important;
+}
+
+#dataTable tbody td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #ddd;
+    color: #333;
+    vertical-align: middle;
+}
+
+/* Estado Activo/Inactivo/Agotado estilo texto (sin badges grandes si se desea similar a reporte) */
+/* El reporte usa texto coloreado: Activo (verde), Inactivo (rojo). El sistema actual usa badges. */
+/* Si el usuario quiere "diseño similar", quizás prefiera el texto coloreado simple. */
+/* Voy a mantener los badges por ahora pero ajustar colores para que matcheen el reporte si es necesario. */
+/* El reporte usa texto simple: Activo (Verde), Agotado (Naranja). */
+/* Los badges actuales ya tienen colores, mantengámoslos pero quizás menos "pill" si se quiere pureza. */
+/* Dejaré los badges como están por usabilidad UI, pero la tabla en sí ya tiene el estilo row striping y header verde. */
+
+/* Ajustar botones de acción en tabla principal para consistencia */
+#dataTable .btn-action {
+    width: 32px;
+    height: 32px;
+    margin: 0 2px;
+}
