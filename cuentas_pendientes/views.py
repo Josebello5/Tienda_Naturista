@@ -170,16 +170,19 @@ def menu_cuentas_pendientes(request):
 
 @login_required
 def generar_reporte_cuentas_pendientes(request):
-    """Genera un PDF con el reporte de cuentas pendientes aplicando los filtros"""
+    """Genera un PDF con el reporte de cuentas pendientes aplicando los filtros usando xhtml2pdf"""
     try:
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.pagesizes import letter
-        from reportlab.lib.units import inch
+        from io import BytesIO
+        import io
+        from django.template.loader import render_to_string
+        from xhtml2pdf import pisa
+        from django.conf import settings
+        import os
         
         # Obtener parámetros de filtro
         query = request.GET.get('q', '').strip()
         estado = request.GET.get('estado', '')
-        tipo_cliente = request.GET.get('tipo_cliente', '')  # Nuevo filtro
+        tipo_cliente = request.GET.get('tipo_cliente', '')
         
         hoy = timezone.now()
         
@@ -198,10 +201,24 @@ def generar_reporte_cuentas_pendientes(request):
         tasas_hoy = TasaCambiaria.objects.filter(fecha_creacion__date=hoy_venezuela).order_by('-fecha_creacion')
         tasa_actual = tasas_hoy.first() if tasas_hoy.exists() else TasaCambiaria.objects.order_by('-fecha_creacion').first()
         
+        # Helper para formato europeo
+        def format_number_es(number):
+            if number is None:
+                return "0,00"
+            try:
+                s = "{:,.2f}".format(float(number))
+                return s.replace(',', 'X').replace('.', ',').replace('X', '.')
+            except (ValueError, TypeError):
+                return str(number)
+
         # Calcular deuda total por cliente
         clientes_deuda_detallada = []
+        
+        total_deuda_bs_sum = Decimal('0')
+        total_deuda_usd_sum = Decimal('0')
+
         for cliente in clientes_credito:
-            # Aplicar filtro de búsqueda por nombre/cédula
+            # Aplicar filtro de búsqueda
             if query:
                 nombre_completo = f"{cliente.nombre} {cliente.apellido}".lower()
                 cedula = cliente.cedula.lower()
@@ -223,32 +240,24 @@ def generar_reporte_cuentas_pendientes(request):
                 # Obtener solo las pendientes
                 ventas_pendientes = ventas_cliente_credito.filter(
                     Estado_Pago__in=['pendiente', 'parcial']
-                ).select_related('Cedula').prefetch_related('pagos', 'detalles')
+                ).select_related('Cedula')
                 
+                if not ventas_pendientes.exists():
+                    continue
+
                 deuda_total_usd = ventas_pendientes.aggregate(
                     total=Sum('Saldo_Pendiente_USD')
                 )['total'] or Decimal('0')
                 
-                # Calcular días transcurridos desde la venta pendiente más antigua
+                # Calcular días desde venta más antigua
                 dias_transcurridos = 0
-                badge_class = 'badge-success'
-                
-                if ventas_pendientes.exists():
-                    venta_mas_antigua = ventas_pendientes.order_by('Fecha_Venta').first()
+                venta_mas_antigua = ventas_pendientes.order_by('Fecha_Venta').first()
+                if venta_mas_antigua:
                     diferencia = hoy - venta_mas_antigua.Fecha_Venta
                     dias_transcurridos = diferencia.days
-                    
-                    # Determinar color del badge según días
-                    if dias_transcurridos > 30:
-                        badge_class = 'badge-danger'
-                    elif dias_transcurridos > 15:
-                        badge_class = 'badge-warning'
                 
-                # Aplicar filtro de estado (solo si se especifica y hay deuda)
+                # Aplicar filtro de estado (mora)
                 if estado:
-                    if not ventas_pendientes.exists():
-                        continue  # Si se busca por mora, ignorar los que no tienen deuda
-                        
                     if estado == 'alta' and dias_transcurridos <= 30:
                         continue
                     elif estado == 'media' and (dias_transcurridos < 15 or dias_transcurridos > 30):
@@ -256,220 +265,64 @@ def generar_reporte_cuentas_pendientes(request):
                     elif estado == 'baja' and dias_transcurridos >= 15:
                         continue
                 
+                deuda_total_bs = deuda_total_usd * tasa_actual.valor if tasa_actual and tasa_actual.valor else Decimal('0')
+                
                 clientes_deuda_detallada.append({
                     'cliente': cliente,
                     'deuda_total_usd': deuda_total_usd,
-                    'deuda_total_bs': deuda_total_usd * tasa_actual.valor if tasa_actual and tasa_actual.valor else Decimal('0'),
+                    'deuda_total_bs': deuda_total_bs,
+                    'deuda_total_usd_display': format_number_es(deuda_total_usd),
+                    'deuda_total_bs_display': format_number_es(deuda_total_bs),
                     'ventas_pendientes': ventas_pendientes.count(),
                     'dias_transcurridos': dias_transcurridos,
-                    'badge_class': badge_class,
                 })
+                
+                total_deuda_bs_sum += deuda_total_bs
+                total_deuda_usd_sum += deuda_total_usd
         
         # Ordenar por deuda total (descendente)
         clientes_deuda_detallada.sort(key=lambda x: x['deuda_total_usd'], reverse=True)
         
-        # Verificar si hay resultados
-        if not clientes_deuda_detallada:
-            response = HttpResponse(content_type='application/pdf')
-            response['Content-Disposition'] = 'inline; filename="sin_resultados.pdf"'
-            
-            p = canvas.Canvas(response, pagesize=letter)
-            width, height = letter
-            
-            p.setTitle("Reporte de Cuentas Pendientes - Tienda Naturista")
-            
-            # Encabezado
-            p.setFont("Helvetica-Bold", 16)
-            p.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
-            
-            p.setFont("Helvetica", 12)
-            p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
-            
-            p.setFont("Helvetica", 10)
-            fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-            p.drawString(1*inch, height-1.6*inch, f"Reporte de Cuentas Pendientes - {fecha_actual}")
-            
-            p.line(1*inch, height-1.7*inch, 7.5*inch, height-1.7*inch)
-            
-            p.setFont("Helvetica-Bold", 14)
-            p.drawString(2*inch, height-3*inch, "No hay resultados con los filtros aplicados")
-            
-            p.setFont("Helvetica", 12)
-            p.drawString(1.5*inch, height-3.5*inch, "Por favor, ajuste los criterios de búsqueda e intente nuevamente.")
-            
-            p.setFont("Helvetica-Oblique", 8)
-            p.drawString(1*inch, 0.5*inch, "Sistema de Gestión - Tienda Naturista")
-            
-            p.showPage()
-            p.save()
-            
-            return response
+        # Construir info de filtros
+        filtros_parts = []
+        if query: filtros_parts.append(f"Búsqueda: '{query}'")
+        if estado: filtros_parts.append(f"Estado: {estado}")
+        if tipo_cliente: filtros_parts.append(f"Tipo: {tipo_cliente}")
+        filtros_info = ", ".join(filtros_parts) if filtros_parts else None
+
+        # Logo path
+        logo_url = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
+
+        context = {
+            'clientes_deuda': clientes_deuda_detallada,
+            'total_clientes': len(clientes_deuda_detallada),
+            'total_bs': format_number_es(total_deuda_bs_sum),
+            'total_usd': format_number_es(total_deuda_usd_sum),
+            'logo_url': logo_url,
+            'filtros_info': filtros_info,
+            'request': request,
+        }
         
-        # Crear respuesta HTTP para resultados encontrados
+        html_string = render_to_string('cuentas_pendientes/reporte_pdf.html', context)
+        
         response = HttpResponse(content_type='application/pdf')
-        
-        # Nombre del archivo con filtros aplicados
-        filename_parts = ["reporte_cuentas_pendientes"]
-        if query:
-            import re
-            clean_query = re.sub(r'[^\w\s-]', '', query)
-            clean_query = re.sub(r'[-\s]+', '_', clean_query)
-            filename_parts.append(clean_query[:20])
-        if estado:
-            filename_parts.append(f"deuda_{estado}")
-        if tipo_cliente:
-            filename_parts.append(f"tipo_{tipo_cliente}")
-        
-        filename = "_".join(filename_parts) + ".pdf"
+        filename = "reporte_cuentas_pendientes.pdf"
         response['Content-Disposition'] = f'inline; filename="{filename}"'
         
-        # Crear el objeto PDF
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
+        pisa_status = pisa.CreatePDF(
+            io.BytesIO(html_string.encode("UTF-8")),
+            dest=response
+        )
         
-        p.setTitle("Reporte de Cuentas Pendientes - Tienda Naturista")
-        
-        # Encabezado
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
-        
-        p.setFont("Helvetica", 10)
-        fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-        
-        # Información de filtros aplicados
-        filtros_info = "Reporte General de Cuentas Pendientes"
-        if query or estado or tipo_cliente:
-            filtros_info = "Cuentas Pendientes Filtradas - "
-            filtros = []
-            if query:
-                filtros.append(f"Búsqueda: '{query}'")
-            if estado:
-                estado_dict = {
-                    'alta': 'Deuda Alta (> 30 días)',
-                    'media': 'Deuda Media (15-30 días)',
-                    'baja': 'Deuda Baja (< 15 días)'
-                }
-                filtros.append(f"Estado: {estado_dict.get(estado, estado)}")
-            if tipo_cliente:
-                tipo_dict = {
-                    'particular': 'Particular',
-                    'mayorista': 'Mayorista'
-                }
-                filtros.append(f"Tipo: {tipo_dict.get(tipo_cliente, tipo_cliente)}")
-            filtros_info += ", ".join(filtros)
-        
-        p.drawString(1*inch, height-1.6*inch, f"{filtros_info} - {fecha_actual}")
-        
-        # Línea separadora
-        p.line(1*inch, height-1.7*inch, 7.5*inch, height-1.7*inch)
-        
-        # Configurar posición inicial para la tabla
-        y_position = height - 2.2*inch
-        line_height = 0.25*inch
-        
-        # Encabezados de tabla
-        p.setFont("Helvetica-Bold", 9)
-        p.drawString(0.5*inch, y_position, "CLIENTE")
-        p.drawString(2.5*inch, y_position, "CÉDULA")
-        p.drawString(3.5*inch, y_position, "VENTAS PEND.")
-        p.drawString(4.5*inch, y_position, "DEUDA TOTAL (Bs)")
-        p.drawString(6*inch, y_position, "DEUDA TOTAL ($)")
-        p.drawString(7.2*inch, y_position, "DÍAS 1RA VENTA")
-        
-        y_position -= line_height
-        p.line(0.5*inch, y_position, 8*inch, y_position)
-        y_position -= 0.1*inch
-        
-        # Datos de clientes
-        p.setFont("Helvetica", 8)
-        
-        # Función para formatear moneda venezolana
-        def formatear_moneda_vzla(valor):
-            valor_str = f"{float(valor):,.2f}"
-            return valor_str.replace(',', 'X').replace('.', ',').replace('X', '.')
-        
-        total_deuda_bs = Decimal('0')
-        total_deuda_usd = Decimal('0')
-        
-        for item in clientes_deuda_detallada:
-            if y_position < 1*inch:
-                p.showPage()
-                y_position = height - 1*inch
-                p.setFont("Helvetica", 8)
-                
-                # Encabezados en nueva página
-                p.setFont("Helvetica-Bold", 9)
-                p.drawString(0.5*inch, y_position, "CLIENTE")
-                p.drawString(2.5*inch, y_position, "CÉDULA")
-                p.drawString(3.5*inch, y_position, "VENTAS PEND.")
-                p.drawString(4.5*inch, y_position, "DEUDA TOTAL (Bs)")
-                p.drawString(6*inch, y_position, "DEUDA TOTAL ($)")
-                p.drawString(7.2*inch, y_position, "DÍAS 1RA VENTA")
-                
-                y_position -= line_height
-                p.line(0.5*inch, y_position, 8*inch, y_position)
-                y_position -= 0.1*inch
-                p.setFont("Helvetica", 8)
+        if pisa_status.err:
+            return HttpResponse(f'Hubo errores al generar el PDF: {pisa_status.err}')
             
-            cliente = item['cliente']
-            nombre_completo = f"{cliente.nombre} {cliente.apellido}"
-            if len(nombre_completo) > 25:
-                nombre_completo = nombre_completo[:22] + "..."
-            
-            p.drawString(0.5*inch, y_position, nombre_completo)
-            p.drawString(2.5*inch, y_position, cliente.cedula)
-            p.drawString(3.7*inch, y_position, str(item['ventas_pendientes']))
-            p.drawString(4.5*inch, y_position, formatear_moneda_vzla(item['deuda_total_bs']))
-            p.drawString(6*inch, y_position, formatear_moneda_vzla(item['deuda_total_usd']))
-            p.drawString(7.4*inch, y_position, f"{item['dias_transcurridos']} días")
-            
-            total_deuda_bs += item['deuda_total_bs']
-            total_deuda_usd += item['deuda_total_usd']
-            
-            y_position -= line_height
-        
-        # Totales
-        p.setFont("Helvetica-Bold", 10)
-        y_position -= 0.3*inch
-        p.drawString(0.5*inch, y_position, f"Total de clientes con deuda: {len(clientes_deuda_detallada)}")
-        y_position -= 0.2*inch
-        p.drawString(0.5*inch, y_position, f"Deuda total: Bs {formatear_moneda_vzla(total_deuda_bs)} ($ {formatear_moneda_vzla(total_deuda_usd)})")
-        
-        # Pie de página
-        p.setFont("Helvetica-Oblique", 8)
-        p.drawString(0.5*inch, 0.5*inch, "Sistema de Gestión - Tienda Naturista")
-        
-        p.showPage()
-        p.save()
-        
         return response
         
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Error al generar PDF de cuentas pendientes: {str(e)}")
-        
-        # Crear PDF de error
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'inline; filename="error.pdf"'
-        
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
-        
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-2*inch, "Error al generar el PDF")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-2.5*inch, "Ocurrió un error inesperado al generar el reporte.")
-        p.drawString(1*inch, height-3*inch, "Por favor, intente nuevamente.")
-        
-        p.showPage()
-        p.save()
-        
-        return response
+        import traceback
+        traceback.print_exc()
+        return HttpResponse(f"Error generando PDF: {str(e)}", status=500)
 
 
 @login_required

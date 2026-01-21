@@ -15,24 +15,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const estado = estadoPagoSelect ? estadoPagoSelect.value : '';
         const tipoCliente = tipoClienteSelect ? tipoClienteSelect.value : '';
         
-        const filas = tableBody.querySelectorAll('tr');
-        let filasVisibles = 0;
+        // Seleccionar solo filas de datos, ignorando mensajes y encabezados
+        // Usamos :scope o filtrado manual para asegurarnos
+        const todasLasFilas = Array.from(tableBody.querySelectorAll('tr'));
+        let matchCount = 0;
         
-        // Filtrar filas de la tabla (mantener comportamiento local)
-        filas.forEach(fila => {
-            if (fila.classList.contains('empty-row')) {
-                fila.style.display = 'none';
+        todasLasFilas.forEach(fila => {
+            // Ignorar filas especiales
+            if (fila.classList.contains('empty-row') || fila.classList.contains('empty-row-filter')) {
                 return;
             }
             
-            // Obtener datos de la fila
-            const clienteNombre = fila.cells[0].textContent.toLowerCase();
+            // Obtener datos de la fila de forma segura
+            let clienteNombre = '';
+            // Buscamos texto en toda la fila para ser más permisivos, o en celdas específicas
+            if (fila.cells && fila.cells.length > 0) {
+                 // Celda 0 tiene nombre y cédula
+                 clienteNombre = fila.cells[0].textContent.toLowerCase();
+            }
+            
             const dias = parseInt(fila.getAttribute('data-dias') || 0);
             const tipoClienteFila = fila.getAttribute('data-tipo-cliente') || '';
             
             // Verificar filtros
-            const coincideBusqueda = !query || 
-                clienteNombre.includes(query);
+            // Búsqueda: coincide en nombre/cédula
+            const coincideBusqueda = !query || clienteNombre.includes(query);
             
             let coincideEstado = true;
             if (estado === 'alta') {
@@ -47,47 +54,38 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Aplicar filtros
             if (coincideBusqueda && coincideEstado && coincideTipoCliente) {
-                // fila.style.display = ''; // DELEGADO A PAGINACIÓN
                 fila.classList.remove('filtro-oculto');
-                filasVisibles++;
+                fila.style.display = ''; // Asegurar que sea visible (paginación puede ocultarlo luego)
+                matchCount++;
             } else {
-                // fila.style.display = 'none'; // DELEGADO A PAGINACIÓN
                 fila.classList.add('filtro-oculto');
-                fila.style.display = 'none'; // Ocultar inmediatamente, paginación re-mostrará si es necesario (pero mejor ocultar aquí para evitar flash)
+                fila.style.display = 'none'; // Ocultar inmediatamente
             }
         });
         
-        // Mostrar mensaje si no hay resultados en la tabla
+        // Manejo de mensajes de "Sin resultados"
         const emptyRow = tableBody.querySelector('.empty-row');
         const emptyRowFilter = tableBody.querySelector('.empty-row-filter');
         const hayFiltros = query || estado || tipoCliente;
         
-        // Ocultar siempre la fila empty original del template
-        if (emptyRow) {
-            emptyRow.style.display = 'none';
-        }
+        // La fila empty original (sin datos) siempre oculta si hay datos cargados
+        // (asumimos que si hay rows, la empty-row original ya fue manejada por backend template logic empty tag,
+        // pero la ocultamos por si acaso JS la ve)
+        if (emptyRow) emptyRow.style.display = 'none';
         
-        if (hayFiltros && filasVisibles === 0) {
-            // Mostrar mensaje de filtros sin resultados
-            if (emptyRowFilter) {
-                emptyRowFilter.style.display = '';
-            }
+        // Mostrar "No se encontraron resultados" si hay filtros activos y 0 matches
+        if (hayFiltros && matchCount === 0) {
+            if (emptyRowFilter) emptyRowFilter.style.display = ''; // table-row
             if (paginationContainer) paginationContainer.style.display = 'none';
         } else {
-            // Ocultar mensaje de filtros
-            if (emptyRowFilter) {
-                emptyRowFilter.style.display = 'none';
-            }
-            // Actualizar paginación
-            paginaActual = 1; // Resetear a primera página al filtrar
+            if (emptyRowFilter) emptyRowFilter.style.display = 'none';
+            // Si hay resultados, actualizamos paginación
+            paginaActual = 1;
             actualizarPaginacion();
         }
-
         
-        // Llamar AJAX para actualizar paneles
+        // Actualizar paneles (AJAX)
         actualizarPanelesAjax(query, estado, tipoCliente);
-        
-        // Actualizar indicadores de filtro
         actualizarIndicadoresFiltro();
     }
     

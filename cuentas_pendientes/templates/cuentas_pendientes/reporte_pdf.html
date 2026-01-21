@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Reporte de Cuentas Pendientes</title>
+    <style>
+        @page {
+            size: letter;
+            /* Margins define the content area */
+            margin-top: 5cm;
+            margin-bottom: 2cm;
+            margin-left: 1.5cm;
+            margin-right: 1.5cm;
+
+            @frame header_frame {           /* Header in top margin */
+                -pdf-frame-content: header_content;
+                left: 1.5cm; width: 18.59cm; top: 1cm; height: 4cm;
+            }
+            @frame footer_frame {           /* Footer in bottom margin */
+                -pdf-frame-content: footer_content;
+                left: 1.5cm; width: 18.59cm; top: 26cm; height: 1cm;
+            }
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 10pt;
+            color: #333;
+        }
+
+        /* Header Styles */
+        #header_content {
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* Header Layout Table */
+        .header-table {
+            width: 100%;
+            border: none;
+            margin-bottom: 0;
+        }
+        
+        .header-table td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .logo-img {
+            width: 80px;
+            height: 80px;
+        }
+
+        h1 {
+            color: #1b5e20; /* Darker Green */
+            font-size: 18pt;
+            margin: 0;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 14pt;
+            margin: 5px 0 0 0;
+            font-weight: normal;
+        }
+
+        .meta-info {
+            font-size: 9pt;
+            color: #444;
+            margin-top: 5px;
+        }
+
+        /* Data Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            table-layout: fixed;
+        }
+
+        .data-table th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 9pt;
+        }
+
+        .data-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #ddd;
+            font-size: 9pt;
+            vertical-align: top;
+            word-wrap: break-word; 
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .summary-box {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f5f5f5;
+            width: 50%;
+            float: right;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Content -->
+    <div id="header_content">
+        <table class="header-table">
+            <tr>
+                <td width="100">
+                    {% if logo_url %}
+                    <img src="{{ logo_url }}" class="logo-img">
+                    {% endif %}
+                </td>
+                <td>
+                    <h1>Tienda Naturista</h1>
+                    <h2>"Algo más para tu salud"</h2>
+                    <div class="meta-info">
+                        <strong>Reporte de Cuentas Pendientes</strong> | {% now "d/m/Y H:i" %}
+                        {% if filtros_info %}
+                        <br><span style="color: #d32f2f;">{{ filtros_info }}</span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Footer Content -->
+    <div id="footer_content">
+        Página <pdf:pagenumber> de <pdf:pagecount>
+    </div>
+
+    <!-- Main Content -->
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th width="30%">Cliente</th>
+                <th width="15%">Cédula</th>
+                <th width="10%">Ventas</th>
+                <th width="15%">Deuda Total (Bs)</th>
+                <th width="15%">Deuda Total ($)</th>
+                <th width="15%">Días Mora</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in clientes_deuda %}
+            <tr>
+                <td>{{ item.cliente.nombre }} {{ item.cliente.apellido }}</td>
+                <td>{{ item.cliente.cedula }}</td>
+                <td style="text-align: center;">{{ item.ventas_pendientes }}</td>
+                <td style="text-align: right;">{{ item.deuda_total_bs_display }}</td>
+                <td style="text-align: right;">{{ item.deuda_total_usd_display }}</td>
+                <td style="text-align: center;">{{ item.dias_transcurridos }} días</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 20px;">
+                    No se encontraron cuentas pendientes con los filtros seleccionados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div style="margin-top: 20px; page-break-inside: avoid;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td width="50%"></td>
+                <td width="50%">
+                    <table style="width: 100%; border: 1px solid #ccc; background: #f9f9f9;">
+                        <tr>
+                            <td colspan="2" style="background: #4CAF50; color: white; padding: 5px; font-weight: bold;">Resumen General</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px; border-bottom: 1px solid #eee;">Total Clientes:</td>
+                            <td style="padding: 5px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">{{ total_clientes }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px; border-bottom: 1px solid #eee;">Total Deuda Bs:</td>
+                            <td style="padding: 5px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">{{ total_bs }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px;">Total Deuda $:</td>
+                            <td style="padding: 5px; text-align: right; font-weight: bold;">{{ total_usd }}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+</html>
