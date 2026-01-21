@@ -119,8 +119,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Filtrar
         if (filtro) {
-            proveedoresFiltrados = todosLosProveedores.filter(p => 
-                p.nombre.toLowerCase().includes(filtro) || 
+            proveedoresFiltrados = todosLosProveedores.filter(p =>
+                p.nombre.toLowerCase().includes(filtro) ||
                 (p.contacto && p.contacto.toLowerCase().includes(filtro))
             );
         } else {
@@ -147,9 +147,9 @@ document.addEventListener('DOMContentLoaded', function () {
         tbody.innerHTML = '';
 
         if (data.length === 0) {
-             tbody.innerHTML = `
+            tbody.innerHTML = `
                 <tr class="empty-message">
-                    <td colspan="5" style="text-align: center; padding: 40px; color: var(--natural-gray);">
+                    <td colspan="4" style="text-align: center; padding: 40px; color: var(--natural-gray);">
                         <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 15px; opacity: 0.5;"></i>
                         <h3 style="margin-bottom: 10px;">No hay proveedores encontrados</h3>
                     </td>
@@ -161,7 +161,6 @@ document.addEventListener('DOMContentLoaded', function () {
         data.forEach(proveedor => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${proveedor.id}</td>
                 <td>${proveedor.nombre}</td>
                 <td>${proveedor.contacto || ''}</td>
                 <td>${proveedor.fecha_creacion}</td>
@@ -218,19 +217,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Números
         for (let i = 1; i <= totalPages; i++) {
-             // Mostrar siempre primera, última, y cercanas a la actual
-             if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            // Mostrar siempre primera, última, y cercanas a la actual
+            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
                 const btn = document.createElement('button');
                 btn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
                 btn.textContent = i;
                 btn.onclick = () => filtrarYPaginar(i);
                 buttonsDiv.appendChild(btn);
-             } else if (i === currentPage - 2 || i === currentPage + 2) {
-                 const span = document.createElement('span');
-                 span.textContent = '...';
-                 span.style.padding = '5px';
-                 buttonsDiv.appendChild(span);
-             }
+            } else if (i === currentPage - 2 || i === currentPage + 2) {
+                const span = document.createElement('span');
+                span.textContent = '...';
+                span.style.padding = '5px';
+                buttonsDiv.appendChild(span);
+            }
         }
 
         // Botón Siguiente

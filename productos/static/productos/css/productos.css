@@ -1478,3 +1478,20 @@ td {
 
 
 
+
+/* ===== FIX: MODALES DE GESTIÓN COMPLETOS SIN RECORTE ===== */
+#modalCategorias,
+#modalPatologias,
+#modalUbicaciones {
+    overflow: auto;
+    padding: 20px;
+}
+
+#modalCategorias .modal-contenido,
+#modalPatologias .modal-contenido,
+#modalUbicaciones .modal-contenido {
+    max-height: calc(100vh - 40px);
+    margin: auto;
+    max-width: 1000px !important;
+    width: 95vw !important;
+}

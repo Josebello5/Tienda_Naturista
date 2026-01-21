@@ -485,10 +485,9 @@ def imprimir_proveedores(request):
         
         # Encabezados de tabla
         p.setFont("Helvetica-Bold", 10)
-        p.drawString(1*inch, y_position, "ID")
-        p.drawString(1.5*inch, y_position, "NOMBRE")
-        p.drawString(4*inch, y_position, "CONTACTO")
-        p.drawString(6*inch, y_position, "FECHA CREACIÓN")
+        p.drawString(1*inch, y_position, "NOMBRE")
+        p.drawString(3.5*inch, y_position, "CONTACTO")
+        p.drawString(5.5*inch, y_position, "FECHA CREACIÓN")
         
         y_position -= line_height
         p.line(1*inch, y_position, 7.5*inch, y_position)
@@ -504,26 +503,24 @@ def imprimir_proveedores(request):
                 
                 # Encabezados en nueva página
                 p.setFont("Helvetica-Bold", 10)
-                p.drawString(1*inch, y_position, "ID")
-                p.drawString(1.5*inch, y_position, "NOMBRE")
-                p.drawString(4*inch, y_position, "CONTACTO")
-                p.drawString(6*inch, y_position, "FECHA CREACIÓN")
+                p.drawString(1*inch, y_position, "NOMBRE")
+                p.drawString(3.5*inch, y_position, "CONTACTO")
+                p.drawString(5.5*inch, y_position, "FECHA CREACIÓN")
                 
                 y_position -= line_height
                 p.line(1*inch, y_position, 7.5*inch, y_position)
                 y_position -= 0.1*inch
                 p.setFont("Helvetica", 9)
             
-            p.drawString(1*inch, y_position, str(proveedor.id_proveedor))
-            p.drawString(1.5*inch, y_position, proveedor.nombre)
+            p.drawString(1*inch, y_position, proveedor.nombre)
             
             # Truncar contacto si es muy largo
             contacto_display = proveedor.contacto or ""
-            if len(contacto_display) > 25:
-                contacto_display = contacto_display[:22] + "..."
-            p.drawString(4*inch, y_position, contacto_display)
+            if len(contacto_display) > 30:
+                contacto_display = contacto_display[:27] + "..."
+            p.drawString(3.5*inch, y_position, contacto_display)
             
-            p.drawString(6*inch, y_position, proveedor.fecha_creacion.strftime('%d/%m/%Y %H:%M'))
+            p.drawString(5.5*inch, y_position, proveedor.fecha_creacion.strftime('%d/%m/%Y %H:%M'))
             
             y_position -= line_height
         

@@ -1842,3 +1842,15 @@ th:nth-child(6) { width: 100px !important; }
 /* Acciones */
 th:nth-child(7) { width: 160px !important; }
 
+/* ===== FIX: MODAL PROVEEDORES OVERFLOW ===== */
+#modalProveedores {
+    overflow: auto;
+    padding: 20px;
+}
+
+#modalProveedores .modal-contenido {
+    max-height: calc(100vh - 40px);
+    margin: auto;
+    max-width: 1000px !important;
+    width: 95vw !important;
+}

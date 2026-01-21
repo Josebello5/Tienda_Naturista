@@ -234,7 +234,8 @@
         <input type="hidden" id="loteIdCosto">
         <div class="form-group">
           <label for="nuevoCostoUnitario">Nuevo Costo Unitario:</label>
-          <input type="text" id="nuevoCostoUnitario" class="form-control" placeholder="0,00" autocomplete="off" required>
+          <input type="text" id="nuevoCostoUnitario" class="form-control" placeholder="0,00" autocomplete="off"
+            required>
           <small class="form-text text-muted">El costo total se recalculará automáticamente</small>
         </div>
       </form>
@@ -319,7 +320,8 @@
       <button class="btn-cerrar" id="btnCerrarModalProveedores">&times;</button>
     </div>
     <div class="modal-body" style="padding: 20px; overflow-y: auto;">
-      <div class="modal-toolbar" style="display: flex; justify-content: space-between; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+      <div class="modal-toolbar"
+        style="display: flex; justify-content: space-between; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
         <div class="search-box" style="flex: 1; min-width: 250px;">
           <i class="fas fa-search"></i>
           <input type="text" id="searchProveedores" placeholder="Buscar proveedor...">
@@ -337,7 +339,6 @@
         <table class="table-compact" style="min-width: 100%;">
           <thead>
             <tr>
-              <th>ID</th>
               <th>Nombre</th>
               <th>Contacto</th>
               <th>Fecha Creación</th>
@@ -350,7 +351,8 @@
         </table>
       </div>
       <!-- Paginación de Proveedores -->
-      <div id="paginationProveedores" class="pagination-wrapper" style="margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 5px;"></div>
+      <div id="paginationProveedores" class="pagination-wrapper"
+        style="margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 5px;"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" id="btnCancelarProveedores">Cerrar</button>
