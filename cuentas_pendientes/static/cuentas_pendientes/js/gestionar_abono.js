@@ -877,13 +877,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
         const estadoPago = estadoPagoSelect ? estadoPagoSelect.value : '';
 
-        const rows = tableBody.querySelectorAll('tr');
+        const rows = Array.from(tableBody.querySelectorAll('tr'));
         let visibleRows = 0;
 
         rows.forEach(row => {
-            if (row.classList.contains('empty-row')) {
-                row.style.display = 'none';
-                return;
+            // Ignorar filas especiales (mensajes de vacío o sin resultados)
+            if (row.classList.contains('empty-row') || row.classList.contains('empty-row-filter')) {
+                return; // Saltamos estas filas en la iteración de datos
             }
 
             const idVenta = row.cells[1]?.textContent?.toLowerCase() || '';
@@ -895,8 +895,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const coincideFechaVenta = fechaEnRango(fechaVentaText, filtroFechaVenta.desde, filtroFechaVenta.hasta);
 
             if (coincideId && coincideEstadoPago && coincideFechaVenta) {
-                // row.style.display = ''; // DELEGADO A PAGINACIÓN
                 row.classList.remove('filtro-oculto');
+                row.style.display = ''; // Asegurar visibilidad inicial (paginación puede ocultar después)
                 visibleRows++;
 
                 // Habilitar/deshabilitar checkbox según disponibilidad
@@ -905,9 +905,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     checkbox.disabled = false;
                 }
             } else {
-                // row.style.display = 'none'; // DELEGADO A PAGINACIÓN
                 row.classList.add('filtro-oculto');
-                row.style.display = 'none'; // Ocultar inmediatamente
+                row.style.display = 'none'; // Ocultar inmediatamente por filtro
 
                 // Deshabilitar checkbox en filas ocultas
                 const checkbox = row.querySelector('.venta-checkbox');
@@ -925,19 +924,19 @@ document.addEventListener('DOMContentLoaded', function () {
         // Verificar si hay filtros activos
         const hayFiltrosActivos = query || estadoPago || filtroFechaVenta.desde || filtroFechaVenta.hasta;
         
-        // Contar total de filas de ventas (excluyendo las filas de mensaje)
-        const totalFilasVentas = Array.from(rows).filter(row => 
+        // Contar total de filas de ventas REALES (excluyendo mensajes)
+        const totalFilasVentas = rows.filter(row => 
             !row.classList.contains('empty-row') && !row.classList.contains('empty-row-filter')
         ).length;
         
         if (totalFilasVentas === 0) {
-            // No hay ventas en absoluto - mostrar mensaje original de Django
+            // No hay ventas en absoluto - mostrar mensaje original
             if (emptyRow) emptyRow.style.display = '';
             if (emptyRowFilter) emptyRowFilter.style.display = 'none';
         } else if (hayFiltrosActivos && visibleRows === 0) {
             // Hay ventas pero los filtros no devuelven resultados
             if (emptyRow) emptyRow.style.display = 'none';
-            if (emptyRowFilter) emptyRowFilter.style.display = '';
+            if (emptyRowFilter) emptyRowFilter.style.display = ''; // Mostrar "Sin resultados"
             if (paginationContainer) paginationContainer.style.display = 'none';
         } else {
             // Hay resultados visibles
@@ -1334,8 +1333,34 @@ document.addEventListener('DOMContentLoaded', function () {
         mostrarMensaje('✅ Resumen de pago cerrado', 'success');
     });
 
+    const btnImprimirReporte = document.getElementById('btnImprimirReporte');
+
     // Agregar método de pago
     btnAgregarMetodo.addEventListener('click', abrirModalMetodoPago);
+    
+    // Imprimir Reporte
+    if (btnImprimirReporte) {
+        btnImprimirReporte.addEventListener('click', function() {
+            const query = searchInput ? searchInput.value.trim() : '';
+            const estado = estadoPagoSelect ? estadoPagoSelect.value : '';
+            const fechaDesdeVal = filtroFechaVenta.desde || '';
+            const fechaHastaVal = filtroFechaVenta.hasta || '';
+            
+            // Construir URL con parámetros
+            const urlBase = getAppUrl(`/imprimir-ventas-cliente/${clienteCedula}/`);
+            const params = new URLSearchParams();
+            
+            if (query) params.append('q', query);
+            if (estado) params.append('estado_pago', estado);
+            if (fechaDesdeVal) params.append('fecha_desde', fechaDesdeVal);
+            if (fechaHastaVal) params.append('fecha_hasta', fechaHastaVal);
+            
+            const finalUrl = `${urlBase}?${params.toString()}`;
+            
+            // Abrir en nueva pestaña
+            window.open(finalUrl, '_blank');
+        });
+    }
 
     // Procesar pago
     btnProcesarPago.addEventListener('click', procesarPago);

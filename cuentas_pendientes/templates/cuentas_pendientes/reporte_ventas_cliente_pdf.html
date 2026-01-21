@@ -1,0 +1,261 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Reporte de Ventas a Crédito - {{ cliente.nombre }} {{ cliente.apellido }}</title>
+    <style>
+        @page {
+            size: letter;
+            /* Margins define the content area */
+            margin-top: 5cm;
+            margin-bottom: 2cm;
+            margin-left: 1.5cm;
+            margin-right: 1.5cm;
+
+            @frame header_frame {           /* Header in top margin */
+                -pdf-frame-content: header_content;
+                left: 1.5cm; width: 18.59cm; top: 1cm; height: 4cm;
+            }
+            @frame footer_frame {           /* Footer in bottom margin */
+                -pdf-frame-content: footer_content;
+                left: 1.5cm; width: 18.59cm; top: 26cm; height: 1cm;
+            }
+        }
+
+        body {
+            font-family: Helvetica, sans-serif;
+            font-size: 9pt;
+            color: #333;
+        }
+
+        /* Header Styles */
+        #header_content {
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .header-table {
+            width: 100%;
+            border: none;
+            margin-bottom: 0;
+        }
+        
+        .header-table td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .logo-img {
+            width: 80px;
+            height: 80px;
+        }
+
+        h1 {
+            color: #1b5e20; /* Darker Green */
+            font-size: 16pt;
+            margin: 0;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 12pt;
+            margin: 5px 0 0 0;
+            font-weight: normal;
+        }
+
+        .meta-info {
+            font-size: 8pt;
+            color: #444;
+            margin-top: 5px;
+        }
+
+        .cliente-info {
+            margin-top: 5px;
+            font-weight: bold;
+            color: #1b5e20;
+            font-size: 11pt;
+        }
+
+        /* Data Table Styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            table-layout: fixed;
+        }
+
+        /* Ensure table header repeats on new pages */
+        thead {
+            display: table-header-group;
+        }
+
+        tfoot {
+            display: table-footer-group;
+        }
+
+        /* Prevent rows from splitting across pages */
+        tr {
+            page-break-inside: avoid;
+        }
+
+        .data-table th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 6px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 8pt;
+        }
+
+        .data-table td {
+            padding: 5px 6px;
+            border-bottom: 1px solid #ddd;
+            font-size: 8pt;
+            vertical-align: top;
+            word-wrap: break-word; 
+        }
+
+        .col-venta { width: 10%; }
+        .col-fecha { width: 12%; }
+        .col-tasa { width: 10%; }
+        .col-total { width: 16%; }
+        .col-abono { width: 16%; }
+        .col-pendiente { width: 16%; }
+        .col-estado { width: 12%; }
+        .col-dias { width: 8%; }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        /* Summary Box */
+        .summary-box {
+            margin-top: 20px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .page-number {
+            text-align: center;
+            font-size: 8pt;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Content -->
+    <div id="header_content">
+        <table class="header-table">
+            <tr>
+                <td width="100">
+                    {% if logo_url %}
+                    <img src="{{ logo_url }}" class="logo-img">
+                    {% endif %}
+                </td>
+                <td>
+                    <h1>Tienda Naturista</h1>
+                    <h2>"Algo más para tu salud"</h2>
+                    <div class="cliente-info">
+                        Cliente: {{ cliente.nombre }} {{ cliente.apellido }}<br>
+                        Cédula: {{ cliente.cedula }}
+                    </div>
+                    <div class="meta-info">
+                        Reporte de Ventas a Crédito | {% now "d/m/Y H:i" %}
+                        {% if filtros_info %}
+                        <br><span style="color: #d32f2f;">{{ filtros_info }}</span>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Footer Content -->
+    <div id="footer_content">
+        <div class="page-number">
+            Sistema de Gestión - Tienda Naturista | Página <pdf:pagenumber> de <pdf:pagecount>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th class="col-venta">№ Venta</th>
+                <th class="col-fecha">Fecha</th>
+                <th class="col-tasa text-center">Tasa</th>
+                <th class="col-total text-right">Total</th>
+                <th class="col-abono text-right">Abono Inicial</th>
+                <th class="col-pendiente text-right">Saldo Pend.</th>
+                <th class="col-dias text-center">Días</th>
+                <th class="col-estado text-center">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in ventas_data %}
+            <tr>
+                <td>#{{ item.venta.ID_Ventas }}</td>
+                <td>{{ item.fecha_display }}</td>
+                <td class="text-center">{{ item.tasa_display }}</td>
+                <td class="text-right">Bs {{ item.total_display }}</td>
+                <td class="text-right">Bs {{ item.abono_inicial_display }}</td>
+                <td class="text-right">
+                    Bs {{ item.saldo_pendiente_display }}<br>
+                    <span style="font-size: 7pt; color: #666;">$ {{ item.saldo_pendiente_usd_display }}</span>
+                </td>
+                <td class="text-center">{{ item.dias }}</td>
+                <td class="text-center">
+                    {% if item.venta.Estado_Pago == 'pendiente' %}Pendiente
+                    {% elif item.venta.Estado_Pago == 'parcial' %}Parcial
+                    {% elif item.venta.Estado_Pago == 'completo' %}Completo
+                    {% else %}{{ item.venta.Estado_Pago }}{% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 20px;">
+                    No se encontraron ventas con los filtros seleccionados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div style="margin-top: 20px; page-break-inside: avoid;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td width="55%"></td>
+                <td width="45%">
+                    <table style="width: 100%; border: 1px solid #ccc; background: #f9f9f9;">
+                        <tr>
+                            <td colspan="2" style="background: #4CAF50; color: white; padding: 5px; font-weight: bold;">Resumen de Deuda</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px; border-bottom: 1px solid #eee;">Ventas Mostradas:</td>
+                            <td style="padding: 5px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">{{ total_ventas }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px; border-bottom: 1px solid #eee;">Deuda Total Bs:</td>
+                            <td style="padding: 5px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">{{ total_deuda_bs }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 5px;">Deuda Total $:</td>
+                            <td style="padding: 5px; text-align: right; font-weight: bold;">{{ total_deuda_usd }}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+</html>

@@ -1217,13 +1217,15 @@ def debug_venta(request, venta_id):
 
 @login_required
 def imprimir_ventas_cliente(request, cliente_cedula):
-    """Generar PDF con listado de ventas a crédito de un cliente"""
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.units import inch
-    from tienda_naturista.utils import format_venezuelan_money
-    
+    """Genera PDF con listado de ventas a crédito de un cliente usando xhtml2pdf"""
     try:
+        from io import BytesIO
+        import io
+        from django.template.loader import render_to_string
+        from xhtml2pdf import pisa
+        from django.conf import settings
+        import os
+        
         cliente = get_object_or_404(Cliente, cedula=cliente_cedula)
         
         # Obtener parámetros de filtro
@@ -1272,10 +1274,20 @@ def imprimir_ventas_cliente(request, cliente_cedula):
                 ventas = ventas.filter(Fecha_Venta__lte=fecha_hasta_obj)
             except ValueError:
                 pass
-        
+
         ventas = ventas.order_by('-Fecha_Venta')
         
-        # Calcular totales
+        # Helper para formato europeo
+        def format_number_es(number):
+            if number is None:
+                return "0,00"
+            try:
+                s = "{:,.2f}".format(float(number))
+                return s.replace(',', 'X').replace('.', ',').replace('X', '.')
+            except (ValueError, TypeError):
+                return str(number)
+        
+        # Calcular totales y preparar datos
         hoy = timezone.now()
         total_deuda_bs = Decimal('0')
         total_deuda_usd = Decimal('0')
@@ -1285,213 +1297,69 @@ def imprimir_ventas_cliente(request, cliente_cedula):
             diferencia = hoy - venta.Fecha_Venta
             dias_transcurridos = diferencia.days
             
+            # Formatear datos para el template
             ventas_data.append({
                 'venta': venta,
-                'dias': dias_transcurridos
+                'dias': dias_transcurridos,
+                'fecha_display': venta.Fecha_Venta.strftime('%d/%m/%Y'),
+                'tasa_display': format_number_es(venta.Tasa_Venta or 0),
+                'total_display': format_number_es(venta.Total),
+                'abono_inicial_display': format_number_es(venta.Abono_Inicial),
+                'saldo_pendiente_display': format_number_es(venta.Saldo_Pendiente),
+                'saldo_pendiente_usd_display': format_number_es(venta.Saldo_Pendiente_USD),
+                'pagado_bs_display': format_number_es(venta.Total - venta.Saldo_Pendiente)
             })
             
+            # Deuda total solo suma pendientes/parciales
             if venta.Estado_Pago in ['pendiente', 'parcial']:
                 total_deuda_bs += venta.Saldo_Pendiente
                 total_deuda_usd += venta.Saldo_Pendiente_USD
-        
-        # Generar nombre de archivo dinámico basado en filtros
-        nombre_partes = ['ventas_credito', cliente.cedula]
-        
-        if estado_pago_filtro:
-            nombre_partes.append(estado_pago_filtro)
-        
-        if query:
-            nombre_partes.append(f'venta{query}')
-        
+
+        # Info de filtros para el reporte
+        filtros_parts = []
+        if query: filtros_parts.append(f"Venta: #{query}")
+        if estado_pago_filtro: filtros_parts.append(f"Estado: {estado_pago_filtro.title()}")
         if fecha_desde or fecha_hasta:
             if fecha_desde and fecha_hasta:
-                nombre_partes.append(f'{fecha_desde}_a_{fecha_hasta}')
+                filtros_parts.append(f"Fecha: {fecha_desde} a {fecha_hasta}")
             elif fecha_desde:
-                nombre_partes.append(f'desde_{fecha_desde}')
+                filtros_parts.append(f"Desde: {fecha_desde}")
             elif fecha_hasta:
-                nombre_partes.append(f'hasta_{fecha_hasta}')
+                filtros_parts.append(f"Hasta: {fecha_hasta}")
         
-        nombre_archivo = '_'.join(nombre_partes) + '.pdf'
+        filtros_info = ", ".join(filtros_parts) if filtros_parts else None
+
+        # Logo path
+        logo_url = os.path.join(settings.BASE_DIR, 'usuarios', 'static', 'usuarios', 'img', 'logo_redondo_sin_fondo.png')
         
-        # Crear PDF
+        context = {
+            'cliente': cliente,
+            'ventas_data': ventas_data,
+            'total_ventas': len(ventas_data),
+            'total_deuda_bs': format_number_es(total_deuda_bs),
+            'total_deuda_usd': format_number_es(total_deuda_usd),
+            'logo_url': logo_url,
+            'filtros_info': filtros_info,
+            'request': request,
+        }
+        
+        html_string = render_to_string('cuentas_pendientes/reporte_ventas_cliente_pdf.html', context)
+        
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename="{nombre_archivo}"'
+        filename = f"ventas_credito_{cliente.cedula}.pdf"
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
         
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
+        pisa_status = pisa.CreatePDF(
+            io.BytesIO(html_string.encode("UTF-8")),
+            dest=response
+        )
         
-        # Configuración inicial
-        p.setTitle(f"Ventas a Crédito - {cliente.nombre} {cliente.apellido}")
-        
-        # Encabezado
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-1*inch, "TIENDA NATURISTA")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-1.3*inch, "Algo más para tu salud")
-        
-        p.setFont("Helvetica-Bold", 12)
-        p.drawString(1*inch, height-1.6*inch, f"Reporte de Ventas a Crédito")
-        
-        p.setFont("Helvetica", 10)
-        p.drawString(1*inch, height-1.9*inch, f"Cliente: {cliente.nombre} {cliente.apellido}")
-        p.drawString(1*inch, height-2.1*inch, f"Cédula: {cliente.cedula}")
-        
-        fecha_actual = datetime.now().strftime("%d/%m/%Y %H:%M")
-        p.drawString(1*inch, height-2.3*inch, f"Fecha de impresión: {fecha_actual}")
-        
-        # Mostrar filtros aplicados
-        y_filtros = height-2.5*inch
-        if estado_pago_filtro or query or fecha_desde or fecha_hasta:
-            p.setFont("Helvetica-Bold", 9)
-            p.drawString(1*inch, y_filtros, "Filtros aplicados:")
-            y_filtros -= 0.15*inch
-            p.setFont("Helvetica", 8)
+        if pisa_status.err:
+            return HttpResponse(f'Hubo errores al generar el PDF: {pisa_status.err}')
             
-            if query:
-                p.drawString(1.2*inch, y_filtros, f"• Venta №: {query}")
-                y_filtros -= 0.12*inch
-            
-            if estado_pago_filtro:
-                estado_display = {
-                    'completo': 'Completo',
-                    'pendiente': 'Pendiente',
-                    'parcial': 'Parcial'
-                }.get(estado_pago_filtro, estado_pago_filtro)
-                p.drawString(1.2*inch, y_filtros, f"• Estado: {estado_display}")
-                y_filtros -= 0.12*inch
-            
-            if fecha_desde or fecha_hasta:
-                if fecha_desde and fecha_hasta:
-                    p.drawString(1.2*inch, y_filtros, f"• Período: {fecha_desde} a {fecha_hasta}")
-                elif fecha_desde:
-                    p.drawString(1.2*inch, y_filtros, f"• Desde: {fecha_desde}")
-                elif fecha_hasta:
-                    p.drawString(1.2*inch, y_filtros, f"• Hasta: {fecha_hasta}")
-                y_filtros -= 0.12*inch
-            
-            y_filtros -= 0.1*inch
-        
-        # Resumen de deuda
-        p.setFont("Helvetica-Bold", 10)
-        p.drawString(1*inch, y_filtros, f"Deuda Total: Bs {format_venezuelan_money(total_deuda_bs)} (${format_venezuelan_money(total_deuda_usd)})")
-        
-        # Línea separadora
-        y_linea = y_filtros - 0.2*inch
-        p.line(0.5*inch, y_linea, 8*inch, y_linea)
-        
-        # Configurar posición inicial para la tabla
-        y_position = y_linea - 0.3*inch
-        line_height = 0.22*inch
-        
-        # Encabezados de tabla
-        p.setFont("Helvetica-Bold", 8)
-        p.drawString(0.6*inch, y_position, "№")
-        p.drawString(1*inch, y_position, "Fecha")
-        p.drawString(1.8*inch, y_position, "Tasa")
-        p.drawString(2.4*inch, y_position, "Total Venta")
-        p.drawString(3.4*inch, y_position, "Abono Inicial")
-        p.drawString(4.5*inch, y_position, "Saldo Pend.")
-        p.drawString(5.6*inch, y_position, "Días")
-        p.drawString(6.2*inch, y_position, "Estado")
-        
-        y_position -= line_height
-        p.line(0.5*inch, y_position, 8*inch, y_position)
-        y_position -= 0.15*inch
-        
-        # Datos de ventas
-        p.setFont("Helvetica", 7)
-        
-        for item in ventas_data:
-            venta = item['venta']
-            dias = item['dias']
-            
-            if y_position < 1*inch:
-                p.showPage()
-                y_position = height - 1*inch
-                
-                # Encabezados en nueva página
-                p.setFont("Helvetica-Bold", 8)
-                p.drawString(0.6*inch, y_position, "№")
-                p.drawString(1*inch, y_position, "Fecha")
-                p.drawString(1.8*inch, y_position, "Tasa")
-                p.drawString(2.4*inch, y_position, "Total Venta")
-                p.drawString(3.4*inch, y_position, "Abono Inicial")
-                p.drawString(4.5*inch, y_position, "Saldo Pend.")
-                p.drawString(5.6*inch, y_position, "Días")
-                p.drawString(6.2*inch, y_position, "Estado")
-                
-                y_position -= line_height
-                p.line(0.5*inch, y_position, 8*inch, y_position)
-                y_position -= 0.15*inch
-                p.setFont("Helvetica", 7)
-            
-            # Número de venta
-            p.drawString(0.6*inch, y_position, str(venta.ID_Ventas))
-            
-            # Fecha
-            fecha_str = venta.Fecha_Venta.strftime('%d/%m/%Y')
-            p.drawString(1*inch, y_position, fecha_str)
-            
-            # Tasa
-            tasa_str = format_venezuelan_money(venta.Tasa_Venta) if venta.Tasa_Venta else "N/A"
-            p.drawString(1.8*inch, y_position, tasa_str)
-            
-            # Total Venta
-            total_str = f"Bs {format_venezuelan_money(venta.Total)}"
-            p.drawString(2.4*inch, y_position, total_str)
-            
-            # Abono Inicial
-            abono_str = f"Bs {format_venezuelan_money(venta.Abono_Inicial)}"
-            p.drawString(3.4*inch, y_position, abono_str)
-            
-            # Saldo Pendiente
-            saldo_str = f"Bs {format_venezuelan_money(venta.Saldo_Pendiente)}"
-            p.drawString(4.5*inch, y_position, saldo_str)
-            
-            # Días
-            p.drawString(5.6*inch, y_position, str(dias))
-            
-            # Estado
-            estado_display = {
-                'completo': 'Completo',
-                'pendiente': 'Pendiente',
-                'parcial': 'Parcial'
-            }.get(venta.Estado_Pago, venta.Estado_Pago)
-            p.drawString(6.2*inch, y_position, estado_display)
-            
-            y_position -= line_height
-        
-        # Total
-        p.setFont("Helvetica-Bold", 9)
-        y_position -= 0.2*inch
-        p.drawString(0.6*inch, y_position, f"Total de ventas: {ventas.count()}")
-        
-        # Pie de página
-        p.setFont("Helvetica-Oblique", 8)
-        p.drawString(1*inch, 0.5*inch, "Sistema de Gestión - Tienda Naturista")
-        
-        p.showPage()
-        p.save()
-        
         return response
         
     except Exception as e:
-        # En caso de error, generar PDF de error
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'inline; filename="error.pdf"'
-        
-        p = canvas.Canvas(response, pagesize=letter)
-        width, height = letter
-        
-        p.setFont("Helvetica-Bold", 16)
-        p.drawString(1*inch, height-2*inch, "Error al generar el PDF")
-        
-        p.setFont("Helvetica", 12)
-        p.drawString(1*inch, height-2.5*inch, "Ocurrió un error inesperado al generar el listado.")
-        p.drawString(1*inch, height-2.8*inch, f"Error: {str(e)}")
-        
-        p.showPage()
-        p.save()
-        
-        return response
+        import traceback
+        traceback.print_exc()
+        return HttpResponse(f"Error generando PDF: {str(e)}", status=500)
