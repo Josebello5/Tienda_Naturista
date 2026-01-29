@@ -89,6 +89,7 @@
             <th>Email</th>
             <th>Rol</th>
             <th>Estado</th>
+            <th>Estado de Cuenta</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -120,6 +121,13 @@
               <span class="badge bg-secondary">Inactivo</span>
               {% endif %}
             </td>
+            <td>
+              {% if usuario.account_locked %}
+              <span class="badge bg-danger">Bloqueada</span>
+              {% else %}
+              <span class="badge bg-success">Normal</span>
+              {% endif %}
+            </td>
             <td class="actions">
               <button class="btn-action btn-edit" title="Editar Usuario" 
                 data-id="{{ usuario.id }}"
@@ -143,6 +151,24 @@
                 {% endif %}>
                 <i class="fas {% if usuario.is_active %}fa-toggle-on text-success{% else %}fa-toggle-off text-muted{% endif %}"></i>
               </button>
+              
+              {% if usuario.account_locked and usuario.groups.all.0.name != 'Dueño' %}
+              <button class="btn-action btn-unlock" 
+                title="Desbloquear Cuenta" 
+                data-id="{{ usuario.id }}"
+                data-nombre="{{ usuario.first_name }} {{ usuario.last_name }}">
+                <i class="fas fa-unlock" style="color: #f39c12;"></i>
+              </button>
+              {% endif %}
+              
+              {% if usuario.groups.all.0.name != 'Dueño' %}
+              <button class="btn-action btn-reset-password" 
+                title="Cambiar Contraseña" 
+                data-id="{{ usuario.id }}"
+                data-nombre="{{ usuario.first_name }} {{ usuario.last_name }}">
+                <i class="fas fa-key" style="color: #9b59b6;"></i>
+              </button>
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
@@ -245,6 +271,72 @@
       <button id="btnConfirmImport" class="btn btn-danger">
          <i class="fas fa-file-import"></i> Confirmar Restauración
       </button>
+    </div>
+  </div>
+</div>
+
+<div id="modalUnlockUser" class="modal-overlay">
+  <div class="modal-confirm" style="background: white; padding: 2rem; border-radius: 15px; text-align: center; max-width: 450px; width: 90%;">
+    <div class="modal-confirm-icon" style="font-size: 3rem; color: #f39c12; margin-bottom: 1rem;">
+      <i class="fas fa-unlock"></i>
+    </div>
+    <h2>Desbloquear Cuenta</h2>
+    <p id="unlockUserMessage">¿Está seguro de desbloquear la cuenta de este usuario?</p>
+    <div class="modal-confirm-actions" style="display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem;">
+      <button id="btnCancelUnlock" class="btn btn-secondary">Cancelar</button>
+      <button id="btnConfirmUnlock" class="btn btn-primary"><i class="fas fa-unlock"></i> Desbloquear</button>
+    </div>
+  </div>
+</div>
+
+<div id="modalResetPassword" class="modal-filtro">
+  <div class="modal-contenido">
+    <div class="modal-header">
+      <h3>Cambiar Contraseña de Usuario</h3>
+      <button class="btn-cerrar" id="btnCerrarModalResetPassword">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="resetPasswordUserId">
+      <p style="margin-bottom: 1rem; color: #555;">
+        <strong>Usuario:</strong> <span id="resetPasswordUserName"></span>
+      </p>
+      
+      <div class="mb-3">
+        <label for="newPassword" class="form-label">Nueva Contraseña:</label>
+        <div style="position: relative;">
+          <input type="password" id="newPassword" class="form-control" required 
+                 placeholder="Mínimo 8 caracteres">
+          <span class="password-toggle-icon" id="toggleNewPassword" 
+                style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #7f8c8d;">
+            <i class="fas fa-eye"></i>
+          </span>
+        </div>
+        <div class="password-requirements" style="font-size: 0.85rem; margin-top: 0.5rem; color: #7f8c8d;">
+          <div id="req-length"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Mínimo 8 caracteres</div>
+          <div id="req-upper"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Al menos una mayúscula</div>
+          <div id="req-lower"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Al menos una minúscula</div>
+          <div id="req-number"><i class="fas fa-circle" style="font-size: 0.5rem;"></i> Al menos un número</div>
+        </div>
+      </div>
+      
+      <div class="mb-3">
+        <label for="confirmPassword" class="form-label">Confirmar Contraseña:</label>
+        <div style="position: relative;">
+          <input type="password" id="confirmPassword" class="form-control" required 
+                 placeholder="Confirmar contraseña">
+          <span class="password-toggle-icon" id="toggleConfirmPassword" 
+                style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #7f8c8d;">
+            <i class="fas fa-eye"></i>
+          </span>
+        </div>
+        <div id="confirmPasswordError" class="invalid-feedback" style="display: none; color: #e74c3c; font-size: 0.85rem; margin-top: 5px;">
+          <i class="fas fa-exclamation-circle"></i> Las contraseñas no coinciden
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="btnCancelarResetPassword">Cancelar</button>
+      <button class="btn btn-primary" id="btnGuardarNewPassword">Cambiar Contraseña</button>
     </div>
   </div>
 </div>
@@ -386,6 +478,8 @@
   window.VERIFICAR_EMAIL_URL = "{% url 'usuarios:verificar_email_api' %}";
   window.CAMBIAR_ESTADO_URL = "{% url 'usuarios:cambiar_estado_usuario_api' %}";
   window.IMPORTAR_DB_URL = "{% url 'usuarios:importar_db' %}";
+  window.UNLOCK_USER_URL = "{% url 'usuarios:unlock_user_api' %}";
+  window.RESET_PASSWORD_URL = "{% url 'usuarios:reset_user_password_api' %}";
 </script>
 <script src="{% static 'usuarios/js/menu_configuracion.js' %}"></script>
 {% endblock %}

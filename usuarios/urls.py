@@ -14,6 +14,8 @@ urlpatterns = [
     path('configuracion/editar-usuario/', views.editar_usuario_api, name='editar_usuario_api'),
     path('configuracion/verificar-email/', views.verificar_email_api, name='verificar_email_api'),
     path('configuracion/cambiar-estado/', views.cambiar_estado_usuario_api, name='cambiar_estado_usuario_api'),
+    path('configuracion/desbloquear-usuario/', views.unlock_user_api, name='unlock_user_api'),
+    path('configuracion/resetear-password/', views.reset_user_password_api, name='reset_user_password_api'),
     
     # Password Recovery
     path('password-reset/', views.password_reset_request, name='password_reset_request'),

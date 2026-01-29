@@ -616,4 +616,221 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     }
+
+    // ===== UNLOCK USER FUNCTIONALITY =====
+    const modalUnlockUser = document.getElementById('modalUnlockUser');
+    const btnCancelUnlock = document.getElementById('btnCancelUnlock');
+    const btnConfirmUnlock = document.getElementById('btnConfirmUnlock');
+    let userIdToUnlock = null;
+
+    document.querySelectorAll('.btn-unlock').forEach(btn => {
+        btn.addEventListener('click', function() {
+            userIdToUnlock = this.getAttribute('data-id');
+            const userName = this.getAttribute('data-nombre');
+            
+            document.getElementById('unlockUserMessage').textContent = 
+                `¿Está seguro de desbloquear la cuenta de ${userName}?`;
+            
+            if (modalUnlockUser) {
+                modalUnlockUser.classList.add('active');
+                modalUnlockUser.style.visibility = 'visible';
+                modalUnlockUser.style.opacity = '1';
+            }
+        });
+    });
+
+    if (btnCancelUnlock) {
+        btnCancelUnlock.addEventListener('click', function() {
+            if (modalUnlockUser) {
+                modalUnlockUser.classList.remove('active');
+                modalUnlockUser.style.visibility = 'hidden';
+                modalUnlockUser.style.opacity = '0';
+            }
+            userIdToUnlock = null;
+        });
+    }
+
+    if (btnConfirmUnlock) {
+        btnConfirmUnlock.addEventListener('click', function() {
+            if (!userIdToUnlock) return;
+
+            fetch(window.UNLOCK_USER_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ id: userIdToUnlock })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    mostrarExito('Cuenta Desbloqueada', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+                if (modalUnlockUser) {
+                    modalUnlockUser.classList.remove('active');
+                    modalUnlockUser.style.visibility = 'hidden';
+                    modalUnlockUser.style.opacity = '0';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    }
+
+    // ===== RESET PASSWORD FUNCTIONALITY =====
+    const modalResetPassword = document.getElementById('modalResetPassword');
+    const btnCerrarModalResetPassword = document.getElementById('btnCerrarModalResetPassword');
+    const btnCancelarResetPassword = document.getElementById('btnCancelarResetPassword');
+    const btnGuardarNewPassword = document.getElementById('btnGuardarNewPassword');
+    const newPassword = document.getElementById('newPassword');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const toggleNewPassword = document.getElementById('toggleNewPassword');
+    const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+
+    // Open reset password modal
+    document.querySelectorAll('.btn-reset-password').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const userId = this.getAttribute('data-id');
+            const userName = this.getAttribute('data-nombre');
+            
+            document.getElementById('resetPasswordUserId').value = userId;
+            document.getElementById('resetPasswordUserName').textContent = userName;
+            
+            // Clear fields
+            if (newPassword) newPassword.value = '';
+            if (confirmPassword) confirmPassword.value = '';
+            document.getElementById('confirmPasswordError').style.display = 'none';
+            resetPasswordRequirements();
+            
+            if (modalResetPassword) modalResetPassword.style.display = 'flex';
+        });
+    });
+
+    function cerrarModalResetPassword() {
+        if (modalResetPassword) modalResetPassword.style.display = 'none';
+    }
+
+    if (btnCerrarModalResetPassword) btnCerrarModalResetPassword.addEventListener('click', cerrarModalResetPassword);
+    if (btnCancelarResetPassword) btnCancelarResetPassword.addEventListener('click', cerrarModalResetPassword);
+
+    // Toggle password visibility
+    if (toggleNewPassword) {
+        toggleNewPassword.addEventListener('click', function() {
+            const type = newPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+            newPassword.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+    }
+
+    if (toggleConfirmPassword) {
+        toggleConfirmPassword.addEventListener('click', function() {
+            const type = confirmPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+            confirmPassword.setAttribute('type', type);
+            this.innerHTML = type === 'password' ? '<i class="fas fa-eye"></i>' : '<i class="fas fa-eye-slash"></i>';
+        });
+    }
+
+    // Password validation
+    function validatePasswordRequirements(password) {
+        const requirements = {
+            length: password.length >= 8,
+            upper: /[A-Z]/.test(password),
+            lower: /[a-z]/.test(password),
+            number: /[0-9]/.test(password)
+        };
+
+        // Update UI
+        updateRequirement('req-length', requirements.length);
+        updateRequirement('req-upper', requirements.upper);
+        updateRequirement('req-lower', requirements.lower);
+        updateRequirement('req-number', requirements.number);
+
+        return requirements.length && requirements.upper && requirements.lower && requirements.number;
+    }
+
+    function updateRequirement(id, met) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.style.color = met ? '#2ecc71' : '#7f8c8d';
+            const icon = element.querySelector('i');
+            if (icon) {
+                icon.className = met ? 'fas fa-check-circle' : 'fas fa-circle';
+                icon.style.fontSize = met ? '0.8rem' : '0.5rem';
+            }
+        }
+    }
+
+    function resetPasswordRequirements() {
+        ['req-length', 'req-upper', 'req-lower', 'req-number'].forEach(id => {
+            updateRequirement(id, false);
+        });
+    }
+
+    if (newPassword) {
+        newPassword.addEventListener('input', function() {
+            validatePasswordRequirements(this.value);
+        });
+    }
+
+    if (confirmPassword) {
+        confirmPassword.addEventListener('input', function() {
+            const errorDiv = document.getElementById('confirmPasswordError');
+            if (this.value && this.value !== newPassword.value) {
+                errorDiv.style.display = 'block';
+            } else {
+                errorDiv.style.display = 'none';
+            }
+        });
+    }
+
+    // Save new password
+    if (btnGuardarNewPassword) {
+        btnGuardarNewPassword.addEventListener('click', function() {
+            const userId = document.getElementById('resetPasswordUserId').value;
+            const newPass = newPassword.value;
+            const confirmPass = confirmPassword.value;
+
+            // Validations
+            if (!newPass || !confirmPass) {
+                alert('Por favor complete todos los campos');
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                alert('Las contraseñas no coinciden');
+                return;
+            }
+
+            if (!validatePasswordRequirements(newPass)) {
+                alert('La contraseña no cumple con todos los requisitos');
+                return;
+            }
+
+            fetch(window.RESET_PASSWORD_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ 
+                    id: userId,
+                    password: newPass
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cerrarModalResetPassword();
+                    mostrarExito('Contraseña Actualizada', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    }
 });

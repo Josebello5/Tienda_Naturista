@@ -8,12 +8,15 @@ import string
 class Usuario(AbstractUser):
     cedula = models.CharField(max_length=8, unique=True)
     fecha_nacimiento = models.DateField()
+    failed_login_attempts = models.IntegerField(default=0)
+    account_locked = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'cedula'
     REQUIRED_FIELDS = ['email', 'first_name', 'last_name', 'fecha_nacimiento', 'username']
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.cedula})"
+
 
 
 class PasswordResetToken(models.Model):

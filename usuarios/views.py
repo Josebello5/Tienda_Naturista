@@ -66,8 +66,42 @@ def login_view(request):
             if not user.is_active:
                 messages.error(request, 'No se puede iniciar sesión porque el usuario está inactivo.')
             else:
+                # Login exitoso - resetear contador de intentos fallidos
+                if user.failed_login_attempts > 0 or user.account_locked:
+                    user.failed_login_attempts = 0
+                    user.account_locked = False
+                    user.save()
+                
                 login(request, user)
                 return redirect('dashboard:menu')
+        else:
+            # Manejar errores de validación
+            cedula = request.POST.get('cedula')
+            if cedula:
+                try:
+                    from .models import Usuario
+                    user = Usuario.objects.get(cedula=cedula)
+                    
+                    # Si el error es por contraseña incorrecta (no por cuenta bloqueada o inactiva)
+                    if not user.account_locked and user.is_active:
+                        # Verificar si el error es específicamente por contraseña incorrecta
+                        error_messages = [str(error) for error in form.errors.get('__all__', [])]
+                        if any('Contraseña incorrecta' in msg for msg in error_messages):
+                            user.failed_login_attempts += 1
+                            
+                            if user.failed_login_attempts >= 3:
+                                user.account_locked = True
+                                user.save()
+                                messages.error(request, 'Tu cuenta ha sido bloqueada por múltiples intentos fallidos. Debes recuperar tu contraseña o contactar al administrador.')
+                            else:
+                                remaining = 3 - user.failed_login_attempts
+                                user.save()
+                                if remaining == 1:
+                                    messages.error(request, f'Contraseña incorrecta. Te queda {remaining} intento.')
+                                else:
+                                    messages.error(request, f'Contraseña incorrecta. Te quedan {remaining} intentos.')
+                except Usuario.DoesNotExist:
+                    pass
     else:
         form = CedulaLoginForm()
 
@@ -77,6 +111,7 @@ def login_view(request):
     response['Pragma'] = 'no-cache'
     response['Expires'] = '0'
     return response
+
 
 
 @never_cache
@@ -546,6 +581,9 @@ def reset_password(request):
             
             # Cambiar contraseña
             user.set_password(new_password)
+            # Desbloquear cuenta y resetear contador de intentos fallidos
+            user.failed_login_attempts = 0
+            user.account_locked = False
             user.save()
             
             # Marcar token como usado
@@ -593,3 +631,96 @@ def mask_email(email):
     else:
         masked_username = username[0] + '*' * (len(username) - 2) + username[-1]
     return f"{masked_username}@{domain}"
+
+
+# ===== OWNER ACCOUNT MANAGEMENT VIEWS =====
+
+@login_required
+@owner_required
+def unlock_user_api(request):
+    """API para que el Dueño desbloquee cuentas de usuarios"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_id = data.get('id')
+            
+            if not user_id:
+                return JsonResponse({'success': False, 'error': 'ID de usuario requerido'}, status=400)
+            
+            user = Usuario.objects.get(pk=user_id)
+            
+            # No permitir desbloquear al Dueño (no debería estar bloqueado)
+            if user.groups.filter(name='Dueño').exists():
+                return JsonResponse({'success': False, 'error': 'No se puede modificar la cuenta del Dueño'}, status=403)
+            
+            # Desbloquear cuenta
+            user.failed_login_attempts = 0
+            user.account_locked = False
+            user.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Cuenta de {user.first_name} {user.last_name} desbloqueada exitosamente'
+            })
+            
+        except Usuario.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Usuario no encontrado'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+
+@login_required
+@owner_required
+def reset_user_password_api(request):
+    """API para que el Dueño cambie la contraseña de cualquier usuario"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_id = data.get('id')
+            new_password = data.get('password', '')
+            
+            if not user_id:
+                return JsonResponse({'success': False, 'error': 'ID de usuario requerido'}, status=400)
+            
+            if not new_password:
+                return JsonResponse({'success': False, 'error': 'Contraseña requerida'}, status=400)
+            
+            # Validaciones de contraseña
+            if len(new_password) < 8:
+                return JsonResponse({'success': False, 'error': 'La contraseña debe tener al menos 8 caracteres'}, status=400)
+            
+            if not any(c.isupper() for c in new_password):
+                return JsonResponse({'success': False, 'error': 'La contraseña debe contener al menos una mayúscula'}, status=400)
+            
+            if not any(c.islower() for c in new_password):
+                return JsonResponse({'success': False, 'error': 'La contraseña debe contener al menos una minúscula'}, status=400)
+            
+            if not any(c.isdigit() for c in new_password):
+                return JsonResponse({'success': False, 'error': 'La contraseña debe contener al menos un número'}, status=400)
+            
+            user = Usuario.objects.get(pk=user_id)
+            
+            # No permitir cambiar contraseña del Dueño
+            if user.groups.filter(name='Dueño').exists():
+                return JsonResponse({'success': False, 'error': 'No se puede modificar la contraseña del Dueño'}, status=403)
+            
+            # Cambiar contraseña
+            user.set_password(new_password)
+            # Desbloquear cuenta y resetear contador por si acaso
+            user.failed_login_attempts = 0
+            user.account_locked = False
+            user.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Contraseña de {user.first_name} {user.last_name} cambiada exitosamente'
+            })
+            
+        except Usuario.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Usuario no encontrado'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)

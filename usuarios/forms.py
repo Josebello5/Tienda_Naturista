@@ -78,6 +78,10 @@ class CedulaLoginForm(forms.Form):
             except Usuario.DoesNotExist:
                 raise forms.ValidationError("La cédula no está registrada.")
             
+            # Verificar si la cuenta está bloqueada
+            if user.account_locked:
+                raise forms.ValidationError("Tu cuenta ha sido bloqueada por múltiples intentos fallidos. Debes recuperar tu contraseña o contactar al administrador.")
+            
             auth_user = authenticate(username=user.username, password=password)
             if auth_user is None:
                 if user.check_password(password):
