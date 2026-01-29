@@ -6,53 +6,34 @@ from django.core.management.base import BaseCommand
 from django.core.management import call_command
 from django.core.mail import EmailMessage
 from django.conf import settings
-from usuarios.models import Usuario
+from usuarios.models import Usuario, BackupHistory
 
 
 class Command(BaseCommand):
     help = 'Genera backup de la base de datos, lo comprime en ZIP y lo envía por email al Dueño'
+    
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--pending',
+            action='store_true',
+            help='Marca este backup como pendiente (ejecutado después del domingo)'
+        )
 
     def handle(self, *args, **options):
         """
-        Genera backup automático semanal con las siguientes características:
-        - Se ejecuta solo los DOMINGOS
-        - Solo se ejecuta UNA VEZ por domingo
-        - Verifica si ya se ejecutó hoy antes de proceder
+        Genera backup automático con las siguientes características:
         - Compresión en formato ZIP
         - Envío por email al usuario Dueño
         - Almacenamiento local de backups
         - Notificaciones de éxito o fallo
+        - Registro en historial de backups
         """
+        is_pending = options.get('pending', False)
+        
         try:
-            # 1. Verificar si hoy es domingo (0 = Lunes, 6 = Domingo)
-            hoy = datetime.now()
-            if hoy.weekday() != 6:
-                dia_semana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'][hoy.weekday()]
-                self.stdout.write(self.style.WARNING(
-                    f'Hoy es {dia_semana}. El backup solo se ejecuta los domingos.'
-                ))
-                return
-            
-            # 2. Verificar si ya se ejecutó el backup hoy
-            backup_dir = os.path.join(settings.BASE_DIR, 'backups')
-            if not os.path.exists(backup_dir):
-                os.makedirs(backup_dir)
-            
-            last_run_file = os.path.join(backup_dir, '.last_backup_date')
-            fecha_hoy = date.today().isoformat()
-            
-            if os.path.exists(last_run_file):
-                with open(last_run_file, 'r') as f:
-                    ultima_ejecucion = f.read().strip()
-                
-                if ultima_ejecucion == fecha_hoy:
-                    self.stdout.write(self.style.SUCCESS(
-                        f'✓ El backup ya se ejecutó hoy ({fecha_hoy}). No es necesario ejecutarlo nuevamente.'
-                    ))
-                    return
-            
+            tipo_backup = "PENDIENTE" if is_pending else "AUTOMÁTICO"
             self.stdout.write(self.style.WARNING('='*60))
-            self.stdout.write(self.style.WARNING('INICIANDO BACKUP AUTOMÁTICO SEMANAL'))
+            self.stdout.write(self.style.WARNING(f'INICIANDO BACKUP {tipo_backup}'))
             self.stdout.write(self.style.WARNING('='*60))
 
             
@@ -159,13 +140,19 @@ Sistema Tienda Naturista
             # 9. Enviar notificación de éxito
             self._send_success_notification(dueno, zip_filename, zip_size_mb)
             
-            # 10. Guardar fecha de última ejecución
-            last_run_file = os.path.join(backup_dir, '.last_backup_date')
-            with open(last_run_file, 'w') as f:
-                f.write(date.today().isoformat())
+            # 10. Guardar en historial de backups
+            BackupHistory.objects.create(
+                filename=zip_filename,
+                size_mb=round(zip_size_mb, 2),
+                email_sent=True,
+                email_recipient=recipient_email,
+                is_automatic=True,
+                is_pending=is_pending
+            )
             
             self.stdout.write(self.style.SUCCESS('='*60))
             self.stdout.write(self.style.SUCCESS('✓ BACKUP COMPLETADO EXITOSAMENTE'))
+            self.stdout.write(self.style.SUCCESS(f'✓ Registrado en historial de backups'))
             self.stdout.write(self.style.SUCCESS('='*60))
             
         except Exception as e:
@@ -175,9 +162,19 @@ Sistema Tienda Naturista
             self.stdout.write(self.style.ERROR(f'✗ ERROR EN BACKUP: {error_msg}'))
             self.stdout.write(self.style.ERROR('='*60))
             
+            # Registrar fallo en historial
             try:
                 dueno = Usuario.objects.filter(groups__name='Dueño').first()
                 if dueno:
+                    BackupHistory.objects.create(
+                        filename='error_backup.zip',
+                        size_mb=0,
+                        email_sent=False,
+                        email_recipient=dueno.email,
+                        is_automatic=True,
+                        is_pending=is_pending,
+                        error_message=error_msg
+                    )
                     self._send_failure_notification(dueno, error_msg)
             except:
                 pass

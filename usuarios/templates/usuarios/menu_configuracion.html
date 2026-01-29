@@ -37,6 +37,55 @@
   </div>
 </div>
 
+
+<!-- Historial de Backups Automáticos -->
+<div class="db-management-card" style="background: white; padding: 1.5rem; border-radius: 15px; margin-bottom: 2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div>
+      <h3 style="color: #2c3e50; margin-bottom: 0.5rem;"><i class="fas fa-history"></i> Historial de Backups Automáticos</h3>
+      <p style="color: #7f8c8d; margin: 0;">Registro de backups semanales automáticos</p>
+    </div>
+    <a href="{% url 'usuarios:backup_history' %}" class="btn btn-info" style="display: flex; align-items: center; gap: 8px;">
+      <i class="fas fa-chart-line"></i> Ver Historial Completo
+    </a>
+  </div>
+
+  {% if recent_backups %}
+  <div style="background: #f8f9fa; padding: 1rem; border-radius: 10px;">
+    <h4 style="font-size: 0.95rem; color: #7f8c8d; margin-bottom: 1rem;">Últimos Backups:</h4>
+    {% for backup in recent_backups %}
+    <div style="background: white; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <i class="fas fa-check-circle" style="color: #5CB85C; font-size: 1.2rem;"></i>
+        <div>
+          <div style="font-weight: 600; color: #2c3e50; font-size: 0.9rem;">{{ backup.fecha_backup|date:"d/m/Y H:i" }}</div>
+          <div style="font-size: 0.8rem; color: #7f8c8d;">{{ backup.size_mb }} MB</div>
+        </div>
+      </div>
+      <div>
+        {% if backup.is_pending %}
+        <span style="background: rgba(243, 156, 18, 0.15); color: #f39c12; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+          Pendiente
+        </span>
+        {% else %}
+        <span style="background: rgba(58, 140, 110, 0.15); color: #3A8C6E; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+          Automático
+        </span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="text-align: center; padding: 2rem; background: #f8f9fa; border-radius: 10px;">
+    <i class="fas fa-info-circle" style="font-size: 2rem; color: #dee2e6; margin-bottom: 10px;"></i>
+    <p style="color: #7f8c8d; margin: 0;">No hay backups registrados aún</p>
+    <p style="color: #95a5a6; font-size: 0.85rem; margin-top: 5px;">Los backups aparecerán aquí cuando se ejecuten automáticamente</p>
+  </div>
+  {% endif %}
+</div>
+
+
 <div class="productos-container">
   <div class="productos-main">
 

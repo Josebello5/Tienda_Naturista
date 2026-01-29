@@ -53,3 +53,23 @@ class PasswordResetToken(models.Model):
         """Marca el token como usado"""
         self.is_used = True
         self.save()
+
+
+class BackupHistory(models.Model):
+    """Historial de backups automáticos realizados"""
+    fecha_backup = models.DateTimeField(auto_now_add=True)
+    filename = models.CharField(max_length=255)
+    size_mb = models.DecimalField(max_digits=10, decimal_places=2)
+    email_sent = models.BooleanField(default=False)
+    email_recipient = models.EmailField()
+    is_automatic = models.BooleanField(default=True)  # True para automático, False para manual
+    is_pending = models.BooleanField(default=False)  # True si se ejecutó después del domingo
+    error_message = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-fecha_backup']
+        verbose_name = 'Historial de Backup'
+        verbose_name_plural = 'Historial de Backups'
+    
+    def __str__(self):
+        return f"Backup {self.fecha_backup.strftime('%Y-%m-%d %H:%M')} - {self.filename}"

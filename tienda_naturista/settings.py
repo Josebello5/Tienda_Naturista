@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'usuarios.middleware.backup_middleware.AutoBackupMiddleware',  # Backup automático
 ]
 
 ROOT_URLCONF = 'tienda_naturista.urls'
@@ -152,6 +153,15 @@ AUTH_USER_MODEL = 'usuarios.Usuario'
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',  
 ]
+
+# Cache configuration para middleware de backups
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 600,  # 10 minutos por defecto
+    }
+}
 
 LOGIN_URL = '/usuarios/login/'
 LOGIN_REDIRECT_URL = 'dashboard:menu'  

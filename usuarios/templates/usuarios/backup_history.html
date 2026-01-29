@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Historial de Backups - Tienda Naturista{% endblock %}
+
+{% block content %}
+<div class="welcome-card" style="background: linear-gradient(135deg, #2c3e50, #4ca1af);">
+  <h2><i class="fas fa-history"></i> Historial de Backups Automáticos</h2>
+  <p>Registro completo de todos los backups realizados</p>
+</div>
+
+<div class="productos-container">
+  <div class="productos-main">
+    
+    <!-- Filtros de Mes y Año -->
+    <div class="filtros-row" style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+      <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fas fa-filter" style="color: #3A8C6E; font-size: 1.2rem;"></i>
+          <span style="font-weight: 600; color: #2c3e50;">Filtrar por:</span>
+        </div>
+        
+        <form method="GET" id="filterForm" style="display: flex; gap: 15px; align-items: center; flex: 1;">
+          <div class="filtro-select">
+            <select name="mes" id="mesFilter" onchange="document.getElementById('filterForm').submit()" style="padding: 10px 15px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 0.95rem; min-width: 150px;">
+              {% for num, nombre in meses %}
+              <option value="{{ num }}" {% if num == mes_actual %}selected{% endif %}>{{ nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="filtro-select">
+            <select name="año" id="añoFilter" onchange="document.getElementById('filterForm').submit()" style="padding: 10px 15px; border: 2px solid #e1e8ed; border-radius: 8px; font-size: 0.95rem; min-width: 120px;">
+              {% for año in años_disponibles %}
+              <option value="{{ año }}" {% if año == año_actual %}selected{% endif %}>{{ año }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <a href="{% url 'usuarios:backup_history' %}" class="btn btn-secondary" style="padding: 10px 20px;">
+            <i class="fas fa-redo"></i> Resetear
+          </a>
+        </form>
+      </div>
+    </div>
+
+    <!-- Estadísticas del Mes -->
+    <div class="backup-stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px;">
+      <div class="stat-card" style="background: white; padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #3A8C6E;">
+        <div style="font-size: 1.8rem; font-weight: bold; color: #3A8C6E;">{{ total_mes }}</div>
+        <div style="color: #7f8c8d; font-size: 0.85rem;">Este Mes</div>
+      </div>
+      
+      <div class="stat-card" style="background: white; padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #5CB85C;">
+        <div style="font-size: 1.8rem; font-weight: bold; color: #5CB85C;">{{ exitosos_mes }}</div>
+        <div style="color: #7f8c8d; font-size: 0.85rem;">Exitosos</div>
+      </div>
+      
+      {% if fallidos_mes > 0 %}
+      <div class="stat-card" style="background: white; padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #e74c3c;">
+        <div style="font-size: 1.8rem; font-weight: bold; color: #e74c3c;">{{ fallidos_mes }}</div>
+        <div style="color: #7f8c8d; font-size: 0.85rem;">Fallidos</div>
+      </div>
+      {% endif %}
+      
+      {% if pendientes_mes > 0 %}
+      <div class="stat-card" style="background: white; padding: 18px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #f39c12;">
+        <div style="font-size: 1.8rem; font-weight: bold; color: #f39c12;">{{ pendientes_mes }}</div>
+        <div style="color: #7f8c8d; font-size: 0.85rem;">Pendientes</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Tabla de Backups -->
+    {% if backups %}
+    <div style="background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden;">
+      <div class="table-container" style="border-radius: 0;">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Archivo</th>
+              <th>Tamaño</th>
+              <th>Enviado a</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for backup in backups %}
+            <tr>
+              <td>{{ backup.fecha_backup|date:"d/m/Y H:i" }}</td>
+              <td style="font-family: monospace; font-size: 0.85rem;">{{ backup.filename }}</td>
+              <td>{{ backup.size_mb }} MB</td>
+              <td>{{ backup.email_recipient }}</td>
+              <td>
+                {% if backup.is_pending %}
+                <span class="badge" style="background: rgba(243, 156, 18, 0.15); color: #f39c12; border: 1px solid rgba(243, 156, 18, 0.3);">
+                  <i class="fas fa-clock"></i> Pendiente
+                </span>
+                {% elif backup.is_automatic %}
+                <span class="badge" style="background: rgba(58, 140, 110, 0.15); color: #3A8C6E; border: 1px solid rgba(58, 140, 110, 0.3);">
+                  <i class="fas fa-robot"></i> Automático
+                </span>
+                {% else %}
+                <span class="badge" style="background: rgba(52, 152, 181, 0.15); color: #3498B5; border: 1px solid rgba(52, 152, 181, 0.3);">
+                  <i class="fas fa-user"></i> Manual
+                </span>
+                {% endif %}
+              </td>
+              <td>
+                {% if backup.email_sent %}
+                <span class="badge" style="background: rgba(92, 184, 92, 0.15); color: #5CB85C; border: 1px solid rgba(92, 184, 92, 0.3);">
+                  <i class="fas fa-check-circle"></i> Exitoso
+                </span>
+                {% else %}
+                <span class="badge" style="background: rgba(231, 76, 60, 0.15); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.3);">
+                  <i class="fas fa-times-circle"></i> Fallido
+                </span>
+                {% if backup.error_message %}
+                <div style="font-size: 0.75rem; color: #e74c3c; margin-top: 4px;">{{ backup.error_message|truncatewords:10 }}</div>
+                {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 60px; background: white; border-radius: 12px;">
+      <i class="fas fa-inbox" style="font-size: 4rem; color: #dee2e6; margin-bottom: 20px;"></i>
+      <h3 style="color: #7f8c8d;">No hay backups en este período</h3>
+      <p style="color: #95a5a6;">Intenta seleccionar otro mes o año.</p>
+    </div>
+    {% endif %}
+
+    <!-- Resumen Global -->
+    <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 12px; text-align: center;">
+      <p style="color: #7f8c8d; margin: 0;">
+        <strong>Total histórico:</strong> {{ total_backups }} backups 
+        ({{ total_exitosos }} exitosos, {{ total_fallidos }} fallidos)
+      </p>
+    </div>
+
+    <!-- Botón Volver -->
+    <div style="margin-top: 25px; text-align: center;">
+      <a href="{% url 'usuarios:menu_configuracion' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Volver a Configuración
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'productos/css/productos.css' %}">
+<style>
+  .productos-container {
+    padding: 20px;
+  }
+  
+  .productos-main {
+    padding: 30px;
+  }
+
+  .badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+
+  table {
+    font-size: 0.9rem;
+  }
+
+  th, td {
+    padding: 14px 12px;
+  }
+
+  .stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  }
+
+  .filtro-select select {
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .filtro-select select:hover {
+    border-color: #3A8C6E;
+  }
+
+  .filtro-select select:focus {
+    outline: none;
+    border-color: #3A8C6E;
+    box-shadow: 0 0 0 3px rgba(58, 140, 110, 0.1);
+  }
+</style>
+{% endblock %}

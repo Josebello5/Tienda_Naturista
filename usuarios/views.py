@@ -138,9 +138,96 @@ from django.conf import settings
 
 @owner_required
 def menu_configuracion(request):
-    from .models import Usuario
-    usuarios = Usuario.objects.all()
-    return render(request, 'usuarios/menu_configuracion.html', {'usuarios': usuarios})
+    from .models import Usuario, BackupHistory
+    usuarios = Usuario.objects.all().order_by('cedula')
+    recent_backups = BackupHistory.objects.filter(email_sent=True).order_by('-fecha_backup')[:5]
+    return render(request, 'usuarios/menu_configuracion.html', {
+        'usuarios': usuarios,
+        'recent_backups': recent_backups
+    })
+
+
+@owner_required
+def backup_history(request):
+    """Vista para mostrar el historial completo de backups con filtros de mes/año"""
+    from .models import BackupHistory
+    
+    # Obtener todos los backups
+    backups = BackupHistory.objects.all()
+    
+    # Obtener filtros de mes y año (por defecto mes y año actual)
+    ahora = timezone.now()
+    mes_filtro = request.GET.get('mes')
+    año_filtro = request.GET.get('año')
+    
+    # Si no hay filtros, usar mes y año actual
+    if not mes_filtro:
+        mes_filtro = ahora.month
+    else:
+        try:
+            mes_filtro = int(mes_filtro)
+        except:
+            mes_filtro = ahora.month
+    
+    if not año_filtro:
+        año_filtro = ahora.year
+    else:
+        try:
+            año_filtro = int(año_filtro)
+        except:
+            año_filtro = ahora.year
+    
+    # Filtrar por mes y año seleccionados
+    backups_filtrados = backups.filter(
+        fecha_backup__year=año_filtro,
+        fecha_backup__month=mes_filtro
+    ).order_by('-fecha_backup')
+    
+    # Obtener lista de años disponibles (solo años que tienen backups)
+    años_disponibles = sorted(
+        list(set([b.fecha_backup.year for b in backups])),
+        reverse=True
+    )
+    
+    # Si no hay años disponibles, agregar el año actual
+    if not años_disponibles:
+        años_disponibles = [ahora.year]
+    
+    # Meses del año
+    meses = [
+        (1, 'Enero'), (2, 'Febrero'), (3, 'Marzo'), (4, 'Abril'),
+        (5, 'Mayo'), (6, 'Junio'), (7, 'Julio'), (8, 'Agosto'),
+        (9, 'Septiembre'), (10, 'Octubre'), (11, 'Noviembre'), (12, 'Diciembre')
+    ]
+    
+    # Estadísticas del mes filtrado
+    total_mes = backups_filtrados.count()
+    exitosos_mes = backups_filtrados.filter(email_sent=True).count()
+    fallidos_mes = backups_filtrados.filter(email_sent=False).count()
+    pendientes_mes = backups_filtrados.filter(is_pending=True).count()
+    
+    # Estadísticas globales
+    total_backups = backups.count()
+    total_exitosos = backups.filter(email_sent=True).count()
+    total_fallidos = backups.filter(email_sent=False).count()
+    
+    context = {
+        'backups': backups_filtrados,
+        'mes_actual': mes_filtro,
+        'año_actual': año_filtro,
+        'meses': meses,
+        'años_disponibles': años_disponibles,
+        'total_mes': total_mes,
+        'exitosos_mes': exitosos_mes,
+        'fallidos_mes': fallidos_mes,
+        'pendientes_mes': pendientes_mes,
+        'total_backups': total_backups,
+        'total_exitosos': total_exitosos,
+        'total_fallidos': total_fallidos,
+    }
+    
+    return render(request, 'usuarios/backup_history.html', context)
+
 
 def get_pdf_content_disposition(filename):
     from urllib.parse import quote
