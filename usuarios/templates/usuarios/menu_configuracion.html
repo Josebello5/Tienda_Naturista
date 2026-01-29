@@ -63,6 +63,14 @@
             <option value="False">Inactivo</option>
           </select>
         </div>
+
+        <div class="filtro-select ms-3">
+          <select id="accountStatusFilter">
+            <option value="">Estado de Cuenta</option>
+            <option value="blocked">Bloqueada</option>
+            <option value="normal">Normal</option>
+          </select>
+        </div>
       </div>
 
       <div class="toolbar-actions">
@@ -89,13 +97,12 @@
             <th>Email</th>
             <th>Rol</th>
             <th>Estado</th>
-            <th>Estado de Cuenta</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody id="tableBody">
           {% for usuario in usuarios %}
-          <tr data-rol="{{ usuario.groups.all.0.name|default:'Sin Asignar' }}">
+          <tr data-rol="{{ usuario.groups.all.0.name|default:'Sin Asignar' }}" data-account-locked="{{ usuario.account_locked }}">
             <td>{{ usuario.cedula }}</td>
             <td>{{ usuario.first_name }}</td>
             <td>{{ usuario.last_name }}</td>
@@ -115,18 +122,17 @@
               {% endwith %}
             </td>
             <td>
-              {% if usuario.is_active %}
-              <span class="badge bg-success">Activo</span>
-              {% else %}
-              <span class="badge bg-secondary">Inactivo</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if usuario.account_locked %}
-              <span class="badge bg-danger">Bloqueada</span>
-              {% else %}
-              <span class="badge bg-success">Normal</span>
-              {% endif %}
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                {% if usuario.is_active %}
+                <span class="badge bg-success">Activo</span>
+                {% else %}
+                <span class="badge bg-secondary">Inactivo</span>
+                {% endif %}
+                
+                {% if usuario.account_locked %}
+                <span class="badge bg-danger">Bloqueada</span>
+                {% endif %}
+              </div>
             </td>
             <td class="actions">
               <button class="btn-action btn-edit" title="Editar Usuario" 

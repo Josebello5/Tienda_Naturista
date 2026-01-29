@@ -123,11 +123,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // ===== FUNCIONES DE FILTRADO =====
     const roleFilter = document.getElementById('roleFilter');
     const statusFilter = document.getElementById('statusFilter');
+    const accountStatusFilter = document.getElementById('accountStatusFilter');
 
     function filtrarUsuarios() {
         const query = searchInput.value.trim().toLowerCase();
         const roleValue = roleFilter ? roleFilter.value : '';
         const statusValue = statusFilter ? statusFilter.value : '';
+        const accountStatusValue = accountStatusFilter ? accountStatusFilter.value : '';
         const rows = tableBody.querySelectorAll('tr');
         let visibleRows = 0;
 
@@ -145,6 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const email = row.cells[4].textContent.toLowerCase();
             const rowRole = row.getAttribute('data-rol');
             const rowStatus = row.querySelector('.btn-toggle-status') ? row.querySelector('.btn-toggle-status').getAttribute('data-estado') : '';
+            const rowAccountStatus = row.getAttribute('data-account-locked');
 
             const matchQuery = !query ||
                 cedula.includes(query) ||
@@ -156,8 +159,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Status comparison: "True" vs "True" or "False" vs "False"
             const matchStatus = !statusValue || (rowStatus === statusValue);
+            
+            // Account status comparison
+            const matchAccountStatus = !accountStatusValue || 
+                (accountStatusValue === 'blocked' && rowAccountStatus === 'True') ||
+                (accountStatusValue === 'normal' && rowAccountStatus === 'False');
 
-            if (matchQuery && matchRole && matchStatus) {
+            if (matchQuery && matchRole && matchStatus && matchAccountStatus) {
                 row.style.display = '';
                 visibleRows++;
             } else {
@@ -172,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 emptyRow = document.createElement('tr');
                 emptyRow.className = 'empty-row';
                 emptyRow.innerHTML = `
-                    <td colspan="7">
+                    <td colspan="8">
                         <div class="no-results">
                             <i class="fas fa-search-minus"></i>
                             <h3>No se encontraron usuarios</h3>
@@ -200,6 +208,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (roleFilter) roleFilter.addEventListener('change', filtrarUsuarios);
     if (statusFilter) statusFilter.addEventListener('change', filtrarUsuarios);
+    if (accountStatusFilter) accountStatusFilter.addEventListener('change', filtrarUsuarios);
 
     // ===== FUNCIONALIDAD DE IMPRESIÓN =====
     const btnImprimir = document.getElementById('btnImprimirUsuarios');
@@ -208,6 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const query = searchInput.value.trim();
             const role = roleFilter ? roleFilter.value : '';
             const status = statusFilter ? statusFilter.value : '';
+            const accountStatus = accountStatusFilter ? accountStatusFilter.value : '';
 
             let url = '/usuarios/configuracion/generar-pdf/?';
             const params = new URLSearchParams();
@@ -215,6 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (query) params.append('q', query);
             if (role) params.append('rol', role);
             if (status) params.append('estado', status);
+            if (accountStatus) params.append('cuenta', accountStatus);
 
             window.open(url + params.toString(), '_blank');
         });

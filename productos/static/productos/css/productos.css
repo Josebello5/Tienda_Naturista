@@ -1479,7 +1479,7 @@ td {
 
 
 
-/* ===== FIX: MODALES DE GESTIÓN COMPLETOS SIN RECORTE ===== */
+/* ===== FIX: MODALES DE GESTIï¿½N COMPLETOS SIN RECORTE ===== */
 #modalCategorias,
 #modalPatologias,
 #modalUbicaciones {
@@ -1518,25 +1518,26 @@ td {
     border: 1px solid #ddd;
 }
 
-/* Encabezados verdes estilo reporte PDF */
+
+/* Encabezados con gradiente igual que clientes */
 #tablaCategorias thead,
 #tablaPatologias thead,
 #tablaUbicaciones thead {
-    background: #4CAF50;
+    background: linear-gradient(to right, var(--primary-green), var(--primary-blue));
+    color: white;
 }
 
 #tablaCategorias thead th,
 #tablaPatologias thead th,
 #tablaUbicaciones thead th {
-    background-color: #4CAF50;
-    color: white;
-    padding: 12px 15px;
+    padding: 18px 15px;
     text-align: left;
-    font-weight: bold;
-    font-size: 0.85rem;
+    font-weight: 600;
+    font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border: none;
+    white-space: nowrap;
+    color: white;
 }
 
 /* Filas alternadas estilo reporte */
@@ -1709,20 +1710,20 @@ td {
     border: 1px solid #ddd;
 }
 
+
 #dataTable thead {
-    background: #4CAF50 !important; /* Forzar verde plano sobre gradiente anterior */
+    background: linear-gradient(to right, var(--primary-green), var(--primary-blue));
+    color: white;
 }
 
 #dataTable thead th {
-    background-color: #4CAF50 !important;
-    color: white;
-    padding: 12px 15px;
+    padding: 18px 15px;
     text-align: left;
-    font-weight: bold;
-    font-size: 0.85rem;
+    font-weight: 600;
+    font-size: 0.9rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border: none;
+    color: white;
 }
 
 #dataTable tbody tr:nth-child(even) {

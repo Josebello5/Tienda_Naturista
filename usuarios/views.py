@@ -173,6 +173,7 @@ def generar_pdf_usuarios(request):
         query = request.GET.get('q', '')
         rol_filter = request.GET.get('rol', '')
         estado_filter = request.GET.get('estado', '')
+        cuenta_filter = request.GET.get('cuenta', '')  # Nuevo filtro
         
         usuarios = Usuario.objects.all().order_by('cedula')
         
@@ -190,6 +191,13 @@ def generar_pdf_usuarios(request):
         if estado_filter:
             is_active = estado_filter == 'True'
             usuarios = usuarios.filter(is_active=is_active)
+        
+        # Filtro por estado de cuenta bloqueada
+        if cuenta_filter:
+            if cuenta_filter == 'blocked':
+                usuarios = usuarios.filter(account_locked=True)
+            elif cuenta_filter == 'normal':
+                usuarios = usuarios.filter(account_locked=False)
 
         context = {
             'titulo': 'Listado de Usuarios',
@@ -198,6 +206,7 @@ def generar_pdf_usuarios(request):
             'query': query,
             'rol_filter': rol_filter,
             'estado_filter': estado_filter,
+            'cuenta_filter': cuenta_filter,
         }
         
         filename = f"listado_usuarios_{datetime.now().strftime('%Y%m%d')}.pdf"
